@@ -1,0 +1,56 @@
+{
+  "users": [
+    {
+      "id": "ea789cf8-80f1-4869-be68-8e03531c7929",
+      "email": "maverickoluwatomisin@gmail.com",
+      "passwordHash": "$2b$10$Mm05Z1F5voZgfZhulgh0MODf7khmSVCNKY05j63qWvHzotinmuTwW",
+      "timezone": "Africa/Lagos",
+      "morningNotificationTime": "09:00",
+      "eveningNotificationTime": "20:00",
+      "isOnboarded": true,
+      "createdAt": "2026-08-26T13:12:29.182Z"
+    }
+  ],
+  "commitments": [
+    {
+      "id": "31b462fa-b0bf-456a-9a53-b56da8907331",
+      "userId": "ea789cf8-80f1-4869-be68-8e03531c7929",
+      "name": "Stay sober",
+      "why": "To stay clear-headed and present for the people I love.",
+      "frequency": "daily",
+      "customDays": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "active": true,
+      "createdAt": "2026-08-26T13:13:34.256Z"
+    }
+  ],
+  "checkIns": [
+    {
+      "id": "f2fa9161-3eaf-4df8-b0b1-79c074b86407",
+      "userId": "ea789cf8-80f1-4869-be68-8e03531c7929",
+      "commitmentId": "31b462fa-b0bf-456a-9a53-b56da8907331",
+      "date": "2026-08-26",
+      "type": "morning",
+      "plannedActions": [
+        "Read 15 pages of calm reflection",
+        "Protect 7+ hours of sleep"
+      ],
+      "intentionNote": "sfsfs",
+      "status": null,
+      "reflection": null,
+      "lessonsLearned": null,
+      "blockerTags": null,
+      "moodOrCraving": null,
+      "isLate": false,
+      "createdAt": "2026-08-26T13:52:46.761Z"
+    }
+  ],
+  "weeklyRecaps": []
+}
