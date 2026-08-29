@@ -18,6 +18,8 @@ export const commitments = pgTable("commitments", {
   why: text("why"),
   frequency: varchar("frequency", { length: 32 }).default("daily").notNull(), // 'daily' | 'custom_days'
   customDays: jsonb("custom_days").$type<number[]>(), // [0, 1, 2, ...] (0 = Sunday)
+  colorIndex: integer("color_index").default(0).notNull(), // 0 to 4
+  icon: varchar("icon", { length: 32 }).default("anchor").notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -38,7 +40,10 @@ export const checkIns = pgTable("check_ins", {
   reflection: text("reflection"),
   lessonsLearned: text("lessons_learned"),
   blockerTags: jsonb("blocker_tags").$type<string[]>(), // ['stress', 'time', 'urge', 'forgot', 'unmotivated', 'other']
-  moodOrCraving: integer("mood_or_craving"), // 1 - 5
+  moodOrCraving: integer("mood_or_craving"), // 1 - 5 (kept for backward compat)
+  emotionName: varchar("emotion_name", { length: 64 }), // 'Peaceful' | 'Grateful' | 'Anxious' etc.
+  moodValence: integer("mood_valence"), // -5 (unpleasant) to +5 (pleasant)
+  moodArousal: integer("mood_arousal"), // 1 (low energy/calm) to 5 (high energy/intense)
   isLate: boolean("is_late").default(false).notNull(),
   
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -57,6 +62,26 @@ export const weeklyRecaps = pgTable("weekly_recaps", {
   generatedAt: timestamp("generated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const communityReflections = pgTable("community_reflections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  category: varchar("category", { length: 64 }).default("Sobriety & Recovery").notNull(),
+  emotionName: varchar("emotion_name", { length: 64 }).default("Grounded").notNull(),
+  anchoredDays: integer("anchored_days").default(1).notNull(),
+  resonatesCount: integer("resonates_count").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Commitment = typeof commitments.$inferSelect;
@@ -64,3 +89,7 @@ export type NewCommitment = typeof commitments.$inferInsert;
 export type CheckIn = typeof checkIns.$inferSelect;
 export type NewCheckIn = typeof checkIns.$inferInsert;
 export type WeeklyRecap = typeof weeklyRecaps.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type CommunityReflection = typeof communityReflections.$inferSelect;
+export type NewCommunityReflection = typeof communityReflections.$inferInsert;

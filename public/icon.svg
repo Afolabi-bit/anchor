@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7F2" />
+      <stop offset="100%" stop-color="#F3EFE7" />
+    </linearGradient>
+    <linearGradient id="anchorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DB8165" />
+      <stop offset="100%" stop-color="#C86D51" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#C86D51" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background squircle -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#bgGrad)" stroke="#EAE3D7" stroke-width="8" />
+
+  <!-- Inner Soft Accent Circle -->
+  <circle cx="256" cy="256" r="180" fill="#F9EBE7" opacity="0.7" />
+
+  <!-- Anchor Icon -->
+  <g filter="url(#shadow)" stroke="url(#anchorGrad)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Ring Top -->
+    <circle cx="256" cy="140" r="32" stroke="url(#anchorGrad)" stroke-width="24" fill="none" />
+    <!-- Vertical Spine -->
+    <line x1="256" y1="172" x2="256" y2="400" />
+    <!-- Horizontal Crossbar -->
+    <line x1="180" y1="230" x2="332" y2="230" />
+    <!-- Fluke Curve (Lower Crescent) -->
+    <path d="M 120 310 C 130 410, 382 410, 392 310" />
+    <!-- Left Crown Arrow Tip -->
+    <path d="M 100 330 L 120 310 L 140 330" />
+    <!-- Right Crown Arrow Tip -->
+    <path d="M 372 330 L 392 310 L 412 330" />
+  </g>
+</svg>

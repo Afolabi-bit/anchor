@@ -1,5 +1,5 @@
 import { db, schema } from "@/db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, asc } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 
@@ -105,17 +105,32 @@ export async function updateUser(
 
 // ----------------- COMMITMENTS -----------------
 export async function getActiveCommitmentByUserId(userId: string): Promise<schema.Commitment | null> {
+  const commitments = await getActiveCommitmentsByUserId(userId);
+  return commitments[0] || null;
+}
+
+export async function getActiveCommitmentsByUserId(userId: string): Promise<schema.Commitment[]> {
   if (db) {
-    const result = await db
+    return db
       .select()
       .from(schema.commitments)
       .where(and(eq(schema.commitments.userId, userId), eq(schema.commitments.active, true)))
-      .orderBy(desc(schema.commitments.createdAt))
-      .limit(1);
-    return result[0] || null;
+      .orderBy(asc(schema.commitments.createdAt));
   }
   const store = readLocalStore();
-  return store.commitments.find((c) => c.userId === userId && c.active) || null;
+  return store.commitments.filter((c) => c.userId === userId && c.active);
+}
+
+export async function getAllCommitmentsByUserId(userId: string): Promise<schema.Commitment[]> {
+  if (db) {
+    return db
+      .select()
+      .from(schema.commitments)
+      .where(eq(schema.commitments.userId, userId))
+      .orderBy(desc(schema.commitments.active), asc(schema.commitments.createdAt));
+  }
+  const store = readLocalStore();
+  return store.commitments.filter((c) => c.userId === userId);
 }
 
 export async function createCommitment(data: {
@@ -124,6 +139,8 @@ export async function createCommitment(data: {
   why?: string;
   frequency?: string;
   customDays?: number[];
+  colorIndex?: number;
+  icon?: string;
 }): Promise<schema.Commitment> {
   if (db) {
     const result = await db.insert(schema.commitments).values({
@@ -132,15 +149,13 @@ export async function createCommitment(data: {
       why: data.why?.trim() || null,
       frequency: data.frequency || "daily",
       customDays: data.customDays || [0, 1, 2, 3, 4, 5, 6],
+      colorIndex: data.colorIndex ?? 0,
+      icon: data.icon || "anchor",
       active: true,
     }).returning();
     return result[0];
   }
   const store = readLocalStore();
-  // Deactivate existing
-  store.commitments.forEach((c) => {
-    if (c.userId === data.userId) c.active = false;
-  });
   const newCommitment: schema.Commitment = {
     id: crypto.randomUUID(),
     userId: data.userId,
@@ -148,12 +163,29 @@ export async function createCommitment(data: {
     why: data.why?.trim() || null,
     frequency: data.frequency || "daily",
     customDays: data.customDays || [0, 1, 2, 3, 4, 5, 6],
+    colorIndex: data.colorIndex ?? 0,
+    icon: data.icon || "anchor",
     active: true,
     createdAt: new Date(),
   };
   store.commitments.push(newCommitment);
   writeLocalStore(store);
   return newCommitment;
+}
+
+export async function deleteCommitment(id: string, userId: string): Promise<boolean> {
+  if (db) {
+    const result = await db
+      .delete(schema.commitments)
+      .where(and(eq(schema.commitments.id, id), eq(schema.commitments.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+  const store = readLocalStore();
+  const initialLen = store.commitments.length;
+  store.commitments = store.commitments.filter((c) => !(c.id === id && c.userId === userId));
+  writeLocalStore(store);
+  return store.commitments.length < initialLen;
 }
 
 export async function updateCommitment(
@@ -215,6 +247,9 @@ export async function upsertCheckIn(data: {
   lessonsLearned?: string;
   blockerTags?: string[];
   moodOrCraving?: number;
+  emotionName?: string;
+  moodValence?: number;
+  moodArousal?: number;
   isLate?: boolean;
 }): Promise<schema.CheckIn> {
   if (db) {
@@ -275,6 +310,9 @@ export async function upsertCheckIn(data: {
     lessonsLearned: data.lessonsLearned || null,
     blockerTags: data.blockerTags || null,
     moodOrCraving: data.moodOrCraving ?? null,
+    emotionName: data.emotionName || null,
+    moodValence: data.moodValence ?? null,
+    moodArousal: data.moodArousal ?? null,
     isLate: data.isLate ?? false,
     createdAt: new Date(),
   };
@@ -322,3 +360,141 @@ export async function saveWeeklyRecap(data: {
   writeLocalStore(store);
   return newRecap;
 }
+
+// ----------------- PUSH SUBSCRIPTIONS -----------------
+export async function savePushSubscription(data: {
+  userId: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}): Promise<schema.PushSubscription> {
+  if (db) {
+    const existing = await db
+      .select()
+      .from(schema.pushSubscriptions)
+      .where(eq(schema.pushSubscriptions.endpoint, data.endpoint))
+      .limit(1);
+
+    if (existing.length > 0) {
+      const result = await db
+        .update(schema.pushSubscriptions)
+        .set({ ...data, createdAt: new Date() })
+        .where(eq(schema.pushSubscriptions.id, existing[0].id))
+        .returning();
+      return result[0];
+    }
+
+    const result = await db.insert(schema.pushSubscriptions).values(data).returning();
+    return result[0];
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    ...data,
+    createdAt: new Date(),
+  };
+}
+
+export async function getPushSubscriptionsByUserId(userId: string): Promise<schema.PushSubscription[]> {
+  if (db) {
+    return db
+      .select()
+      .from(schema.pushSubscriptions)
+      .where(eq(schema.pushSubscriptions.userId, userId));
+  }
+  return [];
+}
+
+export async function deletePushSubscription(endpoint: string): Promise<boolean> {
+  if (db) {
+    const result = await db
+      .delete(schema.pushSubscriptions)
+      .where(eq(schema.pushSubscriptions.endpoint, endpoint))
+      .returning();
+    return result.length > 0;
+  }
+  return true;
+}
+
+export async function getAllPushSubscriptionsWithUsers() {
+  if (db) {
+    return db
+      .select({
+        subscription: schema.pushSubscriptions,
+        user: schema.users,
+      })
+      .from(schema.pushSubscriptions)
+      .innerJoin(schema.users, eq(schema.pushSubscriptions.userId, schema.users.id));
+  }
+  return [];
+}
+
+export async function getCommunityReflections(category?: string): Promise<schema.CommunityReflection[]> {
+  if (db) {
+    if (category && category !== "All") {
+      return db
+        .select()
+        .from(schema.communityReflections)
+        .where(eq(schema.communityReflections.category, category))
+        .orderBy(desc(schema.communityReflections.createdAt))
+        .limit(50);
+    }
+    return db
+      .select()
+      .from(schema.communityReflections)
+      .orderBy(desc(schema.communityReflections.createdAt))
+      .limit(50);
+  }
+  return [];
+}
+
+export async function createCommunityReflection(data: {
+  userId?: string;
+  content: string;
+  category: string;
+  emotionName?: string;
+  anchoredDays?: number;
+}): Promise<schema.CommunityReflection> {
+  if (db) {
+    const result = await db
+      .insert(schema.communityReflections)
+      .values({
+        userId: data.userId || null,
+        content: data.content.trim(),
+        category: data.category || "Sobriety & Recovery",
+        emotionName: data.emotionName || "Grounded",
+        anchoredDays: data.anchoredDays ?? 1,
+        resonatesCount: 0,
+      })
+      .returning();
+    return result[0];
+  }
+  return {
+    id: crypto.randomUUID(),
+    userId: data.userId || null,
+    content: data.content.trim(),
+    category: data.category || "Sobriety & Recovery",
+    emotionName: data.emotionName || "Grounded",
+    anchoredDays: data.anchoredDays ?? 1,
+    resonatesCount: 0,
+    createdAt: new Date(),
+  };
+}
+
+export async function incrementReflectionResonates(id: string): Promise<boolean> {
+  if (db) {
+    const existing = await db
+      .select()
+      .from(schema.communityReflections)
+      .where(eq(schema.communityReflections.id, id));
+    if (existing.length > 0) {
+      await db
+        .update(schema.communityReflections)
+        .set({ resonatesCount: (existing[0].resonatesCount || 0) + 1 })
+        .where(eq(schema.communityReflections.id, id));
+      return true;
+    }
+  }
+  return false;
+}
+

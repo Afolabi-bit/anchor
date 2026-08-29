@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import Navigation from "@/app/components/Navigation";
 import StoryRecapModal from "@/app/components/StoryRecapModal";
 import ExportReportModal from "@/app/components/ExportReportModal";
+import ClinicalExportModal from "@/app/components/ClinicalExportModal";
+import AIPatternInsights from "@/app/components/AIPatternInsights";
+import CalendarHeatmap from "@/app/components/CalendarHeatmap";
+import MilestoneGallery from "@/app/components/MilestoneGallery";
+import PageTransition from "@/app/components/PageTransition";
+import { ProgressSkeleton } from "@/app/components/Skeletons";
+import { generateClinicalSummary, ClinicalSummaryData } from "@/lib/clinical-report";
 import {
   Calendar,
   Sun,
@@ -14,9 +21,16 @@ import {
   HeartHandshake,
   Sparkles,
   Printer,
+  FileText,
   Compass,
-  Play
+  Play,
+  TrendingUp,
+  Activity,
+  Flame,
+  Award,
+  Anchor
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 
 export default function ProgressPage() {
@@ -26,9 +40,31 @@ export default function ProgressPage() {
   const [commitment, setCommitment] = useState<any>(null);
   const [recapData, setRecapData] = useState<any>(null);
 
+  const [range, setRange] = useState<"7" | "30" | "90" | "all">("30");
+  const [rangeLoading, setRangeLoading] = useState(false);
+
   // Modal states
   const [storyOpen, setStoryOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [clinicalModalOpen, setClinicalModalOpen] = useState(false);
+  const [clinicalReport, setClinicalReport] = useState<ClinicalSummaryData | null>(null);
+
+  const handleOpenClinicalReport = async () => {
+    try {
+      triggerHaptic(12);
+      const checkInsRes = await fetch("/api/checkins");
+      const checkInsData = checkInsRes.ok ? await checkInsRes.json() : { checkIns: [] };
+      const report = generateClinicalSummary(
+        user,
+        commitment,
+        checkInsData.checkIns || []
+      );
+      setClinicalReport(report);
+      setClinicalModalOpen(true);
+    } catch (err) {
+      console.error("Clinical summary error:", err);
+    }
+  };
 
   useEffect(() => {
     async function loadRecap() {
@@ -41,273 +77,217 @@ export default function ProgressPage() {
         }
         const meData = await meRes.json();
         setUser(meData.user);
-        setCommitment(meData.commitment);
+        const comm = meData.commitment || meData.commitments?.[0];
+        setCommitment(comm);
 
-        const recapRes = await fetch("/api/recaps");
-        if (recapRes.ok) {
-          const data = await recapRes.json();
-          setRecapData(data.currentRecap);
+        const res = await fetch(`/api/recaps?range=${range}`);
+        if (res.ok) {
+          const data = await res.json();
+          setRecapData(data.recap);
         }
       } catch (err) {
-        console.error("Progress loading error:", err);
+        console.error("Failed to load recap:", err);
       } finally {
         setLoading(false);
       }
     }
     loadRecap();
-  }, [router]);
+  }, [router, range]);
 
-  const formatDateShort = (dateStr: string) => {
-    try {
-      const parts = dateStr.split("-").map(Number);
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      return new Intl.DateTimeFormat("en-US", { weekday: "short", day: "numeric" }).format(d);
-    } catch {
-      return dateStr;
-    }
+  const handleRangeChange = async (newRange: "7" | "30" | "90" | "all") => {
+    triggerHaptic(10);
+    setRange(newRange);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
+        <Navigation />
+        <ProgressSkeleton />
+      </div>
+    );
+  }
+
+  const completionRate = recapData?.completionRate ?? 0;
+  const streakCurrent = recapData?.streakCurrent ?? 0;
+  const totalAnchored = recapData?.daysAnchored ?? Math.round((completionRate / 100) * (recapData?.totalDays || 7));
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
       <Navigation userEmail={user?.email} />
 
-      <main className="flex-1 max-w-xl mx-auto w-full px-5 py-8 sm:py-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold">
-              Insight Sanctuary
-            </span>
-            <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-1">
-              7-Day Recap & Progress
-            </h1>
-          </div>
-          <button
-            onClick={() => {
-              triggerHaptic(12);
-              setExportOpen(true);
-            }}
-            className="text-xs px-3.5 py-1.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] font-medium border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-sm flex items-center gap-1.5 cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Export Report</span>
-          </button>
-        </div>
-
-        {/* Story Deck Banner Trigger */}
-        <div className="mb-6 p-6 rounded-3xl bg-[#F9EBE7] dark:bg-[#38251F] border border-[#F2D7CE] dark:border-[#4D332B] shadow-organic-md flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-[#C86D51]">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Interactive Story Experience</span>
-            </div>
-            <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-              Review Your 7-Day Story
-            </h2>
-            <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-              A 4-chapter mindful visual reflection of rhythm, obstacles & wisdom.
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              triggerHaptic(15);
-              setStoryOpen(true);
-            }}
-            className="w-12 h-12 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white flex items-center justify-center shrink-0 cursor-pointer shadow-organic-sm transition-transform hover:scale-105"
-          >
-            <Play className="w-5 h-5 fill-current ml-0.5" />
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="p-12 text-center text-sm font-serif-title text-[#786F66] dark:text-[#A8A096]">
-            Reflecting on your week...
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Top Stat Overview Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {/* Follow-Through Rate */}
-              <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm">
-                <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block mb-1">
-                  Follow-Through
-                </span>
-                <span className="font-serif-title text-3xl font-medium text-[#2C2520] dark:text-[#ECE7E0]">
-                  {recapData?.completionRate ?? 0}%
-                </span>
-                <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] mt-1 block">
-                  Across {recapData?.totalDaysWithEvening || 0} reflections
-                </span>
-              </div>
-
-              {/* Days Reflected */}
-              <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm">
-                <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block mb-1">
-                  Days Reflected
-                </span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-serif-title text-3xl font-medium text-[#2C2520] dark:text-[#ECE7E0]">
-                    {recapData?.streakCurrent ?? 0}
-                  </span>
-                  <span className="text-xs text-[#786F66] dark:text-[#A8A096]">days</span>
-                </div>
-                <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] mt-1 block">
-                  Longest: {recapData?.streakLongest ?? 0} days
-                </span>
-              </div>
-
-              {/* Total Check-in Touchpoints */}
-              <div className="col-span-2 sm:col-span-1 p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm">
-                <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block mb-1">
-                  Touchpoints
-                </span>
-                <span className="font-serif-title text-3xl font-medium text-[#2C2520] dark:text-[#ECE7E0]">
-                  {recapData?.totalCheckIns ?? 0}
-                </span>
-                <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] mt-1 block">
-                  Morning & evening plans
-                </span>
-              </div>
+      <PageTransition>
+        <main className="flex-1 max-w-xl mx-auto w-full px-5 py-6 sm:py-8 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold">
+                Insight Sanctuary
+              </span>
+              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
+                Progress & Rhythm
+              </h1>
             </div>
 
-            {/* 7-Day Timeline Chart */}
-            <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 clay-card shadow-organic-md space-y-4">
-              <div>
-                <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#C86D51]" />
-                  7-Day Rhythm
+            {/* Header Action Buttons */}
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => {
+                  triggerHaptic(15);
+                  setStoryOpen(true);
+                }}
+                className="text-xs px-3 py-1.5 rounded-full bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Story Deck</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={handleOpenClinicalReport}
+                className="text-xs px-3 py-1.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold border border-[#D9E6DD] dark:border-[#2C4032] shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Clinical PDF</span>
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Top Metric Summary Trio */}
+          <div className="grid grid-cols-3 gap-2.5">
+            {/* Follow-Through % */}
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
+                Consistency
+              </span>
+              <span className="font-serif-title text-2xl font-semibold text-[#658B70]">
+                {completionRate}%
+              </span>
+              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] block">
+                {recapData?.totalDays || 30}d window
+              </span>
+            </div>
+
+            {/* Cumulative Anchored Days */}
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
+                Anchored Days
+              </span>
+              <span className="font-serif-title text-2xl font-semibold text-[#B88452]">
+                {totalAnchored}
+              </span>
+              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] block">
+                Cumulative
+              </span>
+            </div>
+
+            {/* Current Active Cadence */}
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
+                Active Cadence
+              </span>
+              <span className="font-serif-title text-2xl font-semibold text-[#C86D51]">
+                {streakCurrent}d
+              </span>
+              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] block">
+                Streak
+              </span>
+            </div>
+          </div>
+
+          {/* 90-Day Rhythm Calendar Heatmap Matrix */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#B88452]" />
+                <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0]">
+                  Rhythm Matrix
                 </h3>
-                <p className="text-xs text-[#786F66] dark:text-[#A8A096] mt-0.5">
-                  Visualizing morning intentions and evening reflections.
-                </p>
               </div>
 
-              <div className="grid grid-cols-7 gap-2 pt-2">
-                {recapData?.dailyTrend?.map((day: any) => {
-                  const hasEvening = Boolean(day.eveningStatus);
-                  const isYes = day.eveningStatus === "yes";
-                  const isPartial = day.eveningStatus === "partial";
-
+              {/* Range Switcher Tabs */}
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs">
+                {(
+                  [
+                    { id: "7", label: "7d" },
+                    { id: "30", label: "30d" },
+                    { id: "90", label: "90d" },
+                    { id: "all", label: "All" },
+                  ] as const
+                ).map((tab) => {
+                  const isActive = range === tab.id;
                   return (
-                    <div
-                      key={day.date}
-                      className="p-3 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] flex flex-col items-center justify-between min-h-[110px] text-center shadow-xs"
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleRangeChange(tab.id)}
+                      className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                        isActive
+                          ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] font-semibold shadow-2xs"
+                          : "text-[#786F66] dark:text-[#A8A096]"
+                      }`}
                     >
-                      <span className="text-[10px] font-medium text-[#786F66] dark:text-[#A8A096]">
-                        {formatDateShort(day.date)}
-                      </span>
-
-                      {/* Morning Dot */}
-                      <div className="my-1">
-                        {day.morningPlanned ? (
-                          <div title="Morning intention set" className="p-1 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]">
-                            <Sun className="w-3.5 h-3.5" />
-                          </div>
-                        ) : (
-                          <div title="No morning plan" className="w-2.5 h-2.5 rounded-full bg-[#EAE3D7] dark:bg-[#38332E]" />
-                        )}
-                      </div>
-
-                      {/* Evening Status Pill */}
-                      <div className="w-full">
-                        {hasEvening ? (
-                          <span
-                            className={`block w-full py-0.5 rounded-full text-[9px] font-semibold ${
-                              isYes
-                                ? "bg-[#EEF4F0] text-[#658B70]"
-                                : isPartial
-                                ? "bg-[#FAF2EA] text-[#B88452]"
-                                : "bg-[#F0ECE6] text-[#82786F]"
-                            }`}
-                          >
-                            {isYes ? "YES" : isPartial ? "PART" : "NO"}
-                          </span>
-                        ) : (
-                          <span className="text-[9px] text-[#9E948A]">—</span>
-                        )}
-                      </div>
-                    </div>
+                      {tab.label}
+                    </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Recurring Themes */}
-            <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 clay-card shadow-organic-md space-y-4">
-              <div>
-                <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0] flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-[#B88452]" />
-                  Themes & Obstacles Observed
-                </h3>
-                <p className="text-xs text-[#786F66] dark:text-[#A8A096] mt-0.5">
-                  Spotting natural patterns helps remove self-blame.
-                </p>
-              </div>
-
-              {recapData?.topBlockerTags && recapData.topBlockerTags.length > 0 ? (
-                <div className="space-y-2 pt-1">
-                  {recapData.topBlockerTags.map((item: any) => (
-                    <div
-                      key={item.tag}
-                      className="p-3.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between text-xs"
-                    >
-                      <span className="font-medium text-[#2C2520] dark:text-[#ECE7E0] capitalize">
-                        {item.tag}
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] font-semibold">
-                        Observed {item.count} {item.count === 1 ? "time" : "times"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 rounded-2xl border border-dashed border-[#EAE3D7] text-center text-xs text-[#786F66]">
-                  No obstacle themes tagged this week.
-                </div>
-              )}
-            </div>
-
-            {/* Pinned Lessons Learned */}
-            <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 clay-card shadow-organic-md space-y-4">
-              <div>
-                <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0] flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-[#C86D51]" />
-                  Notable Takeaways
-                </h3>
-                <p className="text-xs text-[#786F66] dark:text-[#A8A096] mt-0.5">
-                  Insights from your evening reflections.
-                </p>
-              </div>
-
-              {recapData?.pinnedLessons && recapData.pinnedLessons.length > 0 ? (
-                <div className="space-y-2.5 pt-1">
-                  {recapData.pinnedLessons.map((lesson: string, idx: number) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed shadow-xs"
-                    >
-                      "{lesson}"
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 rounded-2xl border border-dashed border-[#EAE3D7] text-center text-xs text-[#786F66]">
-                  Add lessons learned during your evening reflections to see them surfaced here.
-                </div>
-              )}
-            </div>
-
-            {/* Grounding Message */}
-            <div className="p-5 rounded-3xl bg-[#FAF7F2] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] flex items-start gap-3.5 text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed shadow-organic-sm">
-              <HeartHandshake className="w-5 h-5 text-[#658B70] shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold text-[#2C2520] dark:text-[#ECE7E0]">A Mirror, Not a Scorecard: </span>
-                This recap reflects your habits without evaluation or shame. Progress is showing up again tomorrow.
-              </div>
-            </div>
+            <CalendarHeatmap
+              data={recapData?.heatmapData || recapData?.heatmapMatrix || []}
+              totalAnchoredDays={totalAnchored}
+            />
           </div>
-        )}
-      </main>
+
+          {/* AI Pattern Insights Synthesis */}
+          <AIPatternInsights commitmentId={commitment?.id} />
+
+          {/* Non-Punitive Milestone Shelf */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-[#C86D51]" />
+                <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0]">
+                  Recovery Milestones
+                </h3>
+              </div>
+              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">Cumulative days shown up</span>
+            </div>
+
+            <MilestoneGallery totalAnchoredDays={totalAnchored} />
+          </div>
+
+          {/* Recent Pinned Takeaways & Wisdom */}
+          {recapData?.pinnedLessons && recapData.pinnedLessons.length > 0 && (
+            <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm space-y-3">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#B88452]">
+                <Lightbulb className="w-4 h-4" />
+                <span>Pinned Reflections & Wisdom</span>
+              </div>
+              <div className="space-y-2">
+                {recapData.pinnedLessons.slice(0, 3).map((lesson: string, idx: number) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs font-serif italic text-[#2C2520] dark:text-[#ECE7E0]"
+                  >
+                    "{lesson}"
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Compassionate Mirror Card */}
+          <div className="p-4 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] flex items-center gap-3 text-xs text-[#658B70] dark:text-[#82A78C] shadow-2xs">
+            <HeartHandshake className="w-4 h-4 shrink-0" />
+            <span>
+              <strong>A Mirror, Not a Scorecard:</strong> Anchor reflects your habits without evaluation or shame. Progress is simply showing up again.
+            </span>
+          </div>
+        </main>
+      </PageTransition>
 
       {/* Story Recap Modal Deck */}
       {storyOpen && (
@@ -326,6 +306,15 @@ export default function ProgressPage() {
           userEmail={user?.email}
           commitment={commitment}
           recapData={recapData}
+        />
+      )}
+
+      {/* Clinical & Therapy Intake Report Modal */}
+      {clinicalModalOpen && clinicalReport && (
+        <ClinicalExportModal
+          isOpen={clinicalModalOpen}
+          onClose={() => setClinicalModalOpen(false)}
+          report={clinicalReport}
         />
       )}
     </div>

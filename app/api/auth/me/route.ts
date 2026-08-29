@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getUserById, getActiveCommitmentByUserId } from "@/lib/db-service";
+import { getUserById, getActiveCommitmentsByUserId, getAllCommitmentsByUserId } from "@/lib/db-service";
 
 export async function GET() {
   const session = await getSession();
@@ -13,7 +13,8 @@ export async function GET() {
     return NextResponse.json({ user: null }, { status: 401 });
   }
 
-  const commitment = await getActiveCommitmentByUserId(user.id);
+  const activeCommitments = await getActiveCommitmentsByUserId(user.id);
+  const allCommitments = await getAllCommitmentsByUserId(user.id);
 
   return NextResponse.json({
     user: {
@@ -24,6 +25,8 @@ export async function GET() {
       eveningNotificationTime: user.eveningNotificationTime,
       timezone: user.timezone,
     },
-    commitment,
+    commitment: activeCommitments[0] || null,
+    commitments: activeCommitments,
+    allCommitments,
   });
 }

@@ -1,131 +1,165 @@
-# Anchor — Tier-1 Design System & UX Scaling Plan
+# Anchor — UI/UX Overhaul & Cognitive Simplification Plan
 
-> **Product Vision:** A warm, judgment-free daily accountability & recovery companion that replaces streak anxiety with honest reflection, sensory grounding, and actionable insight.
+> **Lead:** Principal UX Architect & Product Design Team (FAANG Standard)  
+> **Date:** August 2026  
+> **Objective:** Transform Anchor from a feature-dense, cognitively overwhelming dashboard into an effortless, serene, and intuitive daily companion.  
+> **Core Principle:** *"One Screen, One Purpose, Zero Cognitive Friction."*
 
 ---
 
-## 1. Design System & Token Hierarchy
+## 1. Executive Problem Diagnosis — Why the Current UI/UX Is Hard to Understand
 
-### A. 3-Tier Token Architecture (`app/globals.css`)
+Anchor has built an exceptional feature foundation (Neon Postgres, Gemini AI, Web Push, Offline Sync, 2D Emotion Wheel, Calendar Heatmap, Voice Dictation, Recovery Milestones, Community). However, **the experience currently feels like a cockpit of competing widgets rather than a calming sanctuary.**
+
+### Critical Friction Points Identified:
+
+1. **No Clear Visual Hierarchy (The "Cockpit Effect"):**
+   - On `/today`, a user is simultaneously confronted with: *Date Header, Grounding Drawer button, Daily Affirmation Card, Partner Cheer Banner, Multi-Commitment Switcher Pills, Circadian Arc SVG, Morning Planning Card, and Evening Reflection Card*.
+   - **User Reaction:** *"What am I supposed to do right now?"*
+2. **Ambiguous Mental Model & Terminology:**
+   - The UI mixes the words *"Commitment"*, *"Anchor"*, *"Habit"*, *"Ritual"*, *"Intention"*, and *"Sanctuary"*.
+   - Users need one clear, unshakeable mental model:
+     - ⚓ **Your Anchor:** The single core promise you are keeping to yourself today.
+     - ☀️ **Morning Intention (15s):** Set your focus and 1-3 micro-steps.
+     - 🌙 **Evening Reflection (30s):** Record how it went, your emotional state, and gentle wisdom.
+3. **Color & Badge Overload:**
+   - Terracotta, Ochre, Sage, Amber, Slate, Emotion Dots, and Status Badges all fight for ocular dominance on every card.
+   - **Design Rule:** If everything is highlighted, nothing is highlighted.
+4. **Redundant & Scattered Navigation:**
+   - 5 tabs (`Today`, `Journal`, `Progress`, `Community`, `Settings`) with fragmented features (e.g. Export buttons scattered across both Progress and Settings; Affirmation on Today and Quotes in Journal).
+5. **Modal Fatigue:**
+   - Modals open inside modals (e.g., CheckInStepper -> EmotionWheel -> Presets; Settings -> Export -> Clinical; Milestone Celebrations). Context is lost.
+
+---
+
+## 2. The New Design System: "Serene Spatial Clarity"
+
 ```
-[ Global Primitives ] ──► [ Semantic Intent Tokens ] ──► [ Component Tokens ]
-```
-
-- **Fluid Typography (Major Third Scale 1.25):**
-  - `--font-size-xs`: `clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem)`
-  - `--font-size-sm`: `clamp(0.875rem, 0.825rem + 0.25vw, 0.9375rem)`
-  - `--font-size-base`: `clamp(1rem, 0.95rem + 0.25vw, 1.0625rem)`
-  - `--font-size-lg`: `clamp(1.125rem, 1.05rem + 0.35vw, 1.25rem)`
-  - `--font-size-xl`: `clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem)`
-  - `--font-size-2xl`: `clamp(1.75rem, 1.5rem + 0.8vw, 2.25rem)`
-  - `--font-size-hero`: `clamp(2.25rem, 1.9rem + 1.4vw, 3.5rem)`
-
-- **Organic Elevation (Zero hard edges, warm diffuse ambient shadow):**
-  - `--shadow-organic-sm`: `0 2px 8px -2px rgba(44, 37, 32, 0.04), 0 1px 4px -1px rgba(44, 37, 32, 0.03)`
-  - `--shadow-organic-md`: `0 8px 24px -6px rgba(44, 37, 32, 0.06), 0 2px 8px -2px rgba(44, 37, 32, 0.04)`
-  - `--shadow-organic-lg`: `0 16px 40px -10px rgba(44, 37, 32, 0.08), 0 4px 16px -4px rgba(44, 37, 32, 0.04)`
-
-- **Spring Physics & Temporal Curves:**
-  - `--ease-spring-gentle`: `cubic-bezier(0.25, 1, 0.5, 1)`
-  - `--ease-spring-bouncy`: `cubic-bezier(0.34, 1.56, 0.64, 1)`
-  - `--duration-breathe`: `4000ms`
-
----
-
-## 2. Phased Implementation Roadmap
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        ANCHOR SCALING ROADMAP                          │
-└──────┬────────────────────┬────────────────────┬───────────────────────┘
-       │                    │                    │
-       ▼                    ▼                    ▼
-【 Phase 1: Sensory UX 】 【 Phase 2: Offline & AI 】 【 Phase 3: Partner & Security 】
- • Fluid Typography Tokens• PWA Service Worker   • Sponsor Read-Only View
- • "Hold to Anchor" ritual• IndexedDB Sync Queue • Redacted PDF/CSV Export
- • Conversational Reveal  • Natural Pattern AI   • Privacy Shield Blur
- • Web Haptics & Audio    • Soft Landing Flow    • Multi-Commitment System
-```
-
----
-
-## Phase 1: Sensory Polish & Micro-Interactions (Immediate)
-
-### 1.1 Morning Intention Flow: "Zero-Friction Priming"
-- [ ] **Quick-Add Smart Chips:** Suggest recent and frequently used micro-actions based on commitment type (*e.g., "15m walk", "Call sponsor", "Read 10 pages"*).
-- [ ] **"Hold to Anchor" Sealing Ritual:** Replace instant submit button with a 1.5-second tactile press-and-hold progress interaction with micro-vibration feedback.
-- [ ] **Intention Affirmation Banner:** Soft ripple animation affirming the start of the day.
-
-### 1.2 Evening Reflection Flow: "Conversational Pacing"
-- [ ] **Single-Thought Progressive Reveal:** Display the 3 core cards (*Yes / Partially / Not today*) first; reveal subsequent reflection prompts smoothly only after selection.
-- [ ] **Neutral Dignified "Not Today" State:** Ensure "Not today" retains the same warm, supportive styling as "Yes", removing any subconscious failure stigma.
-- [ ] **Contextual Tag Carousel:** Categorized obstacle tags (*Time, Stress, Urges, Fatigue, Distraction*) with gentle organic chip toggles.
-
-### 1.3 Multi-Sensory Polish
-- [ ] **Micro-Haptics (Web Vibration API):** Subtle tactile ticks on chip toggles, button presses, and ritual completion.
-- [ ] **Soundscape for Grounding Drawer:** Gentle singing bowl chime via Web Audio synthesizer at the completion of 4-7-8 breathing cycles (toggleable).
-
----
-
-## Phase 2: Continuity, Offline-First & Pattern Insights (Short-term)
-
-### 2.1 Offline-First Sync Architecture
-- [ ] **Service Worker & Manifest Setup:** Installable PWA support with cached static assets and shell.
-- [ ] **IndexedDB Local Storage Queue:** Queue check-ins locally when offline; automatically synchronize with Neon Postgres upon reconnection.
-- [ ] **Network State Indicator:** Subtle, non-intrusive offline badge (*"Saved locally — will sync when connected"*).
-
-### 2.2 Qualitative Behavioral Pattern Engine
-- [ ] **Pattern Recognition Logic:** Synthesize weekly check-in tags into supportive natural language summaries:
-  - *"You identified 'Time & Schedule' on 3 consecutive Fridays. Would you like to set a lighter intention for Fridays?"*
-  - *"Days starting with a morning intention have an 85% follow-through rate."*
-- [ ] **7-Day Trend Chart Polish:** Interactive tooltips revealing micro-actions and reflections on hover/tap.
-
-### 2.3 Restorative Soft Landing Greetings
-- [ ] Adaptive greeting copy when a check-in was missed: *"New day. Yesterday is behind us — let's anchor today."*
-- [ ] Graceful 1-tap option to log a quick backfilled reflection without streak penalties.
-
----
-
-## Phase 3: Ecosystem, Security & Partner Support (Medium-term)
-
-### 3.1 Sponsor / Accountability Partner View
-- [ ] **Secure Read-Only Access Token:** Generate a private, expiring access link for a sponsor, therapist, or trusted partner.
-- [ ] **Granular Privacy Controls:** Allow user to choose between *High-Level Overview Only* (completion rate, touchpoints) and *Full Journal Reflection Access*.
-
-### 3.2 Clinical & Therapy Data Export
-- [ ] Export clean, beautifully formatted PDF and CSV summaries for therapy or recovery meetings.
-- [ ] Summary includes mood/craving trends, obstacle breakdown, and highlighted takeaways.
-
-### 3.3 Discreet "Privacy Shield" Mode
-- [ ] One-tap top bar toggle (or double-tap screen gesture) to instantly blur commitment names and journal entries in public settings.
-
----
-
-## 3. Database Schema Extensions (Drizzle Postgres)
-
-```typescript
-// Proposed schema updates in db/schema.ts for Phase 2 & 3:
-
-// sponsor_access_tokens
-export const sponsorTokens = pgTable("sponsor_tokens", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  token: varchar("token", { length: 64 }).notNull().unique(),
-  includeJournalNotes: boolean("include_journal_notes").default(false).notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
-
-// user_preferences (extended)
-// - soundEnabled: boolean
-// - hapticsEnabled: boolean
-// - privacyShieldEnabled: boolean
+┌────────────────────────────────────────────────────────┐
+│                   ANCHOR MENTAL MODEL                  │
+├──────────────────────────┬─────────────────────────────┤
+│ 1. DAILY FOCUS           │ Time-aware: Morning vs      │
+│    (What matters now)    │ Evening Single Primary Card │
+├──────────────────────────┼─────────────────────────────┤
+│ 2. SANCTUARY LOG         │ Clean, chronological        │
+│    (Where you showed up) │ timeline of honest days     │
+├──────────────────────────┼─────────────────────────────┤
+│ 3. DEEP INSIGHTS         │ AI Breakthroughs & Heatmap  │
+│    (Your growth mirror)  │ without cluttered widgets   │
+└──────────────────────────┴─────────────────────────────┘
 ```
 
+### Core Design Pillars:
+
+- **1. Time-Aware Progressive Disclosure:** The app should intelligently know if it's morning, afternoon, or evening. Show **only the relevant ritual** front-and-center.
+- **2. Single Focal Action:** One prominent, high-contrast button per screen. Everything else recedes into calm, muted secondary elements.
+- **3. Harmonized Palette:** A warm, neutral linen foundation (`#FAF7F2` / `#1C1917`) with **one primary accent color** (`#C86D51` Terracotta) and subtle state indicators only where clinically meaningful.
+- **4. Streamlined 4-Tab Navigation:**
+  1. 🧭 **Today** — Your current daily ritual & grounding
+  2. 📖 **Journal** — Your reflection timeline & search
+  3. 📊 **Progress** — Your AI pattern insights & rhythm heatmap
+  4. ⚙️ **Settings & Community** — Goal management, partner sharing & quiet community
+
 ---
 
-## 4. Quality & Verification Checklist
+## 3. Screen-by-Screen UI/UX Overhaul Specifications
 
-- [ ] **Accessibility:** Full WCAG AAA color contrast, keyboard navigability, and screen reader announcements.
-- [ ] **Performance:** Sub-100ms interaction latency, Zero Layout Shift (CLS < 0.01), and instant offline check-in caching.
-- [ ] **Tone Compliance:** 100% free of shame, failure flags, red warning alerts, or punitive gamification.
+---
+
+### Phase 1: `/today` — The Time-Aware Ritual Hero
+
+**The Problem Today:** Users see both Morning and Evening cards active at once, plus 4 other cards competing above the fold.
+
+**The Overhaul:**
+1. **Dynamic Time-Aware Ritual Hero Card:**
+   - **Before 2:00 PM (Morning Mode):** The page hero prominently displays **Morning Intention**. 
+     - If not done: High-contrast *"Anchor Your Day (15s)"* primary action with a soothing breathing prompt.
+     - If completed: A serene checkmark state with your 1 primary thought, and a muted countdown to evening.
+   - **After 2:00 PM (Evening Mode):** The hero seamlessly shifts focus to **Evening Reflection**.
+     - If not done: Warm *"Close Your Day with Compassion (30s)"* action.
+     - If completed: A peaceful bedtime sanctuary state (*"Day Anchored. Rest peacefully."*).
+2. **Collapsible Wisdom & Grounding Capsule:**
+   - Merge the *Daily Affirmation Card* and *Grounding Drawer* into a sleek, 1-line mindful banner below the header that can be tapped to expand into full breathing or quotes.
+3. **Simplified Multi-Anchor Carousel:**
+   - Instead of a noisy horizontal pill bar, display an elegant segmented chip with subtle progress dots (`• 2/3 completed today`).
+
+---
+
+### Phase 2: Check-In Stepper — Seamless Guided Flow
+
+**The Problem Today:** 4 heavy stages with text, checkboxes, emotion wheels, and hold buttons can feel cumbersome.
+
+**The Overhaul:**
+1. **Frictionless Step Indicator:** A minimalist 3-dot progress bar with smooth slide animations.
+2. **Morning (2 Rapid Steps):**
+   - *Step 1:* Pick 1-2 micro-actions (preset chips or custom).
+   - *Step 2:* Tap the soothing 528Hz Anchor button (quick-tap or 1s hold with clear feedback).
+3. **Evening (3 Gentle Steps):**
+   - *Step 1:* One-tap follow-through status (*"Followed Through"*, *"Partially"*, *"Rest / Learned"*).
+   - *Step 2:* 2D Emotion Wheel or Quick Mood Selector.
+   - *Step 3:* 1-sentence reflection (with instant Voice-to-Text button).
+
+---
+
+### Phase 3: `/journal` — The Clean Narrative Timeline
+
+**The Problem Today:** Search bar, emotion chips, 7-day strip, soft landing cards, and expandable cards all stacked on top of each other create vertical clutter.
+
+**The Overhaul:**
+1. **Integrated Search & Filter Capsule:**
+   - A single unified search header with an inline filter dropdown (combining Status, Starred, and Emotions).
+2. **Compact 7-Day Rhythm Ribbon:**
+   - Muted, pebble-style weekly strip showing clean colored dots instead of heavy boxed borders.
+3. **Card Progressive Disclosure:**
+   - Collapsed cards display: *Date • Emotion Badge • 1-line quote snippet*.
+   - Expanding smoothly reveals the full morning intention, evening reflection, and blocker tags without jarring layout shifts.
+
+---
+
+### Phase 4: `/progress` — Actionable Storytelling
+
+**The Problem Today:** 7 separate statistic sections, mood splines, heatmaps, badges, takeaways, and dual export buttons.
+
+**The Overhaul:**
+1. **Top Metric Trio:**
+   - 3 clean, airy numbers: *Consistency %*, *Cumulative Anchored Days*, *Current Streak*.
+2. **90-Day Rhythm Matrix (Heatmap):**
+   - Prominently placed with a simple 4-level color key (*Full, Partial, Rest, Learning*).
+3. **Google Gemini AI Breakthrough Card:**
+   - 3 structured, high-value bullets with clean icons (*Breakthrough*, *Trigger Pattern*, *Circadian Rhythm*).
+4. **Milestone Trophy Shelf:**
+   - Horizontal scrolling badge collection with clear unlock progress bars.
+5. **Unified Export Header:**
+   - One clean *"Export"* button offering *Clinical Intake PDF* or *CSV Dataset*.
+
+---
+
+### Phase 5: Settings & Community Consolidation
+
+**The Problem Today:** Community is a separate bottom tab crowding the mobile screen, while settings has scattered sections.
+
+**The Overhaul:**
+1. **4-Tab Navigation Bar:**
+   - Mobile bottom bar restored to 4 spacious, highly legible tabs (`Today`, `Journal`, `Progress`, `Sanctuary / Settings`).
+2. **Community Sanctuary Inside Sanctuary:**
+   - Access the *Anonymous Community Feed* as a featured sanctuary room with a clear explanation of zero-judgment sharing.
+3. **Settings Grouped Sections:**
+   - *My Anchors (Add/Edit/Reorder)*
+   - *Daily Notification Cadence*
+   - *Accountability Partner Portal*
+   - *Data & Clinical PDF Export*
+
+---
+
+## 4. Implementation Phasing & Next Steps
+
+| Step | Scope | Impact |
+|---|---|---|
+| **Phase 1** | **Today Page Spatial & Time-Aware Overhaul** | **COMPLETED ✅** (Time-aware hero, clean hierarchy, 1 focal action) |
+| **Phase 2** | **Check-In Stepper Streamlining** | **COMPLETED ✅** (2-step morning, 3-step evening, < 20s completion) |
+| **Phase 3** | **Navigation & Color System Harmonization** | **COMPLETED ✅** (4-tab spacious layout, Community in Sanctuary, calm palette) |
+| **Phase 4** | **Journal & Progress Visual De-cluttering** | **COMPLETED ✅** (Unified search ribbon, 3-metric summary, heatmap hero) |
+
+---
+
+*This plan replaces all previous execution documents and focuses 100% on simplifying, polishing, and elevating Anchor's UI/UX to world-class FAANG simplicity.*

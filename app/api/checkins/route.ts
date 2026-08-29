@@ -38,6 +38,9 @@ export async function POST(request: Request) {
       lessonsLearned,
       blockerTags,
       moodOrCraving,
+      emotionName,
+      moodValence,
+      moodArousal,
       commitmentId: customCommitmentId,
     } = body;
 
@@ -71,6 +74,9 @@ export async function POST(request: Request) {
       lessonsLearned: lessonsLearned?.trim() || undefined,
       blockerTags: Array.isArray(blockerTags) ? blockerTags : undefined,
       moodOrCraving: typeof moodOrCraving === "number" ? moodOrCraving : undefined,
+      emotionName: emotionName?.trim() || undefined,
+      moodValence: typeof moodValence === "number" ? moodValence : undefined,
+      moodArousal: typeof moodArousal === "number" ? moodArousal : undefined,
       isLate,
     });
 
