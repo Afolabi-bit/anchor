@@ -168,7 +168,10 @@ export default function TodayPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation userEmail={user?.email} />
+      <Navigation
+        userEmail={user?.email}
+        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+      />
       <OfflineSyncBadge />
 
       <PageTransition>
@@ -180,7 +183,7 @@ export default function TodayPage() {
                 {formattedDate}
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
-                {greeting}{user?.email ? `, ${user.email.split("@")[0]}` : ""}
+                {greeting}{user?.firstName ? `, ${user.firstName}` : user?.email ? `, ${user.email.split("@")[0]}` : ""}
               </h1>
             </div>
 

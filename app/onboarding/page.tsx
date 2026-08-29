@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Anchor,
@@ -38,7 +38,21 @@ const DAYS_OF_WEEK = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch {}
+    }
+    loadUser();
+  }, []);
 
   // Form State
   const [commitmentName, setCommitmentName] = useState("");
@@ -153,7 +167,7 @@ export default function OnboardingPage() {
               >
                 <div>
                   <h2 className="font-serif-title text-3xl text-[#2C2520] dark:text-[#ECE7E0] leading-snug">
-                    Take a breath. <br />
+                    Take a breath{user?.firstName ? `, ${user.firstName}` : ""}. <br />
                     <span className="italic text-[#C86D51] dark:text-[#DB8165]">You are safe here.</span>
                   </h2>
                   <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-3 leading-relaxed max-w-sm mx-auto">
@@ -202,7 +216,7 @@ export default function OnboardingPage() {
               >
                 <div>
                   <h2 className="font-serif-title text-2xl sm:text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
-                    What are you showing up for?
+                    {user?.firstName ? `${user.firstName}, what` : "What"} are you showing up for?
                   </h2>
                   <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-1.5 leading-relaxed">
                     Anchor works best when focused on one core daily anchor.

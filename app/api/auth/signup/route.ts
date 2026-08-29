@@ -5,7 +5,21 @@ import { hashPassword, createSessionToken, setSessionCookie } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, timezone } = body;
+    const { email, password, firstName, lastName, timezone } = body;
+
+    if (!firstName || typeof firstName !== "string" || !firstName.trim()) {
+      return NextResponse.json(
+        { error: "First name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!lastName || typeof lastName !== "string" || !lastName.trim()) {
+      return NextResponse.json(
+        { error: "Last name is required" },
+        { status: 400 }
+      );
+    }
 
     if (!email || !password) {
       return NextResponse.json(
@@ -39,6 +53,8 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(password);
     const user = await createUser({
       email,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       passwordHash,
       timezone: timezone || "UTC",
     });
@@ -46,6 +62,8 @@ export async function POST(request: Request) {
     const token = await createSessionToken({
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       isOnboarded: user.isOnboarded,
       morningNotificationTime: user.morningNotificationTime,
       eveningNotificationTime: user.eveningNotificationTime,
@@ -58,6 +76,8 @@ export async function POST(request: Request) {
       user: {
         id: user.id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
         isOnboarded: user.isOnboarded,
         morningNotificationTime: user.morningNotificationTime,
         eveningNotificationTime: user.eveningNotificationTime,

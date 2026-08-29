@@ -9,6 +9,8 @@ const COOKIE_NAME = "anchor_session";
 export interface SessionUser {
   id: string;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   isOnboarded: boolean;
   morningNotificationTime: string;
   eveningNotificationTime: string;
@@ -28,6 +30,8 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
   return new SignJWT({
     id: user.id,
     email: user.email,
+    firstName: user.firstName || null,
+    lastName: user.lastName || null,
     isOnboarded: user.isOnboarded,
     morningNotificationTime: user.morningNotificationTime,
     eveningNotificationTime: user.eveningNotificationTime,
@@ -45,6 +49,8 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
     return {
       id: payload.id as string,
       email: payload.email as string,
+      firstName: (payload.firstName as string) || null,
+      lastName: (payload.lastName as string) || null,
       isOnboarded: Boolean(payload.isOnboarded),
       morningNotificationTime: (payload.morningNotificationTime as string) || "08:00",
       eveningNotificationTime: (payload.eveningNotificationTime as string) || "20:00",

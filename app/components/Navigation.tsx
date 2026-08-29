@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Sanctuary", icon: Settings },
 ];
 
-export default function Navigation({ userEmail }: { userEmail?: string }) {
+export default function Navigation({ userEmail, userName }: { userEmail?: string; userName?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [privacyMode, setPrivacyMode] = useState(false);
@@ -116,9 +116,9 @@ export default function Navigation({ userEmail }: { userEmail?: string }) {
               {privacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </motion.button>
 
-            {userEmail && (
+            {(userName || userEmail) && (
               <span className="text-xs text-[#786F66] dark:text-[#A8A096] hidden md:inline-block truncate max-w-[130px] font-normal pl-1">
-                {userEmail}
+                {userName || userEmail}
               </span>
             )}
 

@@ -3,6 +3,8 @@ import { pgTable, uuid, varchar, text, timestamp, boolean, integer, jsonb, date 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: varchar("email", { length: 255 }).notNull().unique(),
+  firstName: varchar("first_name", { length: 128 }),
+  lastName: varchar("last_name", { length: 128 }),
   passwordHash: text("password_hash").notNull(),
   timezone: varchar("timezone", { length: 64 }).default("UTC").notNull(),
   morningNotificationTime: varchar("morning_notification_time", { length: 5 }).default("08:00").notNull(),

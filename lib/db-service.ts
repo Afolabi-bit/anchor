@@ -54,15 +54,22 @@ export async function getUserById(id: string): Promise<schema.User | null> {
 
 export async function createUser(data: {
   email: string;
+  firstName?: string;
+  lastName?: string;
   passwordHash: string;
   timezone?: string;
   morningNotificationTime?: string;
   eveningNotificationTime?: string;
 }): Promise<schema.User> {
   const normalizedEmail = data.email.toLowerCase().trim();
+  const firstName = data.firstName?.trim() || null;
+  const lastName = data.lastName?.trim() || null;
+
   if (db) {
     const result = await db.insert(schema.users).values({
       email: normalizedEmail,
+      firstName,
+      lastName,
       passwordHash: data.passwordHash,
       timezone: data.timezone || "UTC",
       morningNotificationTime: data.morningNotificationTime || "08:00",
@@ -75,6 +82,8 @@ export async function createUser(data: {
   const newUser: schema.User = {
     id: crypto.randomUUID(),
     email: normalizedEmail,
+    firstName,
+    lastName,
     passwordHash: data.passwordHash,
     timezone: data.timezone || "UTC",
     morningNotificationTime: data.morningNotificationTime || "08:00",

@@ -212,7 +212,10 @@ export default function JournalPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation userEmail={user?.email} />
+      <Navigation
+        userEmail={user?.email}
+        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+      />
       <OfflineSyncBadge />
 
       <PageTransition>

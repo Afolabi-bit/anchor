@@ -320,7 +320,10 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation userEmail={user?.email} />
+      <Navigation
+        userEmail={user?.email}
+        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+      />
 
       <PageTransition>
         <main className="flex-1 max-w-xl mx-auto w-full px-5 py-8 sm:py-10">
@@ -741,7 +744,15 @@ export default function SettingsPage() {
 
                 {/* Account Info & Logout */}
                 <div className="pt-4 border-t border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between text-xs text-[#786F66] dark:text-[#A8A096]">
-                  <span>Signed in as <strong className="text-[#2C2520] dark:text-[#ECE7E0]">{user?.email}</strong></span>
+                  <span>
+                    Signed in as{" "}
+                    <strong className="text-[#2C2520] dark:text-[#ECE7E0]">
+                      {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : user?.email}
+                    </strong>
+                    {user?.firstName && (
+                      <span className="text-[#9E948A] text-[11px] ml-1">({user.email})</span>
+                    )}
+                  </span>
                   <button
                     type="button"
                     onClick={handleLogout}

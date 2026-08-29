@@ -114,7 +114,10 @@ export default function ProgressPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation userEmail={user?.email} />
+      <Navigation
+        userEmail={user?.email}
+        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+      />
 
       <PageTransition>
         <main className="flex-1 max-w-xl mx-auto w-full px-5 py-6 sm:py-8 space-y-6">

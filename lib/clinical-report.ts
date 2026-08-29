@@ -126,7 +126,10 @@ export function generateClinicalSummary(
       hour: "2-digit",
       minute: "2-digit",
     }),
-    userName: user?.name || user?.email || "Patient Client",
+    userName:
+      user?.firstName && user?.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : user?.firstName || user?.name || user?.email || "Patient Client",
     commitmentName: commitment?.name || "Daily Anchor Focus",
     commitmentWhy: commitment?.why || "Living with intentional self-compassion and clear values.",
     dateRange: `Past ${totalDays} Recorded Check-Ins`,
