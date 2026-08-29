@@ -168,7 +168,7 @@ export default function ProgressPage() {
                 {completionRate}%
               </span>
               <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
-                {recapData?.totalDays || 30}d window
+                {recapData?.windowLabel || `${recapData?.totalDays || 1}d on path`}
               </span>
             </div>
 
@@ -181,7 +181,7 @@ export default function ProgressPage() {
                 {totalAnchored}
               </span>
               <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
-                Cumulative
+                {recapData?.accountAgeInDays ? `Day ${recapData.accountAgeInDays} total` : "Cumulative"}
               </span>
             </div>
 

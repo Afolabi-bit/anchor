@@ -199,7 +199,13 @@ export default function JournalPage() {
     }
   };
 
-  const missedPastDays = past7Days.slice(0, 6).filter((dStr) => !groupedByDate[dStr]?.evening);
+  const accountStartDate = user?.createdAt
+    ? new Date(user.createdAt).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+
+  const missedPastDays = past7Days
+    .slice(0, 6)
+    .filter((dStr) => !groupedByDate[dStr]?.evening && dStr >= accountStartDate);
 
   if (loading) {
     return (
@@ -248,20 +254,27 @@ export default function JournalPage() {
                 const eveningStatus = entry?.evening?.status;
                 const hasMorning = Boolean(entry?.morning);
                 const isToday = dStr === new Date().toISOString().slice(0, 10);
+                const isPreAccount = dStr < accountStartDate;
 
                 return (
                   <button
                     key={dStr}
                     type="button"
-                    onClick={() => scrollToDate(dStr)}
-                    className="flex flex-col items-center gap-1 cursor-pointer py-0.5"
+                    disabled={isPreAccount}
+                    onClick={() => !isPreAccount && scrollToDate(dStr)}
+                    className={`flex flex-col items-center gap-1 py-0.5 ${
+                      isPreAccount ? "opacity-35 cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                    title={isPreAccount ? "Prior to joining Anchor" : undefined}
                   >
                     <span className="text-[9px] text-[#786F66] dark:text-[#A8A096] font-medium">
                       {formatWeekday(dStr)}
                     </span>
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-2xs ${
-                        eveningStatus === "yes"
+                        isPreAccount
+                          ? "bg-[#F3EFE7]/40 dark:bg-[#25221F]/30 border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-[#A8A096]"
+                          : eveningStatus === "yes"
                           ? "bg-[#658B70] text-white font-semibold"
                           : eveningStatus === "partial"
                           ? "bg-[#B88452] text-white font-semibold"

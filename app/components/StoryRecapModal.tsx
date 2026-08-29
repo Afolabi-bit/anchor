@@ -47,7 +47,7 @@ export default function StoryRecapModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-[#FAF7F2]/95 dark:bg-[#1C1917]/95 backdrop-blur-2xl animate-in fade-in duration-300">
-      <div className="relative w-full max-w-lg bg-[#FFFFFF] dark:bg-[#25221F] border-t sm:border border-[#EAE3D7] dark:border-[#38332E] rounded-t-3xl sm:rounded-3xl p-5 sm:p-9 shadow-organic-lg clay-card flex flex-col justify-between min-h-[460px] sm:min-h-[520px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-[#FFFFFF] dark:bg-[#25221F] border-t sm:border border-[#EAE3D7] dark:border-[#38332E] rounded-t-3xl sm:rounded-3xl p-5 sm:p-9 shadow-organic-lg clay-card flex flex-col justify-between min-h-115 sm:min-h-130 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Top Story Indicator Bars */}
         <div>
           <div className="flex items-center gap-2 mb-5 sm:mb-6">
@@ -81,10 +81,10 @@ export default function StoryRecapModal({
               </div>
               <div>
                 <span className="text-xs uppercase tracking-widest text-[#C86D51] font-semibold block mb-1">
-                  7-Day Story • Chapter 1
+                  {recapData.windowLabel ? `${recapData.windowLabel} • Chapter 1` : "Story Deck • Chapter 1"}
                 </span>
                 <h2 className="font-serif-title text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
-                  Your Weekly Follow-Through
+                  Your Journey Follow-Through
                 </h2>
                 <div className="my-6 p-6 rounded-3xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-center shadow-organic-sm">
                   <span className="font-serif-title text-5xl font-medium text-[#2C2520] dark:text-[#ECE7E0]">
@@ -112,7 +112,7 @@ export default function StoryRecapModal({
               </div>
               <div>
                 <span className="text-xs uppercase tracking-widest text-[#B88452] font-semibold block mb-1">
-                  7-Day Story • Chapter 2
+                  {recapData.windowLabel ? `${recapData.windowLabel} • Chapter 2` : "Story Deck • Chapter 2"}
                 </span>
                 <h2 className="font-serif-title text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
                   Themes & Circumstances
@@ -157,7 +157,7 @@ export default function StoryRecapModal({
               </div>
               <div>
                 <span className="text-xs uppercase tracking-widest text-[#C86D51] font-semibold block mb-1">
-                  7-Day Story • Chapter 3
+                  {recapData.windowLabel ? `${recapData.windowLabel} • Chapter 3` : "Story Deck • Chapter 3"}
                 </span>
                 <h2 className="font-serif-title text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
                   Your Pinned Wisdom

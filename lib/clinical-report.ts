@@ -132,7 +132,13 @@ export function generateClinicalSummary(
         : user?.firstName || user?.name || user?.email || "Patient Client",
     commitmentName: commitment?.name || "Daily Anchor Focus",
     commitmentWhy: commitment?.why || "Living with intentional self-compassion and clear values.",
-    dateRange: `Past ${totalDays} Recorded Check-Ins`,
+    dateRange: user?.createdAt
+      ? `Since Account Initiation (${new Date(user.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}) • ${totalDays} Check-Ins`
+      : `Past ${totalDays} Recorded Check-Ins`,
     totalDaysEvaluated: totalDays,
     totalAnchoredDays: anchoredDays,
     followThroughPercentage: percentage,

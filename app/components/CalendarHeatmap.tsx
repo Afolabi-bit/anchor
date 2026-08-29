@@ -12,6 +12,7 @@ interface HeatmapDay {
   emotionName?: string | null;
   morningDone: boolean;
   eveningDone: boolean;
+  isPreAccount?: boolean;
 }
 
 interface CalendarHeatmapProps {
@@ -36,8 +37,11 @@ export default function CalendarHeatmap({ data, totalAnchoredDays }: CalendarHea
     }
   });
 
-  const getCellColor = (level: number) => {
-    switch (level) {
+  const getCellColor = (day: HeatmapDay) => {
+    if (day.isPreAccount) {
+      return "bg-[#F3EFE7]/40 dark:bg-[#25221F]/30 opacity-40 border border-dashed border-[#EAE3D7] dark:border-[#38332E]";
+    }
+    switch (day.level) {
       case 3:
         return "bg-[#658B70] dark:bg-[#52775D]"; // Followed through (Sage)
       case 2:
@@ -94,7 +98,7 @@ export default function CalendarHeatmap({ data, totalAnchoredDays }: CalendarHea
                       setHoveredDay(day);
                     }}
                     className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-md cursor-pointer transition-colors relative ${getCellColor(
-                      day.level
+                      day
                     )} ${isHovered ? "ring-2 ring-[#C86D51] ring-offset-1 z-10" : ""}`}
                   />
                 );
@@ -111,29 +115,37 @@ export default function CalendarHeatmap({ data, totalAnchoredDays }: CalendarHea
             <span className="font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
               {formatDate(hoveredDay.date)}:
             </span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                hoveredDay.status === "yes"
-                  ? "bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70]"
-                  : hoveredDay.status === "partial"
-                  ? "bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]"
-                  : hoveredDay.status === "no"
-                  ? "bg-[#F0ECE6] dark:bg-[#2B2824] text-[#786F66]"
-                  : "bg-[#F3EFE7] dark:bg-[#25221F] text-[#9E948A]"
-              }`}
-            >
-              {hoveredDay.status === "yes"
-                ? "Followed Through"
-                : hoveredDay.status === "partial"
-                ? "Partial"
-                : hoveredDay.status === "no"
-                ? "Reflected"
-                : "Resting"}
-            </span>
-            {hoveredDay.emotionName && (
-              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] italic">
-                • {hoveredDay.emotionName}
+            {hoveredDay.isPreAccount ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#9E948A] border border-[#EAE3D7] dark:border-[#38332E]">
+                Prior to Joining Anchor
               </span>
+            ) : (
+              <>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    hoveredDay.status === "yes"
+                      ? "bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70]"
+                      : hoveredDay.status === "partial"
+                      ? "bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]"
+                      : hoveredDay.status === "no"
+                      ? "bg-[#F0ECE6] dark:bg-[#2B2824] text-[#786F66]"
+                      : "bg-[#F3EFE7] dark:bg-[#25221F] text-[#9E948A]"
+                  }`}
+                >
+                  {hoveredDay.status === "yes"
+                    ? "Followed Through"
+                    : hoveredDay.status === "partial"
+                    ? "Partial"
+                    : hoveredDay.status === "no"
+                    ? "Reflected"
+                    : "Resting"}
+                </span>
+                {hoveredDay.emotionName && (
+                  <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] italic">
+                    • {hoveredDay.emotionName}
+                  </span>
+                )}
+              </>
             )}
           </div>
         ) : (

@@ -69,7 +69,7 @@ Synthesize these reflections into 3 deeply supportive, non-judgmental, psycholog
 Respond ONLY with valid JSON matching this exact structure:
 {
   "headline": "A short, warm 3-6 word summary headline for their journey",
-  "analyzedDaysCount": ${checkIns.length},
+  "analyzedDaysCount": ${[...new Set(checkIns.map((c) => c.date))].length || 1},
   "overallHealthScore": 85,
   "insights": [
     {

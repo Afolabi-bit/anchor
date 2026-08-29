@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getCheckInsByUserId, getWeeklyRecapsByUserId } from "@/lib/db-service";
+import { getCheckInsByUserId, getWeeklyRecapsByUserId, getUserById } from "@/lib/db-service";
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -8,32 +8,62 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const user = await getUserById(session.id);
   const { searchParams } = new URL(request.url);
   const commitmentId = searchParams.get("commitmentId");
   const rangeParam = searchParams.get("range") || "7"; // "7" | "30" | "90" | "all"
 
+  // Baseline account creation date & elapsed journey days
+  const accountCreationDate = user?.createdAt ? new Date(user.createdAt) : new Date();
+  const accountStartDate = accountCreationDate.toISOString().slice(0, 10);
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const creationMidnight = new Date(
+    accountCreationDate.getFullYear(),
+    accountCreationDate.getMonth(),
+    accountCreationDate.getDate()
+  ).getTime();
+  const accountAgeInDays = Math.max(
+    1,
+    Math.round((todayMidnight - creationMidnight) / msPerDay) + 1
+  );
+
   const rawCheckIns = await getCheckInsByUserId(session.id);
+  // Filter check-ins so we only evaluate records on or after the account creation date
+  const validCheckIns = rawCheckIns.filter((c) => c.date >= accountStartDate);
   const allCheckIns = commitmentId
-    ? rawCheckIns.filter((c) => !c.commitmentId || c.commitmentId === commitmentId)
-    : rawCheckIns;
+    ? validCheckIns.filter((c) => !c.commitmentId || c.commitmentId === commitmentId)
+    : validCheckIns;
   const existingRecaps = await getWeeklyRecapsByUserId(session.id);
 
-  const numDays =
+  const requestedLimit =
     rangeParam === "30"
       ? 30
       : rangeParam === "90"
       ? 90
       : rangeParam === "all"
-      ? Math.max(90, Math.ceil((Date.now() - new Date(session.id ? 2026 : 2025).getTime()) / (1000 * 60 * 60 * 24)) || 90)
+      ? accountAgeInDays
       : 7;
 
-  // Generate rolling date array
-  const today = new Date();
+  // Window cannot exceed the actual age of the account
+  const effectiveDays = Math.min(requestedLimit, accountAgeInDays);
+
+  // Generate rolling date array strictly on or after account creation date
   const rangeDays: string[] = [];
-  for (let i = numDays - 1; i >= 0; i--) {
+  for (let i = effectiveDays - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(today.getDate() - i);
-    rangeDays.push(d.toISOString().slice(0, 10));
+    const dStr = d.toISOString().slice(0, 10);
+    if (dStr >= accountStartDate) {
+      rangeDays.push(dStr);
+    }
+  }
+
+  if (rangeDays.length === 0) {
+    rangeDays.push(todayStr);
   }
 
   const weekStartDate = rangeDays[0];
@@ -83,7 +113,7 @@ export async function GET(request: Request) {
     };
   });
 
-  // Heatmap matrix (90 days window for calendar view)
+  // Heatmap matrix (90 days window, tagged with account start boundary)
   const heatmapDays: string[] = [];
   for (let i = 89; i >= 0; i--) {
     const d = new Date();
@@ -92,6 +122,19 @@ export async function GET(request: Request) {
   }
 
   const heatmapData = heatmapDays.map((dateStr) => {
+    const isPreAccount = dateStr < accountStartDate;
+    if (isPreAccount) {
+      return {
+        date: dateStr,
+        status: "empty" as const,
+        level: 0,
+        emotionName: null,
+        morningDone: false,
+        eveningDone: false,
+        isPreAccount: true,
+      };
+    }
+
     const morning = allCheckIns.find((c) => c.date === dateStr && c.type === "morning");
     const evening = allCheckIns.find((c) => c.date === dateStr && c.type === "evening");
 
@@ -112,6 +155,7 @@ export async function GET(request: Request) {
       emotionName: evening?.emotionName || null,
       morningDone: Boolean(morning),
       eveningDone: Boolean(evening),
+      isPreAccount: false,
     };
   });
 
@@ -120,7 +164,7 @@ export async function GET(request: Request) {
       ? Math.round((positiveOutcomes / totalDaysWithEvening) * 100)
       : 0;
 
-  // Streak calculations
+  // Streak calculations strictly from account start
   const allUniqueDates = [...new Set(allCheckIns.map((c) => c.date))].sort();
   const totalAnchoredDays = allUniqueDates.length;
 
@@ -144,15 +188,27 @@ export async function GET(request: Request) {
 
   const pinnedLessons = lessonsLearnedList.slice(-4).reverse();
 
+  const windowLabel =
+    accountAgeInDays <= effectiveDays
+      ? accountAgeInDays === 1
+        ? "Day 1 of journey"
+        : `${accountAgeInDays}d on path`
+      : `${effectiveDays}d window`;
+
   return NextResponse.json({
-    currentRecap: {
+    recap: {
       range: rangeParam,
       weekStartDate,
       weekEndDate,
+      accountStartDate,
+      accountAgeInDays,
+      totalDays: effectiveDays,
+      windowLabel,
       completionRate,
       streakCurrent,
       streakLongest: Math.max(streakLongest, streakCurrent, totalAnchoredDays),
       totalAnchoredDays,
+      daysAnchored: totalAnchoredDays,
       topBlockerTags,
       topEmotions,
       pinnedLessons,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getCheckInsByUserId, getActiveCommitmentsByUserId } from "@/lib/db-service";
+import { getCheckInsByUserId, getActiveCommitmentsByUserId, getUserById } from "@/lib/db-service";
 import { generateAIPatternInsights } from "@/lib/insights-service";
 
 export async function GET(request: Request) {
@@ -13,15 +13,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const commitmentId = searchParams.get("commitmentId");
 
+    const user = await getUserById(session.id);
+    const accountStartDate = user?.createdAt
+      ? new Date(user.createdAt).toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+
     const allCheckIns = await getCheckInsByUserId(session.id);
+    const validCheckIns = allCheckIns.filter((c) => c.date >= accountStartDate);
     const commitments = await getActiveCommitmentsByUserId(session.id);
     const activeCommitment = commitmentId
       ? commitments.find((c) => c.id === commitmentId) || commitments[0]
       : commitments[0];
 
     const targetCheckIns = commitmentId
-      ? allCheckIns.filter((c) => !c.commitmentId || c.commitmentId === commitmentId)
-      : allCheckIns;
+      ? validCheckIns.filter((c) => !c.commitmentId || c.commitmentId === commitmentId)
+      : validCheckIns;
 
     const synthesis = await generateAIPatternInsights(
       targetCheckIns,
