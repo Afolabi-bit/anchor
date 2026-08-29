@@ -26,8 +26,10 @@ export default function CircadianArc({
   onOpenEvening,
   onOpenGrounding,
 }: CircadianArcProps) {
-  const isMorningDone = morningSealed !== undefined ? morningSealed : morningCompleted;
-  const isEveningDone = eveningSealed !== undefined ? eveningSealed : eveningCompleted;
+  const isMorningDone =
+    morningSealed !== undefined ? morningSealed : morningCompleted;
+  const isEveningDone =
+    eveningSealed !== undefined ? eveningSealed : eveningCompleted;
   const [timeProgress, setTimeProgress] = useState(0); // 0 to 1 across 24 hours
 
   useEffect(() => {
@@ -53,8 +55,10 @@ export default function CircadianArc({
   const p2 = { x: 470, y: 110 };
 
   const t = Math.min(Math.max(timeProgress, 0), 1);
-  const sunX = Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p2.x;
-  const sunY = Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p2.y;
+  const sunX =
+    Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p2.x;
+  const sunY =
+    Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p2.y;
 
   return (
     <div className="relative overflow-hidden rounded-3xl p-6 bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-md mb-8">
@@ -69,7 +73,11 @@ export default function CircadianArc({
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F3EFE7] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] text-[11px] text-[#786F66] dark:text-[#A8A096] font-medium shadow-2xs">
           <Sparkles className="w-3 h-3 text-[#C86D51] dark:text-[#DB8165]" />
           <span>
-            {isMorningWindow ? "Morning Intention Window" : isMiddayWindow ? "Midday Grounding Window" : "Evening Reflection Window"}
+            {isMorningWindow
+              ? "Morning Intention Window"
+              : isMiddayWindow
+                ? "Midday Grounding Window"
+                : "Evening Reflection Window"}
           </span>
         </div>
       </div>
@@ -78,12 +86,24 @@ export default function CircadianArc({
       <div className="relative w-full h-24 mb-4 select-none">
         <svg viewBox="0 0 500 130" className="w-full h-full overflow-visible">
           <defs>
-            <linearGradient id="arcGlowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient
+              id="arcGlowGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
               <stop offset="0%" stopColor="#B88452" stopOpacity="0.4" />
               <stop offset="50%" stopColor="#658B70" stopOpacity="0.6" />
               <stop offset="100%" stopColor="#C86D51" stopOpacity="0.5" />
             </linearGradient>
-            <linearGradient id="activeTrackGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient
+              id="activeTrackGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
               <stop offset="0%" stopColor="#B88452" />
               <stop offset="50%" stopColor="#658B70" />
               <stop offset="100%" stopColor="#C86D51" />
@@ -163,14 +183,16 @@ export default function CircadianArc({
             triggerHaptic(12);
             onOpenMorning?.();
           }}
-          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[125px] relative overflow-hidden ${
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-31.25 relative overflow-hidden ${
             isMorningWindow
               ? "border-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F] shadow-organic-sm"
               : "border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] hover:bg-[#F3EFE7] dark:hover:bg-[#25221F]"
           }`}
         >
           <div className="flex items-center justify-between w-full">
-            <div className={`p-2 rounded-xl shadow-2xs ${isMorningDone ? "bg-[#658B70] text-white" : "bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]"}`}>
+            <div
+              className={`p-2 rounded-xl shadow-2xs ${isMorningDone ? "bg-[#658B70] text-white" : "bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]"}`}
+            >
               <Sun className="w-4 h-4" />
             </div>
             {isMorningDone ? (
@@ -204,7 +226,7 @@ export default function CircadianArc({
             triggerHaptic(12);
             onOpenGrounding?.();
           }}
-          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[125px] relative overflow-hidden ${
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-31.25 relative overflow-hidden ${
             isMiddayWindow
               ? "border-[#658B70] bg-[#EEF4F0] dark:bg-[#202D24] shadow-organic-sm"
               : "border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] hover:bg-[#F3EFE7] dark:hover:bg-[#25221F]"
@@ -240,14 +262,16 @@ export default function CircadianArc({
             triggerHaptic(12);
             onOpenEvening?.();
           }}
-          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[125px] relative overflow-hidden ${
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-31.25 relative overflow-hidden ${
             isEveningWindow
               ? "border-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F] shadow-organic-sm"
               : "border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] hover:bg-[#F3EFE7] dark:hover:bg-[#25221F]"
           }`}
         >
           <div className="flex items-center justify-between w-full">
-            <div className={`p-2 rounded-xl shadow-2xs ${isEveningDone ? "bg-[#658B70] text-white" : "bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165]"}`}>
+            <div
+              className={`p-2 rounded-xl shadow-2xs ${isEveningDone ? "bg-[#658B70] text-white" : "bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165]"}`}
+            >
               <Moon className="w-4 h-4" />
             </div>
             {isEveningDone ? (

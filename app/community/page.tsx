@@ -154,14 +154,14 @@ export default function CommunityPage() {
       <Navigation />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-5 py-8 sm:py-10">
+        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Quiet Sanctuary
               </span>
-              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
+              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
                 Community Moments
               </h1>
             </div>
@@ -173,7 +173,7 @@ export default function CommunityPage() {
                 triggerHaptic(10);
                 setIsComposing(!isComposing);
               }}
-              className="text-xs px-3.5 py-2 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium shadow-organic-sm flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="text-xs px-3.5 py-2 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium shadow-organic-sm flex items-center gap-1.5 cursor-pointer transition-colors shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Share Moment</span>

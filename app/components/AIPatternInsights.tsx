@@ -65,23 +65,23 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
   if (!data || data.insights.length === 0) return null;
 
   return (
-    <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 sm:p-7 clay-card shadow-organic-md space-y-5">
+    <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-4 sm:p-6 clay-card shadow-organic-md space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#658B70] dark:text-[#82A78C]">
-          <Sparkles className="w-4 h-4" />
-          <span>Anchor AI Pattern Synthesis</span>
+          <Sparkles className="w-4 h-4 shrink-0" />
+          <span className="truncate">AI Pattern Synthesis</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {data.isAiGenerated && (
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] dark:text-[#E2A365] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] flex items-center gap-1">
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] dark:text-[#E2A365] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] flex items-center gap-1 shrink-0">
               <span>✦</span>
-              <span>Gemini Powered</span>
+              <span>Gemini 3.6</span>
             </span>
           )}
-          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold border border-[#D9E6DD] dark:border-[#2C4032]">
-            {data.analyzedDaysCount} Days Synthesized
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold border border-[#D9E6DD] dark:border-[#2C4032] shrink-0">
+            {data.analyzedDaysCount} Days
           </span>
         </div>
       </div>

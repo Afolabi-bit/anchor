@@ -42,21 +42,21 @@ export default function MilestoneGallery({ totalAnchoredDays }: MilestoneGallery
   const unlockedCount = milestones.filter((m) => m.unlocked).length;
 
   return (
-    <div className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-md space-y-5">
+    <div className="p-4 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-md space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
-          <Award className="w-4 h-4 text-[#C86D51]" />
-          <span>Sanctuary Milestones</span>
+          <Award className="w-4 h-4 text-[#C86D51] shrink-0" />
+          <span className="truncate">Sanctuary Milestones</span>
         </div>
 
-        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] dark:text-[#E2A365] font-semibold border border-[#F2D7CE] dark:border-[#4D332B]">
+        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] dark:text-[#E2A365] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] shrink-0">
           {unlockedCount} of {milestones.length} Unlocked
         </span>
       </div>
 
       {/* Grid of Badges */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
         {milestones.map((m) => {
           return (
             <motion.button
@@ -65,7 +65,7 @@ export default function MilestoneGallery({ totalAnchoredDays }: MilestoneGallery
               whileTap={{ scale: 0.97 }}
               type="button"
               onClick={() => handleCardClick(m)}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              className={`p-3 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 m.unlocked
                   ? "bg-[#FAF7F2] dark:bg-[#1E1B18] border-[#EAE3D7] dark:border-[#38332E] shadow-2xs"
                   : "bg-[#F3EFE7]/40 dark:bg-[#25221F]/30 border-dashed border-[#EAE3D7] dark:border-[#38332E] opacity-60"

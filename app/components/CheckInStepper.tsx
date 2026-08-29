@@ -218,7 +218,7 @@ export default function CheckInStepper({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 p-0">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -228,12 +228,12 @@ export default function CheckInStepper({
           className="fixed inset-0 bg-[#2C2520]/60 backdrop-blur-md"
         />
 
-        {/* Modal Card */}
+        {/* Modal Card (Bottom sheet on mobile, centered dialog on sm+) */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 16 }}
+          initial={{ opacity: 0, scale: 0.96, y: 24 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 16 }}
-          className="relative max-w-lg w-full bg-[#FFFFFF] dark:bg-[#201D1A] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 sm:p-7 shadow-organic-lg clay-card flex flex-col max-h-[90vh] overflow-hidden"
+          exit={{ opacity: 0, scale: 0.96, y: 24 }}
+          className="relative max-w-lg w-full bg-[#FFFFFF] dark:bg-[#201D1A] border-t sm:border border-[#EAE3D7] dark:border-[#38332E] rounded-t-3xl sm:rounded-3xl p-5 sm:p-7 shadow-organic-lg clay-card flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden"
         >
           {/* Header Bar */}
           <div className="flex items-center justify-between pb-4 border-b border-[#EAE3D7] dark:border-[#38332E]">

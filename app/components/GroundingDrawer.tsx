@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Wind, Phone, X, Volume2, VolumeX, Sparkles, CheckCircle2, Circle } from "lucide-react";
@@ -76,13 +76,13 @@ export default function GroundingDrawer() {
       {/* Modal / Drawer */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/45 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              initial={{ opacity: 0, scale: 0.96, y: 24 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              exit={{ opacity: 0, scale: 0.96, y: 24 }}
               transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] as const }}
-              className="bg-[#FAF7F2] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl max-w-md w-full p-7 sm:p-9 shadow-organic-lg relative max-h-[90vh] overflow-y-auto clay-card"
+              className="bg-[#FAF7F2] dark:bg-[#25221F] border-t sm:border border-[#EAE3D7] dark:border-[#38332E] rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 sm:p-8 shadow-organic-lg relative max-h-[92vh] sm:max-h-[90vh] overflow-y-auto clay-card"
             >
               {/* Top Bar Controls */}
               <div className="flex items-center justify-between mb-4">

@@ -115,27 +115,27 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-5 py-12 bg-[#FAF7F2] dark:bg-[#1C1917] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-5 py-8 sm:py-12 bg-[#FAF7F2] dark:bg-[#1C1917] transition-colors duration-200">
       <div className="w-full max-w-lg">
         {/* Top Indicator */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] mb-4 shadow-organic-sm"
+            className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] mb-3.5 shadow-organic-sm"
           >
-            <Anchor className="w-7 h-7" />
+            <Anchor className="w-6 h-6 sm:w-7 sm:h-7" />
           </motion.div>
 
           {step > 0 && (
             <div className="flex items-center justify-center gap-2 mb-2">
-              <div className={`h-1.5 w-10 rounded-full transition-colors duration-300 ${step >= 1 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
-              <div className={`h-1.5 w-10 rounded-full transition-colors duration-300 ${step >= 2 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
-              <div className={`h-1.5 w-10 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
+              <div className={`h-1.5 w-8 sm:w-10 rounded-full transition-colors duration-300 ${step >= 1 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
+              <div className={`h-1.5 w-8 sm:w-10 rounded-full transition-colors duration-300 ${step >= 2 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
+              <div className={`h-1.5 w-8 sm:w-10 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
             </div>
           )}
 
-          <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold">
+          <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
             {step === 0
               ? "Welcome to Anchor"
               : step === 1
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Card Frame with Animated Transitions */}
-        <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-7 sm:p-9 shadow-organic-md clay-card">
+        <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-5 sm:p-8 shadow-organic-md clay-card">
           {error && (
             <div className="mb-6 p-4 rounded-2xl bg-[#FAF2EA] border border-[#F2D7CE] text-[#B88452] text-xs">
               {error}

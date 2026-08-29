@@ -46,17 +46,17 @@ export default function Navigation({ userEmail, userName }: { userEmail?: string
 
       {/* Desktop / Tablet Header */}
       <header className="border-b border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2]/85 dark:bg-[#1C1917]/85 backdrop-blur-xl sticky top-0 z-40 transition-colors duration-200 shadow-xs">
-        <div className="max-w-3xl mx-auto px-6 h-18 flex items-center justify-between">
-          <Link href="/today" className="flex items-center gap-3 group">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between">
+          <Link href="/today" className="flex items-center gap-2.5 sm:gap-3 group">
             <motion.div
               whileHover={{ scale: 1.06, rotate: -4 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="w-10 h-10 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] flex items-center justify-center shadow-organic-sm"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] flex items-center justify-center shadow-organic-sm shrink-0"
             >
-              <Anchor className="w-5 h-5" />
+              <Anchor className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </motion.div>
-            <span className="font-serif-title text-xl font-medium tracking-tight text-[#2C2520] dark:text-[#ECE7E0]">
+            <span className="font-serif-title text-lg sm:text-xl font-medium tracking-tight text-[#2C2520] dark:text-[#ECE7E0]">
               Anchor
             </span>
           </Link>

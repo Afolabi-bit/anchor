@@ -120,11 +120,11 @@ export default function ProgressPage() {
       />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-5 py-6 sm:py-8 space-y-6">
+        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
             <div>
-              <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold">
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
                 Insight Sanctuary
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
@@ -133,7 +133,7 @@ export default function ProgressPage() {
             </div>
 
             {/* Header Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start xs:self-auto flex-wrap">
               <motion.button
                 whileTap={{ scale: 0.94 }}
                 onClick={() => {
@@ -158,43 +158,43 @@ export default function ProgressPage() {
           </div>
 
           {/* Top Metric Summary Trio */}
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
             {/* Follow-Through % */}
-            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
+            <div className="p-3 sm:p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Consistency
               </span>
-              <span className="font-serif-title text-2xl font-semibold text-[#658B70]">
+              <span className="font-serif-title text-xl sm:text-2xl font-semibold text-[#658B70] block">
                 {completionRate}%
               </span>
-              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] block">
+              <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
                 {recapData?.totalDays || 30}d window
               </span>
             </div>
 
             {/* Cumulative Anchored Days */}
-            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
-                Anchored Days
+            <div className="p-3 sm:p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+                Anchored
               </span>
-              <span className="font-serif-title text-2xl font-semibold text-[#B88452]">
+              <span className="font-serif-title text-xl sm:text-2xl font-semibold text-[#B88452] block">
                 {totalAnchored}
               </span>
-              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] block">
+              <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
                 Cumulative
               </span>
             </div>
 
             {/* Current Active Cadence */}
-            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
-                Active Cadence
+            <div className="p-3 sm:p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+                Cadence
               </span>
-              <span className="font-serif-title text-2xl font-semibold text-[#C86D51]">
+              <span className="font-serif-title text-xl sm:text-2xl font-semibold text-[#C86D51] block">
                 {streakCurrent}d
               </span>
-              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] block">
-                Streak
+              <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
+                Active Streak
               </span>
             </div>
           </div>

@@ -219,18 +219,18 @@ export default function JournalPage() {
       <OfflineSyncBadge />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-5 py-6 sm:py-8 space-y-5">
+        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Reflective Archive
               </span>
-              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
+              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
                 Personal Journal
               </h1>
             </div>
-            <span className="text-xs px-3 py-1 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs">
+            <span className="text-xs px-3 py-1 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs shrink-0">
               {filteredDates.length} {filteredDates.length === 1 ? "entry" : "entries"}
             </span>
           </div>

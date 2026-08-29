@@ -290,3 +290,29 @@ input[type="range"]::-webkit-slider-thumb:active {
   outline: 2px solid var(--accent-terracotta);
   outline-offset: 3px;
 }
+
+/* Touch & Mobile Responsiveness Optimizations */
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+.pb-safe {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: calc(1rem + env(safe-area-inset-top, 0px));
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

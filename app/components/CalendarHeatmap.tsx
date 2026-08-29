@@ -60,15 +60,15 @@ export default function CalendarHeatmap({ data, totalAnchoredDays }: CalendarHea
   };
 
   return (
-    <div className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-md space-y-4">
+    <div className="p-4 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-md space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
-          <Calendar className="w-4 h-4 text-[#B88452]" />
-          <span>90-Day Rhythm Heatmap</span>
+          <Calendar className="w-4 h-4 text-[#B88452] shrink-0" />
+          <span className="truncate">90-Day Rhythm Heatmap</span>
         </div>
 
-        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold border border-[#D9E6DD] dark:border-[#2C4032]">
+        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold border border-[#D9E6DD] dark:border-[#2C4032] shrink-0">
           {totalAnchoredDays} Anchored Days
         </span>
       </div>
@@ -105,9 +105,9 @@ export default function CalendarHeatmap({ data, totalAnchoredDays }: CalendarHea
       </div>
 
       {/* Floating / Active Preview Detail */}
-      <div className="min-h-7 flex items-center justify-between text-xs pt-1 border-t border-[#EAE3D7] dark:border-[#38332E]">
+      <div className="min-h-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs pt-2 border-t border-[#EAE3D7] dark:border-[#38332E]">
         {hoveredDay ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
               {formatDate(hoveredDay.date)}:
             </span>
@@ -143,7 +143,7 @@ export default function CalendarHeatmap({ data, totalAnchoredDays }: CalendarHea
         )}
 
         {/* Legend */}
-        <div className="flex items-center gap-1.5 text-[10px] text-[#786F66] dark:text-[#A8A096]">
+        <div className="flex items-center gap-1.5 text-[10px] text-[#786F66] dark:text-[#A8A096] self-end sm:self-auto">
           <span>Less</span>
           <span className="w-2.5 h-2.5 rounded-xs bg-[#EAE3D7] dark:bg-[#2E2A26]" />
           <span className="w-2.5 h-2.5 rounded-xs bg-[#82786F]" />

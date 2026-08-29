@@ -66,7 +66,7 @@ ${report.pinnedTakeaways.length > 0 ? report.pinnedTakeaways.map((t) => `"${t}"`
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -78,19 +78,19 @@ ${report.pinnedTakeaways.length > 0 ? report.pinnedTakeaways.map((t) => `"${t}"`
 
         {/* Modal Sheet */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 24 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative max-w-3xl w-full max-h-[90vh] bg-[#FFFFFF] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl shadow-organic-lg clay-card flex flex-col overflow-hidden print:border-none print:shadow-none print:max-h-none print:p-0"
+          exit={{ opacity: 0, scale: 0.95, y: 24 }}
+          className="relative max-w-3xl w-full max-h-[92vh] sm:max-h-[90vh] bg-[#FFFFFF] dark:bg-[#1E1B18] border-t sm:border border-[#EAE3D7] dark:border-[#38332E] rounded-t-3xl sm:rounded-3xl shadow-organic-lg clay-card flex flex-col overflow-hidden print:border-none print:shadow-none print:max-h-none print:p-0"
         >
           {/* Header Bar */}
-          <div className="p-6 border-b border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between print:hidden">
+          <div className="p-4 sm:p-6 border-b border-[#EAE3D7] dark:border-[#38332E] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:hidden">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] flex items-center justify-center shadow-2xs">
+              <div className="w-10 h-10 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] flex items-center justify-center shadow-2xs shrink-0">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
+                <h3 className="font-serif-title text-lg sm:text-xl text-[#2C2520] dark:text-[#ECE7E0]">
                   Clinical & Therapy Summary
                 </h3>
                 <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
@@ -99,7 +99,7 @@ ${report.pinnedTakeaways.length > 0 ? report.pinnedTakeaways.map((t) => `"${t}"`
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
               <button
                 type="button"
                 onClick={handleCopyText}

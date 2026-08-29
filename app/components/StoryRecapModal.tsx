@@ -10,7 +10,7 @@ import {
   Lightbulb,
   Sparkles,
   HeartHandshake,
-  CheckCircle2
+  CheckCircle2,
 } from "lucide-react";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 
@@ -46,16 +46,18 @@ export default function StoryRecapModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#FAF7F2]/95 dark:bg-[#1C1917]/95 backdrop-blur-2xl animate-in fade-in duration-300">
-      <div className="relative w-full max-w-lg bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-7 sm:p-10 shadow-organic-lg clay-card flex flex-col justify-between min-h-[520px]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-[#FAF7F2]/95 dark:bg-[#1C1917]/95 backdrop-blur-2xl animate-in fade-in duration-300">
+      <div className="relative w-full max-w-lg bg-[#FFFFFF] dark:bg-[#25221F] border-t sm:border border-[#EAE3D7] dark:border-[#38332E] rounded-t-3xl sm:rounded-3xl p-5 sm:p-9 shadow-organic-lg clay-card flex flex-col justify-between min-h-[460px] sm:min-h-[520px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Top Story Indicator Bars */}
         <div>
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-5 sm:mb-6">
             {Array.from({ length: totalSlides }).map((_, idx) => (
               <div
                 key={idx}
                 className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                  slide >= idx + 1 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"
+                  slide >= idx + 1
+                    ? "bg-[#C86D51]"
+                    : "bg-[#EAE3D7] dark:bg-[#38332E]"
                 }`}
               />
             ))}
@@ -89,11 +91,14 @@ export default function StoryRecapModal({
                     {recapData.completionRate}%
                   </span>
                   <span className="text-xs text-[#786F66] dark:text-[#A8A096] block mt-1">
-                    Follow-through across {recapData.totalDaysWithEvening || 0} reflections
+                    Follow-through across {recapData.totalDaysWithEvening || 0}{" "}
+                    reflections
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                  Anchor views every day as an independent moment. Whether you logged a full day or took pause, showing up to reflect is progress.
+                  Anchor views every day as an independent moment. Whether you
+                  logged a full day or took pause, showing up to reflect is
+                  progress.
                 </p>
               </div>
             </div>
@@ -113,10 +118,12 @@ export default function StoryRecapModal({
                   Themes & Circumstances
                 </h2>
                 <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-2 mb-4 leading-relaxed">
-                  Recognizing what creates tension is the first step toward self-compassion.
+                  Recognizing what creates tension is the first step toward
+                  self-compassion.
                 </p>
 
-                {recapData.topBlockerTags && recapData.topBlockerTags.length > 0 ? (
+                {recapData.topBlockerTags &&
+                recapData.topBlockerTags.length > 0 ? (
                   <div className="space-y-2">
                     {recapData.topBlockerTags.slice(0, 3).map((item: any) => (
                       <div
@@ -127,7 +134,8 @@ export default function StoryRecapModal({
                           {item.tag}
                         </span>
                         <span className="px-3 py-1 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] text-[#786F66] font-semibold">
-                          Observed {item.count} {item.count === 1 ? "time" : "times"}
+                          Observed {item.count}{" "}
+                          {item.count === 1 ? "time" : "times"}
                         </span>
                       </div>
                     ))}
@@ -158,20 +166,24 @@ export default function StoryRecapModal({
                   Takeaways you discovered in your evening reflections.
                 </p>
 
-                {recapData.pinnedLessons && recapData.pinnedLessons.length > 0 ? (
+                {recapData.pinnedLessons &&
+                recapData.pinnedLessons.length > 0 ? (
                   <div className="space-y-3">
-                    {recapData.pinnedLessons.slice(0, 2).map((lesson: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] font-serif text-sm italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed shadow-xs"
-                      >
-                        "{lesson}"
-                      </div>
-                    ))}
+                    {recapData.pinnedLessons
+                      .slice(0, 2)
+                      .map((lesson: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] font-serif text-sm italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed shadow-xs"
+                        >
+                          "{lesson}"
+                        </div>
+                      ))}
                   </div>
                 ) : (
                   <div className="p-6 rounded-2xl border border-dashed border-[#EAE3D7] text-center text-xs text-[#786F66]">
-                    Add takeaways in your evening reflections to see them honored here.
+                    Add takeaways in your evening reflections to see them
+                    honored here.
                   </div>
                 )}
               </div>
@@ -192,7 +204,8 @@ export default function StoryRecapModal({
                   Show Up For Yourself
                 </h2>
                 <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-3 max-w-sm mx-auto leading-relaxed">
-                  Next week is not about perfection. It is simply about one more day of honest intention and gentle self-awareness.
+                  Next week is not about perfection. It is simply about one more
+                  day of honest intention and gentle self-awareness.
                 </p>
               </div>
             </div>
@@ -219,7 +232,9 @@ export default function StoryRecapModal({
             onClick={nextSlide}
             className="py-3.5 px-6 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-xs sm:text-sm transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-organic-md"
           >
-            <span>{slide === totalSlides ? "Complete Story Review" : "Next Chapter"}</span>
+            <span>
+              {slide === totalSlides ? "Complete Story Review" : "Next Chapter"}
+            </span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
