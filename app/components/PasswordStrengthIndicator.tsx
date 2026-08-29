@@ -47,36 +47,47 @@ export function evaluatePasswordStrength(password: string): PasswordStrength {
     };
   }
 
-  let criteriaMet = 0;
-  if (password.length >= 8) criteriaMet++;
-  if (password.length >= 12) criteriaMet++;
-  if (hasUpper && hasLower) criteriaMet++;
-  if (hasNumber) criteriaMet++;
-  if (hasSpecial) criteriaMet++;
+  // If length is less than 8, it can never reach Good or Strong
+  if (password.length < 8) {
+    const variety = (hasLower ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecial ? 1 : 0);
+    return {
+      score: variety >= 3 ? 2 : 1,
+      label: variety >= 3 ? "Fair (needs 8+ chars)" : "Weak",
+      color: variety >= 3 ? "#B88452" : "#C86D51",
+      hasMinLength: false,
+      hasUpper,
+      hasLower,
+      hasNumber,
+      hasSpecial,
+    };
+  }
 
-  let score = 1;
-  let label = "Weak";
-  let color = "#C86D51"; // Terracotta
+  // Length is >= 8
+  let varietyCount = 0;
+  if (hasLower) varietyCount++;
+  if (hasUpper) varietyCount++;
+  if (hasNumber) varietyCount++;
+  if (hasSpecial) varietyCount++;
 
-  if (criteriaMet >= 4) {
+  let score = 2;
+  let label = "Fair";
+  let color = "#B88452"; // Ochre
+
+  if (varietyCount >= 4 || (varietyCount >= 3 && password.length >= 10)) {
     score = 4;
     label = "Strong & Secure";
     color = "#658B70"; // Sage / Green
-  } else if (criteriaMet === 3) {
+  } else if (varietyCount >= 3 || (varietyCount >= 2 && password.length >= 10)) {
     score = 3;
     label = "Good";
     color = "#82A78C"; // Soft Sage
-  } else if (criteriaMet === 2) {
-    score = 2;
-    label = "Fair";
-    color = "#B88452"; // Warm Ochre
   }
 
   return {
     score,
     label,
     color,
-    hasMinLength,
+    hasMinLength: true,
     hasUpper,
     hasLower,
     hasNumber,
