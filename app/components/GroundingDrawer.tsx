@@ -13,7 +13,7 @@ const GROUNDING_ITEMS = [
   { id: 1, label: "1 slow, honest breath down to the belly", placeholder: "Take a full 4-second inhale and exhale" },
 ];
 
-export default function GroundingDrawer() {
+export default function GroundingDrawer({ triggerClassName }: { triggerClassName?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [breathingStep, setBreathingStep] = useState<"Inhale" | "Hold" | "Exhale" | "Pause">("Inhale");
   const [seconds, setSeconds] = useState(4);
@@ -58,18 +58,21 @@ export default function GroundingDrawer() {
 
   return (
     <>
-      {/* Discreet Trigger Button */}
+      {/* Trigger Button */}
       <motion.button
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => {
           setIsOpen(true);
           setIsBreathingActive(true);
           triggerHaptic(10);
         }}
-        className="text-xs text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] flex items-center gap-2 px-4 py-2 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-[#F3EFE7]/80 dark:bg-[#25221F] hover:bg-[#F3EFE7] transition-all cursor-pointer clay-card shadow-organic-sm"
+        className={
+          triggerClassName ||
+          "text-xs text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-transparent hover:bg-[#FAF7F2] dark:hover:bg-[#1E1B18] transition-colors cursor-pointer"
+        }
       >
-        <Wind className="w-3.5 h-3.5 text-[#658B70] dark:text-[#82A78C]" />
+        <Wind className="w-3.5 h-3.5 text-[#658B70]" />
         <span className="font-medium">Pause & Breathe</span>
       </motion.button>
 

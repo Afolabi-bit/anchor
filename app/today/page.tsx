@@ -46,11 +46,6 @@ export default function TodayPage() {
   const isEvening = currentHour >= 14; // After 2:00 PM is Evening reflection horizon
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const formattedDate = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  }).format(new Date());
 
   const greeting = isEvening ? "Good Evening" : "Good Morning";
 
@@ -61,6 +56,10 @@ export default function TodayPage() {
 
   // Stepper Modal State
   const [activeStepper, setActiveStepper] = useState<"morning" | "evening" | null>(null);
+
+  // Optional manual view override to review or edit the other ritual
+  const [viewOverride, setViewOverride] = useState<"morning" | "evening" | null>(null);
+  const currentRitual = viewOverride || (isEvening ? "evening" : "morning");
 
   // Daily Affirmation quote
   const affirmation = getTodayAffirmation();
@@ -162,7 +161,7 @@ export default function TodayPage() {
     reloadCommitmentCheckIns();
   }, [activeCommitmentId, todayStr]);
 
-  const activeCommitment = commitments.find((c) => c.id === activeCommitmentId) || commitments[0] || null;
+  const activeCommitment = commitments.find((c) => c.id === activeCommitmentId) || commitments[0];
   const activeColorHex = PALETTE_HEX[activeCommitment?.colorIndex ?? 0] || "#C86D51";
 
   const handleCheckInSuccess = (savedCheckIn: any) => {
@@ -197,24 +196,68 @@ export default function TodayPage() {
       <OfflineSyncBadge />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
-          {/* Top Bar: Clean Greeting & Grounding Access */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-6">
+          {/* ========================================================================= */}
+          {/* 1. COMPACT HEADER: Merged Greeting + Anchor Focus (No Box Border)          */}
+          {/* ========================================================================= */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-1">
               <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
-                {formattedDate}
+                {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
               </span>
-              <h1 className="font-serif-title text-xl sm:text-2xl md:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
-                {greeting}{user?.firstName ? `, ${user.firstName}` : user?.email ? `, ${user.email.split("@")[0]}` : ""}
+              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight truncate">
+                {activeCommitment?.name || "Daily Anchor Focus"}
               </h1>
+              {activeCommitment?.why && (
+                <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] font-serif italic truncate">
+                  "{activeCommitment.why}"
+                </p>
+              )}
             </div>
 
-            <div className="shrink-0">
-              <GroundingDrawer />
+            {/* Subtle Top Affordance: Toggle to review/edit the other ritual */}
+            <div className="shrink-0 flex items-center gap-1.5 pt-1">
+              {commitments.length > 1 && (
+                <button
+                  onClick={() => {
+                    triggerHaptic(8);
+                    const currentIndex = commitments.findIndex((c) => c.id === activeCommitmentId);
+                    const nextIndex = (currentIndex + 1) % commitments.length;
+                    setActiveCommitmentId(commitments[nextIndex].id);
+                  }}
+                  className="text-xs px-2.5 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-white/80 dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-colors cursor-pointer"
+                  title="Cycle anchors"
+                >
+                  <span className="w-2 h-2 rounded-full inline-block mr-1.5" style={{ backgroundColor: activeColorHex }} />
+                  <span>Switch</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(8);
+                  setViewOverride(currentRitual === "evening" ? "morning" : "evening");
+                }}
+                className="text-xs px-3 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-white/80 dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title={currentRitual === "evening" ? "View Morning Intention" : "View Evening Reflection"}
+              >
+                {currentRitual === "evening" ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-[#B88452]" />
+                    <span className="text-[11px] font-medium">{morningCheckIn ? "Morning Sealed" : "Morning"}</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-[#C86D51]" />
+                    <span className="text-[11px] font-medium">{eveningCheckIn ? "Evening Done" : "Evening"}</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Partner Encouragement Notification Banner (Only if active cheer exists) */}
+          {/* Partner Encouragement Message Banner (Only shown if cheer is unread) */}
           {partnerMessages.length > 0 && (
             <div className="space-y-2">
               {partnerMessages.map((msg) => (
@@ -250,110 +293,20 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* Mindful Daily Capsule (Sleek, integrated 1-line wisdom) */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <Quote className="w-4 h-4 text-[#B88452] shrink-0 opacity-75" />
-              <p className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] truncate">
-                "{affirmation.quote}"
-              </p>
-            </div>
-            <span className="text-[10px] text-[#B88452] font-semibold shrink-0 uppercase tracking-wider">
-              {affirmation.category}
-            </span>
-          </div>
-
-          {/* Multi-Anchor Segmented Selector */}
-          {commitments.length > 1 && (
-            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs overflow-x-auto no-scrollbar">
-              {commitments.map((comm) => {
-                const isActive = comm.id === activeCommitmentId;
-                const commColor = PALETTE_HEX[comm.colorIndex ?? 0] || "#C86D51";
-
-                return (
-                  <button
-                    key={comm.id}
-                    onClick={() => {
-                      triggerHaptic(8);
-                      setActiveCommitmentId(comm.id);
-                    }}
-                    className={`relative text-xs px-3.5 py-1.5 rounded-xl font-medium transition-colors cursor-pointer shrink-0 z-10 flex items-center gap-1.5 ${
-                      isActive
-                        ? "text-[#2C2520] dark:text-[#ECE7E0]"
-                        : "text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520]"
-                    }`}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeAnchorTab"
-                        className="absolute inset-0 bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] rounded-xl shadow-2xs -z-10"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: commColor }} />
-                    <span>{comm.name}</span>
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => {
-                  triggerHaptic(10);
-                  setNewModalOpen(true);
-                }}
-                className="p-1.5 rounded-xl text-[#786F66] hover:text-[#2C2520] shrink-0 cursor-pointer ml-auto"
-                title="Add Anchor"
+          {/* ========================================================================= */}
+          {/* 2. ONE PRIMARY RITUAL CARD WITH ONE CLEAR ACTION BUTTON (Framer Motion)    */}
+          {/* ========================================================================= */}
+          <AnimatePresence mode="wait">
+            {currentRitual === "morning" ? (
+              /* ----------------------- MORNING RITUAL CARD ----------------------- */
+              <motion.div
+                key="morning-card"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#B88452]/40 dark:border-[#B88452]/30 clay-card shadow-organic-md space-y-5"
               >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
-          {/* Active Commitment Focus Header */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span
-                className="text-[11px] uppercase tracking-widest font-bold flex items-center gap-1"
-                style={{ color: activeColorHex }}
-              >
-                <Anchor className="w-3.5 h-3.5" />
-                Today's Core Anchor
-              </span>
-            </div>
-            <h2 className="font-serif-title text-2xl sm:text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
-              {activeCommitment?.name || "Daily Anchor Focus"}
-            </h2>
-            {activeCommitment?.why && (
-              <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] font-serif italic">
-                "{activeCommitment.why}"
-              </p>
-            )}
-          </div>
-
-          {/* 2-Phase Ritual Cadence Strip */}
-          <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-xs shadow-2xs">
-            <div className={`p-2.5 rounded-xl flex items-center gap-2 ${morningCheckIn ? "bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]" : "text-[#786F66]"}`}>
-              <Sun className="w-4 h-4 shrink-0" />
-              <span className="font-medium truncate">1. Morning Intention</span>
-              {morningCheckIn && <Check className="w-3.5 h-3.5 ml-auto text-[#B88452]" />}
-            </div>
-
-            <div className={`p-2.5 rounded-xl flex items-center gap-2 ${eveningCheckIn ? "bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]" : "text-[#786F66]"}`}>
-              <Moon className="w-4 h-4 shrink-0" />
-              <span className="font-medium truncate">2. Evening Reflection</span>
-              {eveningCheckIn && <Check className="w-3.5 h-3.5 ml-auto text-[#C86D51]" />}
-            </div>
-          </div>
-
-          {/* ========================================================= */}
-          {/* THE TIME-AWARE RITUAL HERO CARD (Single Primary Focus)     */}
-          {/* ========================================================= */}
-          
-          {!isEvening ? (
-            /* ---------------- MORNING HORIZON (< 2:00 PM) ---------------- */
-            <div className="space-y-4">
-              {/* Primary Focus: Morning Intention */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#B88452]/40 dark:border-[#B88452]/30 clay-card shadow-organic-md space-y-5 relative overflow-hidden">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shadow-2xs">
@@ -363,9 +316,9 @@ export default function TodayPage() {
                       <span className="text-[10px] uppercase tracking-wider font-bold text-[#B88452]">
                         Morning Ritual
                       </span>
-                      <h3 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-                        Set Your Intention
-                      </h3>
+                      <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
+                        Set Your Daily Intention
+                      </h2>
                     </div>
                   </div>
 
@@ -379,7 +332,7 @@ export default function TodayPage() {
 
                 {morningCheckIn ? (
                   <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 text-xs">
-                    <span className="text-[10px] uppercase tracking-wider text-[#786F66] font-semibold block">
+                    <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
                       Intention Sealed for Today:
                     </span>
                     {morningCheckIn.plannedActions && morningCheckIn.plannedActions.length > 0 && (
@@ -397,51 +350,45 @@ export default function TodayPage() {
                         "{morningCheckIn.intentionNote}"
                       </p>
                     )}
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setActiveStepper("morning")}
+                        className="text-[11px] text-[#B88452] hover:underline cursor-pointer font-medium"
+                      >
+                        Edit morning intention
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
                     <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
                       Anchor your mindset before the day unfolds. Choose 1 or 2 small actions to protect your peace.
                     </p>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    <button
+                      type="button"
                       onClick={() => {
                         triggerHaptic(12);
                         setActiveStepper("morning");
                       }}
-                      className="w-full py-3.5 rounded-2xl bg-[#B88452] hover:bg-[#A37445] text-white font-semibold text-sm shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                      className="btn-primary w-full py-3.5 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
                     >
                       <span>Anchor Your Day (15s)</span>
                       <ArrowRight className="w-4 h-4" />
-                    </motion.button>
+                    </button>
                   </div>
                 )}
-              </div>
-
-              {/* Secondary Preview: Evening Reflection */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between text-xs text-[#786F66] dark:text-[#A8A096]">
-                <div className="flex items-center gap-2.5">
-                  <Moon className="w-4 h-4 text-[#C86D51]" />
-                  <span>Evening Reflection opens this evening</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic(10);
-                    setActiveStepper("evening");
-                  }}
-                  className="font-medium text-[#C86D51] hover:underline cursor-pointer"
-                >
-                  Record early →
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* ---------------- EVENING HORIZON (>= 2:00 PM) ---------------- */
-            <div className="space-y-4">
-              {/* Primary Focus: Evening Reflection */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#C86D51]/40 dark:border-[#C86D51]/30 clay-card shadow-organic-md space-y-5 relative overflow-hidden">
+              </motion.div>
+            ) : (
+              /* ----------------------- EVENING REFLECTION CARD ----------------------- */
+              <motion.div
+                key="evening-card"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#C86D51]/40 dark:border-[#C86D51]/30 clay-card shadow-organic-md space-y-5"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] flex items-center justify-center shadow-2xs">
@@ -451,9 +398,9 @@ export default function TodayPage() {
                       <span className="text-[10px] uppercase tracking-wider font-bold text-[#C86D51]">
                         Evening Ritual
                       </span>
-                      <h3 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-                        Close Your Day
-                      </h3>
+                      <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
+                        Close Your Day with Compassion
+                      </h2>
                     </div>
                   </div>
 
@@ -461,6 +408,26 @@ export default function TodayPage() {
                     <span className="text-xs px-3 py-1 rounded-full bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] font-semibold border border-[#C86D51]/30 flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" />
                       <span>Completed</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Folded-in Supporting Morning Status Context */}
+                <div className="p-3 rounded-xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs flex items-center justify-between gap-2">
+                  {morningCheckIn ? (
+                    <div className="flex items-center gap-2 text-[#786F66] dark:text-[#A8A096] truncate">
+                      <Sun className="w-3.5 h-3.5 text-[#B88452] shrink-0" />
+                      <span className="truncate">Morning: {morningCheckIn.plannedActions?.[0] || "Intention set"}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-[#786F66] dark:text-[#A8A096]">
+                      <Sun className="w-3.5 h-3.5 opacity-50 shrink-0" />
+                      <span>Morning intention skipped — no penalty. Every evening is a clean slate.</span>
+                    </div>
+                  )}
+                  {morningCheckIn && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold shrink-0">
+                      Sealed ✓
                     </span>
                   )}
                 </div>
@@ -482,55 +449,64 @@ export default function TodayPage() {
                       </p>
                     )}
 
-                    <div className="pt-2 text-[#786F66] dark:text-[#A8A096] italic text-[11px]">
-                      Your day is honored without judgment. Rest peacefully tonight.
+                    <div className="pt-2 text-[#786F66] dark:text-[#A8A096] italic text-[11px] flex items-center justify-between">
+                      <span>Your day is honored without judgment. Rest peacefully tonight.</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveStepper("evening")}
+                        className="text-[11px] text-[#C86D51] hover:underline cursor-pointer font-medium ml-2"
+                      >
+                        Edit reflection
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
                     <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
                       Take 30 seconds to reflect on your anchor with honesty and self-compassion.
                     </p>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    <button
+                      type="button"
                       onClick={() => {
                         triggerHaptic(12);
                         setActiveStepper("evening");
                       }}
-                      className="w-full py-3.5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-semibold text-sm shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                      className="btn-primary w-full py-3.5 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
                     >
                       <span>Close Your Day with Compassion (30s)</span>
                       <ArrowRight className="w-4 h-4" />
-                    </motion.button>
+                    </button>
                   </div>
                 )}
-              </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              {/* Secondary Review: Morning Intention Recap */}
-              {morningCheckIn ? (
-                <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between text-xs text-[#786F66] dark:text-[#A8A096]">
-                  <div className="flex items-center gap-2 truncate">
-                    <Sun className="w-4 h-4 text-[#B88452] shrink-0" />
-                    <span className="truncate">Morning: {morningCheckIn.plannedActions?.[0] || "Intention set"}</span>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold shrink-0">
-                    Sealed ✓
+          {/* ========================================================================= */}
+          {/* 3. SECONDARY SUPPORTING AREA: Daily Quote & Pause & Breathe               */}
+          {/* ========================================================================= */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2.5 min-w-0">
+                <Quote className="w-4 h-4 text-[#B88452] shrink-0 opacity-75 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    "{affirmation.quote}"
+                  </p>
+                  <span className="text-[11px] text-[#B88452] font-semibold block">
+                    — {affirmation.author}
                   </span>
                 </div>
-              ) : (
-                <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between text-xs text-[#786F66] dark:text-[#A8A096]">
-                  <div className="flex items-center gap-2">
-                    <Sun className="w-4 h-4 text-[#786F66]" />
-                    <span>Morning intention was skipped today</span>
-                  </div>
-                  <span className="text-[11px] text-[#786F66]">No penalty</span>
-                </div>
-              )}
+              </div>
+              <div className="shrink-0 pt-0.5">
+                <GroundingDrawer />
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Lightweight Daily Reflection Composer */}
+          {/* ========================================================================= */}
+          {/* 4. JOURNAL COMPOSER (Collapsed Accordion by Default)                      */}
+          {/* ========================================================================= */}
           <div className="pt-1">
             <JournalComposer variant="compact" />
           </div>

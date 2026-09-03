@@ -1,33 +1,49 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   LIGHT THEME: "Warm Linen" (plan.md section 4.1)
+   ========================================================================== */
 :root {
-  /* Warm & Organic Canvas & Surfaces */
+  /* Canvas & Elevated Surfaces */
   --bg-canvas: #FAF7F2;
   --surface-card: #FFFFFF;
   --surface-subtle: #F3EFE7;
   --surface-muted: #EBE5DB;
   
-  /* Text Tokens */
+  /* Text Hierarchy */
   --text-primary: #2C2520;
   --text-secondary: #786F66;
   --text-muted: #9E948A;
   
-  /* Accent Tokens */
+  /* Primary Accent: Terracotta */
   --accent-terracotta: #C86D51;
   --accent-terracotta-hover: #B35D43;
   --accent-terracotta-soft: #F9EBE7;
   
-  /* Reflective State Tokens */
-  --tone-positive: #658B70;
+  /* Grounding Tones: Sage & Warm Ochre */
+  --tone-positive: #658B70;         /* Sage */
+  --tone-positive-hover: #53735C;
   --tone-positive-soft: #EEF4F0;
-  --tone-reflective: #B88452;
+  --tone-reflective: #B88452;       /* Warm Ochre */
+  --tone-reflective-hover: #9E6F42;
   --tone-reflective-soft: #FAF2EA;
   --tone-neutral: #82786F;
   --tone-neutral-soft: #F0ECE6;
 
   /* Borders & Dividers */
   --border-subtle: #EAE3D7;
-  --border-card: #E4DCD0;
+  --border-card: #EAE3D7;
+
+  /* Strict 4px Spacing Tokens */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px - standard card interior element spacing */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px - standard card padding & section gap */
+  --space-8: 2rem;      /* 32px - page header gap */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
 
   /* Fluid Typography Scale (Major Third 1.25) */
   --font-size-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);
@@ -38,30 +54,28 @@
   --font-size-2xl: clamp(1.75rem, 1.5rem + 0.8vw, 2.25rem);
   --font-size-hero: clamp(2.25rem, 1.9rem + 1.4vw, 3.5rem);
 
-  /* Organic Elevation (Warm diffuse ambient shadows) */
+  /* Organic Ambient Elevation */
   --shadow-organic-sm: 0 2px 8px -2px rgba(44, 37, 32, 0.04), 0 1px 4px -1px rgba(44, 37, 32, 0.03);
   --shadow-organic-md: 0 8px 24px -6px rgba(44, 37, 32, 0.06), 0 2px 8px -2px rgba(44, 37, 32, 0.04);
   --shadow-organic-lg: 0 16px 40px -10px rgba(44, 37, 32, 0.08), 0 4px 16px -4px rgba(44, 37, 32, 0.04);
 
-  /* Animation Tokens */
+  /* Animation Physics */
   --ease-spring-gentle: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-spring-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-spring-snappy: cubic-bezier(0.5, 1.8, 0.75, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
-  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
 
-  /* Duration Tokens */
-  --duration-micro: 80ms;
   --duration-fast: 150ms;
   --duration-normal: 250ms;
-  --duration-enter: 350ms;
   --duration-breathe: 4000ms;
 
-  /* Base mappings */
   --background: var(--bg-canvas);
   --foreground: var(--text-primary);
 }
 
+/* ==========================================================================
+   DARK THEME: "Dark Stone" (plan.md section 4.1)
+   System Preference Media Query
+   ========================================================================== */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-canvas: #1C1917;
@@ -71,21 +85,23 @@
     
     --text-primary: #ECE7E0;
     --text-secondary: #A8A096;
-    --text-muted: #7E766D;
+    --text-muted: #786F66;
     
-    --accent-terracotta: #DB8165;
-    --accent-terracotta-hover: #E4937B;
+    --accent-terracotta: #C86D51;
+    --accent-terracotta-hover: #B35D43;
     --accent-terracotta-soft: #38251F;
     
-    --tone-positive: #82A78C;
+    --tone-positive: #658B70;         /* Sage */
+    --tone-positive-hover: #53735C;
     --tone-positive-soft: #202D24;
-    --tone-reflective: #CFA070;
+    --tone-reflective: #B88452;       /* Warm Ochre */
+    --tone-reflective-hover: #9E6F42;
     --tone-reflective-soft: #352A1E;
     --tone-neutral: #A39A91;
     --tone-neutral-soft: #2B2824;
 
     --border-subtle: #38332E;
-    --border-card: #443E38;
+    --border-card: #38332E;
 
     --shadow-organic-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.25);
     --shadow-organic-md: 0 8px 24px -6px rgba(0, 0, 0, 0.35);
@@ -96,11 +112,49 @@
   }
 }
 
+/* Explicit .dark class support for theme toggles */
+.dark {
+  --bg-canvas: #1C1917;
+  --surface-card: #25221F;
+  --surface-subtle: #2E2A26;
+  --surface-muted: #38342F;
+  
+  --text-primary: #ECE7E0;
+  --text-secondary: #A8A096;
+  --text-muted: #786F66;
+  
+  --accent-terracotta: #C86D51;
+  --accent-terracotta-hover: #B35D43;
+  --accent-terracotta-soft: #38251F;
+  
+  --tone-positive: #658B70;
+  --tone-positive-hover: #53735C;
+  --tone-positive-soft: #202D24;
+  --tone-reflective: #B88452;
+  --tone-reflective-hover: #9E6F42;
+  --tone-reflective-soft: #352A1E;
+  --tone-neutral: #A39A91;
+  --tone-neutral-soft: #2B2824;
+
+  --border-subtle: #38332E;
+  --border-card: #38332E;
+
+  --shadow-organic-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.25);
+  --shadow-organic-md: 0 8px 24px -6px rgba(0, 0, 0, 0.35);
+  --shadow-organic-lg: 0 16px 40px -10px rgba(0, 0, 0, 0.45);
+
+  --background: var(--bg-canvas);
+  --foreground: var(--text-primary);
+}
+
 @theme {
   --font-sans: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-serif: var(--font-serif), Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
+/* ==========================================================================
+   GLOBAL BASE STYLES
+   ========================================================================== */
 body {
   background-color: var(--bg-canvas);
   color: var(--text-primary);
@@ -112,7 +166,7 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  transition: background-color 0.4s cubic-bezier(0.25, 1, 0.5, 1), color 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .font-serif-title {
@@ -120,28 +174,74 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Living Ambient Glow Background Layer */
-.ambient-glow-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(circle at 50% 0%, rgba(200, 109, 81, 0.07) 0%, rgba(243, 239, 231, 0.03) 50%, transparent 80%);
+/* ==========================================================================
+   BUTTON WEIGHTS (Standardized Primary & Secondary)
+   ========================================================================== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #C86D51;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  box-shadow: var(--shadow-organic-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  user-select: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  .ambient-glow-layer {
-    background: radial-gradient(circle at 50% 0%, rgba(219, 129, 101, 0.06) 0%, rgba(37, 34, 31, 0.03) 50%, transparent 80%);
-  }
+.btn-primary:hover {
+  background-color: #B35D43;
+  box-shadow: var(--shadow-organic-md);
 }
 
-/* Tactile Claymorphism & Specular Highlights */
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--text-secondary) !important;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  user-select: none;
+}
+
+.btn-secondary:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--surface-subtle);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.btn-lg {
+  padding: 0.875rem 1.75rem;
+  font-size: 0.9375rem;
+}
+
+/* ==========================================================================
+   TACTILE CLAYMORPHISM
+   Provides ambient specular highlight without overriding background-color
+   ========================================================================== */
 .clay-card {
-  background-color: var(--surface-card);
-  border: 1px solid var(--border-card);
   box-shadow: 
     var(--shadow-organic-md),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.65);
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -152,146 +252,60 @@ body {
   }
 }
 
-/* Rotating Ambient Conic Glow Hero Border */
-.conic-glow-wrapper {
-  position: relative;
-  padding: 1.5px;
-  border-radius: 1.6rem;
-  overflow: hidden;
+.dark .clay-card {
+  box-shadow: 
+    var(--shadow-organic-md),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.conic-glow-wrapper::before {
-  content: "";
-  position: absolute;
-  inset: -50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    var(--accent-terracotta) 60deg,
-    transparent 120deg,
-    var(--tone-positive) 180deg,
-    transparent 240deg,
-    var(--tone-reflective) 300deg,
-    transparent 360deg
-  );
-  animation: conic-spin 10s linear infinite;
-  opacity: 0.45;
-  filter: blur(8px);
+/* Standard card layout */
+.card-base {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.5rem;
+  padding: var(--space-6);
 }
 
-@keyframes conic-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Shimmer Skeleton Animation */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.skeleton-shimmer {
-  position: relative;
-  overflow: hidden;
-  background-color: var(--surface-subtle);
-}
-
-.skeleton-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: shimmer 1.8s infinite;
-}
-
-@media (prefers-color-scheme: dark) {
-  .skeleton-shimmer::after {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.06),
-      transparent
-    );
+@media (max-width: 640px) {
+  .card-base {
+    padding: var(--space-4);
+    border-radius: 1.25rem;
   }
 }
 
-/* Discreet Privacy Blur Mode */
-.privacy-blur-active {
-  filter: blur(7px);
-  user-select: none;
-  transition: filter 0.3s ease;
+/* Spacing helpers */
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
-.privacy-blur-active:hover {
-  filter: blur(0px);
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
 
-/* Custom Tactile Range Slider */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
+.page-container {
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding: var(--space-5) var(--space-4) var(--space-8);
 }
 
-input[type="range"]:focus {
-  outline: none;
-}
-
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 9999px;
-  background: var(--surface-subtle);
-  border: 1px solid var(--border-subtle);
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 9999px;
-  background: var(--accent-terracotta);
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  margin-top: -8px;
-  transition: transform 0.15s ease, background-color 0.2s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-}
-
-input[type="range"]::-webkit-slider-thumb:active {
-  transform: scale(1.25);
-}
-
-/* Custom Soft Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-subtle);
-  border-radius: 9999px;
+@media (min-width: 640px) {
+  .page-container {
+    padding: var(--space-8) var(--space-5);
+  }
 }
 
 /* Accessible focus ring */
 *:focus-visible {
-  outline: 2px solid var(--accent-terracotta);
+  outline: 2px solid #C86D51;
   outline-offset: 3px;
 }
 
-/* Touch & Mobile Responsiveness Optimizations */
 button,
 a,
 input,

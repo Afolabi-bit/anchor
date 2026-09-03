@@ -13,13 +13,15 @@ import {
   CheckCircle2,
   Lock,
   Wind,
-  Compass
+  Compass,
+  HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 
 export default function LandingHero() {
   const [activeTab, setActiveTab] = useState<"morning" | "circadian" | "evening">("morning");
+  const [showSealedTooltip, setShowSealedTooltip] = useState(false);
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -54,17 +56,17 @@ export default function LandingHero() {
         Morning intentions, evening reflections, and soft landings when days don't go as planned. Built for recovery, habits, and emotional grounding without streak anxiety.
       </motion.p>
 
-      {/* Hero CTA Buttons */}
+      {/* Hero CTA Buttons: One Primary (Filled), One Secondary (Quiet Ghost/Outlined) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.15 }}
-        className="mt-8 flex flex-col sm:flex-row gap-3.5 w-full max-w-sm sm:max-w-none justify-center"
+        className="mt-8 flex flex-col sm:flex-row items-center gap-3.5 w-full max-w-sm sm:max-w-none justify-center"
       >
         <Link
           href="/signup"
           onClick={() => triggerHaptic(12)}
-          className="py-4 px-8 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-base transition-all duration-200 flex items-center justify-center gap-2 shadow-organic-md hover:scale-[1.02] active:scale-[0.98]"
+          className="btn-primary btn-lg w-full sm:w-auto shadow-organic-md"
         >
           <span>Start your daily anchor</span>
           <ArrowRight className="w-4 h-4" />
@@ -72,9 +74,9 @@ export default function LandingHero() {
         <Link
           href="/login"
           onClick={() => triggerHaptic(10)}
-          className="py-4 px-8 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-[#FFFFFF] dark:bg-[#25221F] hover:bg-[#F3EFE7] dark:hover:bg-[#2E2A26] text-[#2C2520] dark:text-[#ECE7E0] font-medium text-base transition-all flex items-center justify-center shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
+          className="btn-secondary btn-lg w-full sm:w-auto"
         >
-          Sign in to your sanctuary
+          <span>Sign in to your sanctuary</span>
         </Link>
       </motion.div>
 
@@ -151,9 +153,35 @@ export default function LandingHero() {
                     "Stay sober & grounded"
                   </h3>
                 </div>
-                <span className="text-xs px-3 py-1 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-medium">
-                  Sealed Today ?
-                </span>
+
+                {/* Sealed Badge with Explanatory Tooltip Affordance */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowSealedTooltip(!showSealedTooltip)}
+                    onMouseEnter={() => setShowSealedTooltip(true)}
+                    onMouseLeave={() => setShowSealedTooltip(false)}
+                    className="text-xs px-3 py-1 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-medium inline-flex items-center gap-1.5 border border-[#EAE3D7] dark:border-[#38332E] cursor-pointer"
+                    title="What does sealed mean?"
+                  >
+                    <span>Sealed Today</span>
+                    <HelpCircle className="w-3 h-3 text-[#B88452]/80" />
+                  </button>
+
+                  <AnimatePresence>
+                    {showSealedTooltip && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full mt-2 z-30 w-64 p-3 rounded-2xl bg-[#2C2520] dark:bg-[#ECE7E0] text-[#FAF7F2] dark:text-[#1C1917] text-[11px] leading-relaxed shadow-organic-lg pointer-events-none"
+                      >
+                        Sealing confirms your morning intention with a grounding chime, locking in your focus for the day.
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
               <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2">
                 <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold">
@@ -247,7 +275,7 @@ export default function LandingHero() {
             Morning Intention
           </h3>
           <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-            Set 1�2 realistic micro-actions for your commitment without feeling pressured. Seal with the tactile anchor.
+            Set 1–2 realistic micro-actions for your commitment without feeling pressured. Seal with the tactile anchor.
           </p>
         </motion.div>
 
