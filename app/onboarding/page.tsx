@@ -322,7 +322,7 @@ export default function OnboardingPage() {
                     <span>Interactive Preview • Try It Now</span>
                   </div>
                   <h2 className="font-serif-title text-xl sm:text-2xl text-[#2C2520] dark:text-[#ECE7E0]">
-                    Experience the Evening Ritual
+                    Experience the Evening Check-in
                   </h2>
                   <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
                     Check-ins take under 45 seconds. Tap below to see how Anchor reflects self-honesty without shame or guilt.
@@ -433,7 +433,7 @@ export default function OnboardingPage() {
                   ) : (
                     <div className="p-3 rounded-xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] text-xs text-center font-medium flex items-center justify-center gap-2">
                       <Check className="w-4 h-4" />
-                      <span>Reflection sealed with gentle chime. That's the ritual!</span>
+                      <span>Reflection sealed with gentle chime. That's your daily check-in!</span>
                     </div>
                   )}
                 </div>

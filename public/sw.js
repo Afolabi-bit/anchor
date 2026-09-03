@@ -1,4 +1,4 @@
-﻿// Anchor Push Service Worker
+// Anchor Push Service Worker
 self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
@@ -9,7 +9,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("push", (event) => {
   let data = {
-    title: "Anchor � Daily Sanctuary",
+    title: "Anchor • Daily Companion",
     body: "Take a quiet moment to anchor your day.",
     url: "/today",
     tag: "anchor-notification",

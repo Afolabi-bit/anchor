@@ -41,7 +41,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
   },
   {
     id: "sobriety-gambling",
-    name: "Financial Sanctuary & Peace",
+    name: "Financial Clarity & Peace",
     category: "Sobriety & Recovery",
     why: "My worth is not tied to chance. I protect my family's peace and my hard-earned security.",
     suggestedActions: [
@@ -81,7 +81,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
     ],
     suggestedColorIndex: 1, // Ochre
     icon: "Moon",
-    description: "A gentle evening ritual to release workday stress and prepare for restorative sleep.",
+    description: "A gentle evening check-in to release workday stress and prepare for restorative sleep.",
   },
   {
     id: "mental-breathing",
@@ -143,7 +143,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
   },
   {
     id: "vitality-hydration",
-    name: "Pure Hydration Ritual",
+    name: "Daily Hydration Habit",
     category: "Physical Vitality",
     why: "Hydration energizes my brain cells and supports clean cellular detoxification.",
     suggestedActions: [
@@ -175,7 +175,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
     id: "living-creation",
     name: "Daily 30m Creative Focus",
     category: "Mindful Living",
-    why: "Creating gives my soul an outlet to express, play, and build what matters to me.",
+    why: "Creating gives me an outlet to express, play, and build what matters to me.",
     suggestedActions: [
       "Close all tabs except my workspace",
       "Put phone in another room",

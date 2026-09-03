@@ -220,7 +220,7 @@ export default function SponsorSharePage() {
                     Send a Gentle Word of Support
                   </h3>
                   <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                    Your cheer will appear directly in their daily sanctuary.
+                    Your cheer will appear directly on their daily dashboard.
                   </p>
                 </div>
               </div>

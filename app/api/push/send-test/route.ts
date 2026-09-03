@@ -19,7 +19,7 @@ export async function POST() {
       subscriptions.map((sub) =>
         sendPushNotification(sub, {
           title: "Anchor • Test Notification",
-          body: "Your daily sanctuary notifications are active and ready.",
+          body: "Your daily anchor notifications are active and ready.",
           url: "/today",
           tag: "anchor-test",
         })

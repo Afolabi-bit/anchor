@@ -119,7 +119,7 @@ Recovery and personal accountability are among the most vulnerable, high-stakes 
 #### 3.1 Low-Commitment Onboarding
 
 - **Screen 1 — Intention:** select or type a primary focus (e.g. "Sobriety & recovery," "Rest," "Focus").
-- **Screen 2 — Check-in preview:** let the user try an actual check-in step right away, with a gentle haptic pulse, so they understand what the daily ritual feels like before committing to an account.
+- **Screen 2 — Check-in preview:** let the user try an actual check-in step right away, with a gentle haptic pulse, so they understand what the daily check-in feels like before committing to an account.
 - **Screen 3 — Schedule & privacy:** choose morning/evening times, and a short, honest explanation of what an account does (sync across devices) and what's protected (per section 1.4).
 
 #### 3.2 Guest Mode

@@ -103,13 +103,13 @@ export default function SignupPage() {
           <div className="mb-6">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#C86D51] dark:text-[#DB8165] mb-1">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Begin Your Sanctuary</span>
+              <span>Create Your Account</span>
             </div>
             <h2 className="font-serif-title text-xl sm:text-2xl text-[#2C2520] dark:text-[#ECE7E0]">
               Create your private space
             </h2>
             <p className="text-xs text-[#786F66] dark:text-[#A8A096] mt-1 leading-relaxed">
-              We personalize your daily ritual and reflective inquiries with your name.
+              We personalize your daily check-ins and reflective inquiries with your name.
             </p>
           </div>
 
@@ -252,7 +252,7 @@ export default function SignupPage() {
           <div className="mt-6 pt-4.5 border-t border-[#EAE3D7] dark:border-[#38332E] flex items-start gap-2.5 text-[11px] text-[#786F66] dark:text-[#A8A096]">
             <ShieldCheck className="w-4 h-4 shrink-0 text-[#658B70] mt-0.5" />
             <span className="leading-relaxed">
-              Your name and reflections are strictly private to your personal sanctuary.
+              Your name and reflections are strictly private to your personal space.
             </span>
           </div>
         </motion.div>

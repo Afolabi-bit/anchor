@@ -10,8 +10,8 @@ export function triggerHaptic(pattern: number | number[] = 15) {
   }
 }
 
-// Gentle crystal singing bowl synthesizer for peaceful grounding & intention sealing
-export function playSingingBowlChime(freq: number = 432) {
+// Gentle audio chime synthesizer for peaceful grounding & completion feedback
+export function playGentleChime(freq: number = 432) {
   if (typeof window === "undefined") return;
 
   try {
@@ -62,3 +62,7 @@ export function playSingingBowlChime(freq: number = 432) {
     // Audio context not allowed or supported
   }
 }
+
+// Backwards-compatible alias for existing imports
+export const playSingingBowlChime = playGentleChime;
+

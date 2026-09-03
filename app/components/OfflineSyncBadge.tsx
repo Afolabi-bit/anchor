@@ -67,7 +67,7 @@ export default function OfflineSyncBadge() {
             <div className="flex items-center gap-2.5">
               <WifiOff className="w-4 h-4 shrink-0" />
               <div>
-                <span className="font-semibold block">Offline Sanctuary Active</span>
+                <span className="font-semibold block">Offline Mode Active</span>
                 <span className="text-[10px] opacity-80">
                   {pendingCount > 0
                     ? `${pendingCount} reflection${pendingCount > 1 ? "s" : ""} saved locally`
@@ -88,7 +88,7 @@ export default function OfflineSyncBadge() {
           >
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span className="font-medium">All offline reflections synced with sanctuary</span>
+              <span className="font-medium">All offline reflections synced securely</span>
             </div>
             <Sparkles className="w-3.5 h-3.5" />
           </motion.div>

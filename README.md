@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Security](https://img.shields.io/badge/Encryption-AES--256--GCM-E05A47?style=flat-square&logo=shield)](file:///c:/dev/anchor/lib/encryption.ts)
 
-**Anchor** is a calm, privacy-respecting daily accountability and recovery companion. Built for individuals navigating recovery, habit change, and nervous system regulation, Anchor rejects punitive streak anxiety, aggressive gamification, and intrusive surveillance in favor of gentle daily rituals, honest reflection, and cryptographic data protection.
+**Anchor** is a calm, privacy-respecting daily accountability and recovery companion. Built for individuals navigating recovery, habit change, and nervous system regulation, Anchor rejects punitive streak anxiety, aggressive gamification, and intrusive surveillance in favor of gentle daily check-ins, honest reflection, and cryptographic data protection.
 
 ---
 
@@ -41,7 +41,7 @@ Traditional habit trackers fail individuals in recovery and mental wellness jour
 **Anchor's Position:**
 - **Soft Landings Guaranteed:** If an intention is missed, there are no flashing red warning banners, harsh resets, or punitive alerts. Progress is framed as accumulated experience on a continuous path.
 - **Single-Habit Clarity:** Grounded around one primary anchor habit per circadian cycle to cultivate depth over shallow multi-tasking.
-- **Tactile, Calming Interactions:** Micro-haptics and resonant singing bowl chimes turn daily check-ins into grounding somatic rituals rather than data entry chores.
+- **Tactile, Calming Interactions:** Micro-haptics and resonant gentle chimes turn daily check-ins into grounding somatic moments rather than data entry chores.
 
 ---
 
@@ -136,7 +136,7 @@ Anchor features two complete, rigorously tested themes built around warm, earthy
 | `--text-secondary` | `#786F66` | `#A8A096` | Subordinate labels & captions |
 | `--accent-terracotta` | `#C86D51` | `#C86D51` | Primary action button & active focus |
 | `--tone-positive` | `#658B70` | `#658B70` | Sage: positive follow-through |
-| `--tone-reflective` | `#B88452` | `#B88452` | Warm Ochre: morning ritual & cadence |
+| `--tone-reflective` | `#B88452` | `#B88452` | Warm Ochre: morning check-in & cadence |
 
 ### Standardized Button Weights
 Anchor eliminates competing solid buttons:
@@ -152,9 +152,9 @@ Layouts use an 8-step spacing scale (4px, 8px, 12px, 16px, 20px, 24px, 32px, 48p
 
 ### 1. The Single-Focus Today Screen (`/today`)
 - **Collapsed Calm Header:** Displays greeting (`Good Morning` / `Good Evening, [Name]`), anchor focus, and grounding reason with zero card clutter.
-- **Single Hero Ritual Card:** Automatically displays whichever ritual is relevant based on time of day (Morning Intention before 2 PM; Evening Reflection after 2 PM).
+- **Single Hero Check-in Card:** Automatically displays whichever check-in is relevant based on time of day (Morning Intention before 2 PM; Evening Reflection after 2 PM).
 - **Secondary Supporting Area:** Displays full daily wisdom quote (untruncated with author attribution) paired with the "Pause & Breathe" grounding tool.
-- **Subtle Other-Ritual Switch:** A compact pill in the header enables toggling between morning and evening views on demand.
+- **Subtle Check-in Switch:** A compact pill in the header enables toggling between morning and evening views on demand.
 
 ### 2. 2-Dimensional Circumplex Mood Logging
 - Evaluates emotion along two human dimensions:
@@ -176,7 +176,7 @@ Layouts use an 8-step spacing scale (4px, 8px, 12px, 16px, 20px, 24px, 32px, 48p
 ### 5. Somatic Grounding Drawer ("Pause & Breathe")
 - Interactive 4-7-8 and box breathing simulator.
 - 5-4-3-2-1 sensory grounding checklist.
-- HTML5 Web Audio singing bowl chime synthesizer (zero external audio assets).
+- HTML5 Web Audio chime synthesizer (zero external audio assets).
 
 ---
 

@@ -10,10 +10,10 @@ function runOnboardingAndRecommendationsCheck() {
   console.log("1. Auditing recommended copy & label fixes...");
 
   const pwaContent = fs.readFileSync(path.resolve("app/components/PWAInstallPrompt.tsx"), "utf-8");
-  if (!pwaContent.includes("Quick homescreen access & quiet daily rituals")) {
+  if (!pwaContent.includes("Quick homescreen access & quiet daily check-ins")) {
     throw new Error("PWAInstallPrompt copy fix missing!");
   }
-  console.log("[✓] PASS: PWAInstallPrompt copy accurately states 'Quick homescreen access & quiet daily rituals'.");
+  console.log("[✓] PASS: PWAInstallPrompt copy accurately states 'Quick homescreen access & quiet daily check-ins'.");
 
   const exportModalContent = fs.readFileSync(path.resolve("app/components/ExportReportModal.tsx"), "utf-8");
   if (!exportModalContent.includes("Accountability & Session Report")) {
@@ -59,7 +59,7 @@ function runOnboardingAndRecommendationsCheck() {
   if (
     !onboardingContent.includes("Screen 2 of 3: Check-in Preview") ||
     !onboardingContent.includes("Interactive Preview • Try It Now") ||
-    !onboardingContent.includes("Experience the Evening Ritual")
+    !onboardingContent.includes("Experience the Evening Check-in")
   ) {
     throw new Error("Onboarding Screen 2 check-in preview missing!");
   }

@@ -290,7 +290,7 @@ export default function CheckInStepper({
               </div>
             )}
 
-            {/* ================= MORNING RITUAL (2 STEPS) ================= */}
+            {/* ================= MORNING CHECK-IN (2 STEPS) ================= */}
             {activeType === "morning" && (
               <AnimatePresence mode="wait">
                 {step === 1 ? (
@@ -415,7 +415,7 @@ export default function CheckInStepper({
               </AnimatePresence>
             )}
 
-            {/* ================= EVENING RITUAL (3 STEPS) ================= */}
+            {/* ================= EVENING CHECK-IN (3 STEPS) ================= */}
             {activeType === "evening" && (
               <AnimatePresence mode="wait">
                 {step === 1 ? (

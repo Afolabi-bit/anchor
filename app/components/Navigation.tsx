@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { href: "/today", label: "Today", icon: CalendarDays },
   { href: "/journal", label: "Journal", icon: BookOpen },
   { href: "/progress", label: "Progress", icon: BarChart3 },
-  { href: "/settings", label: "Sanctuary", icon: Settings },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Navigation({ userEmail, userName }: { userEmail?: string; userName?: string }) {

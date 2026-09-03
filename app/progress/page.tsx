@@ -143,7 +143,7 @@ export default function ProgressPage() {
           <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
             <div>
               <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
-                Insight Sanctuary
+                Progress & Insights
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
                 Progress & Rhythm

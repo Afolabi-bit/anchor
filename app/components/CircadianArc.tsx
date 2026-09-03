@@ -171,7 +171,7 @@ export default function CircadianArc({
         </div>
       </div>
 
-      {/* 3 Interactive Circadian Ritual Cards */}
+      {/* 3 Interactive Circadian Check-In Cards */}
       <div className="grid grid-cols-3 gap-3">
         {/* Node 1: Morning Dawn */}
         <motion.button

@@ -450,7 +450,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
-                Preferences & Sanctuary
+                Preferences & Settings
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
                 Settings & Anchors
@@ -481,7 +481,7 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Featured Community Sanctuary Card */}
+              {/* Featured Community Card */}
               <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 clay-card shadow-organic-md flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] flex items-center justify-center shadow-2xs">

@@ -47,7 +47,7 @@ export default function MilestoneGallery({ totalAnchoredDays }: MilestoneGallery
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
           <Award className="w-4 h-4 text-[#C86D51] shrink-0" />
-          <span className="truncate">Sanctuary Milestones</span>
+          <span className="truncate">Progress Milestones</span>
         </div>
 
         <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] dark:text-[#E2A365] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] shrink-0">

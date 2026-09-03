@@ -95,7 +95,7 @@ export default function GroundingDrawer({ triggerClassName }: { triggerClassName
                     triggerHaptic(10);
                   }}
                   className="p-2 rounded-full text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] hover:bg-[#F3EFE7] dark:hover:bg-[#2E2A26] transition-colors cursor-pointer text-xs flex items-center gap-1.5"
-                  title={soundEnabled ? "Mute singing bowl chime" : "Enable singing bowl chime"}
+                  title={soundEnabled ? "Mute gentle chime" : "Enable gentle chime"}
                 >
                   {soundEnabled ? <Volume2 className="w-4 h-4 text-[#658B70]" /> : <VolumeX className="w-4 h-4 text-[#9E948A]" />}
                   <span>{soundEnabled ? "Grounding Chime On" : "Chime Muted"}</span>

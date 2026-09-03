@@ -76,7 +76,7 @@ export default function LandingHero() {
           onClick={() => triggerHaptic(10)}
           className="btn-secondary btn-lg w-full sm:w-auto"
         >
-          <span>Sign in to your sanctuary</span>
+          <span>Sign in</span>
         </Link>
       </motion.div>
 
@@ -147,7 +147,7 @@ export default function LandingHero() {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-[11px] uppercase tracking-wider text-[#B88452] font-semibold">
-                    Morning Ritual
+                    Morning Check-in
                   </span>
                   <h3 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
                     "Stay sober & grounded"

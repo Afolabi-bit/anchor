@@ -159,7 +159,7 @@ export default function CommunityPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
-                Quiet Sanctuary
+                Quiet Space
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
                 Community Moments

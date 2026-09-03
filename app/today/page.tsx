@@ -57,9 +57,9 @@ export default function TodayPage() {
   // Stepper Modal State
   const [activeStepper, setActiveStepper] = useState<"morning" | "evening" | null>(null);
 
-  // Optional manual view override to review or edit the other ritual
+  // Optional manual view override to review or edit the other check-in
   const [viewOverride, setViewOverride] = useState<"morning" | "evening" | null>(null);
-  const currentRitual = viewOverride || (isEvening ? "evening" : "morning");
+  const currentView = viewOverride || (isEvening ? "evening" : "morning");
 
   // Daily Affirmation quote
   const affirmation = getTodayAffirmation();
@@ -215,7 +215,7 @@ export default function TodayPage() {
               )}
             </div>
 
-            {/* Subtle Top Affordance: Toggle to review/edit the other ritual */}
+            {/* Subtle Top Affordance: Toggle to review/edit the other check-in */}
             <div className="shrink-0 flex items-center gap-1.5 pt-1">
               {commitments.length > 1 && (
                 <button
@@ -237,12 +237,12 @@ export default function TodayPage() {
                 type="button"
                 onClick={() => {
                   triggerHaptic(8);
-                  setViewOverride(currentRitual === "evening" ? "morning" : "evening");
+                  setViewOverride(currentView === "evening" ? "morning" : "evening");
                 }}
                 className="text-xs px-3 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-white/80 dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title={currentRitual === "evening" ? "View Morning Intention" : "View Evening Reflection"}
+                title={currentView === "evening" ? "View Morning Intention" : "View Evening Reflection"}
               >
-                {currentRitual === "evening" ? (
+                {currentView === "evening" ? (
                   <>
                     <Sun className="w-3.5 h-3.5 text-[#B88452]" />
                     <span className="text-[11px] font-medium">{morningCheckIn ? "Morning Sealed" : "Morning"}</span>
@@ -294,11 +294,11 @@ export default function TodayPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* 2. ONE PRIMARY RITUAL CARD WITH ONE CLEAR ACTION BUTTON (Framer Motion)    */}
+          {/* 2. ONE PRIMARY CHECK-IN CARD WITH ONE CLEAR ACTION BUTTON (Framer Motion)  */}
           {/* ========================================================================= */}
           <AnimatePresence mode="wait">
-            {currentRitual === "morning" ? (
-              /* ----------------------- MORNING RITUAL CARD ----------------------- */
+            {currentView === "morning" ? (
+              /* ----------------------- MORNING CHECK-IN CARD ----------------------- */
               <motion.div
                 key="morning-card"
                 initial={{ opacity: 0, y: 10 }}
@@ -314,7 +314,7 @@ export default function TodayPage() {
                     </div>
                     <div>
                       <span className="text-[10px] uppercase tracking-wider font-bold text-[#B88452]">
-                        Morning Ritual
+                        Morning Check-in
                       </span>
                       <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
                         Set Your Daily Intention
@@ -380,7 +380,7 @@ export default function TodayPage() {
                 )}
               </motion.div>
             ) : (
-              /* ----------------------- EVENING REFLECTION CARD ----------------------- */
+              /* ----------------------- EVENING CHECK-IN CARD ----------------------- */
               <motion.div
                 key="evening-card"
                 initial={{ opacity: 0, y: 10 }}
@@ -396,7 +396,7 @@ export default function TodayPage() {
                     </div>
                     <div>
                       <span className="text-[10px] uppercase tracking-wider font-bold text-[#C86D51]">
-                        Evening Ritual
+                        Evening Check-in
                       </span>
                       <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
                         Close Your Day with Compassion

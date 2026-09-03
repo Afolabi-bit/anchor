@@ -109,7 +109,7 @@ export default function PWAInstallPrompt() {
               Install Anchor App
             </span>
             <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] block truncate">
-              Quick homescreen access & quiet daily rituals
+              Quick homescreen access & quiet daily check-ins
             </span>
           </div>
         </div>

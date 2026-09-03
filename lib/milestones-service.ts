@@ -15,7 +15,7 @@ export const MILESTONE_DEFINITIONS = [
     id: "step-1",
     title: "The First Step",
     subtitle: "1 Day Anchored",
-    description: "You stepped into the sanctuary and chose self-honesty over perfection.",
+    description: "You began your practice and chose self-honesty over perfection.",
     thresholdDays: 1,
     iconName: "Compass",
     accentColor: "#C86D51",
@@ -40,7 +40,7 @@ export const MILESTONE_DEFINITIONS = [
   },
   {
     id: "step-30",
-    title: "One Month Sanctuary",
+    title: "One Month Anchor",
     subtitle: "30 Days of Reflection",
     description: "A full month of non-judgmental presence and deep self-compassion.",
     thresholdDays: 30,
