@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Anchor, CalendarDays, BookOpen, BarChart3, Settings, LogOut, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
+import { performClientLogout } from "@/lib/client-storage";
 
 const NAV_ITEMS = [
   { href: "/today", label: "Today", icon: CalendarDays },
@@ -26,6 +27,9 @@ export default function Navigation({ userEmail, userName }: { userEmail?: string
     } else {
       document.body.classList.remove("privacy-active");
     }
+    return () => {
+      document.body.classList.remove("privacy-active");
+    };
   }, [privacyMode]);
 
   const togglePrivacyMode = () => {
@@ -34,7 +38,7 @@ export default function Navigation({ userEmail, userName }: { userEmail?: string
   };
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await performClientLogout();
     router.push("/login");
     router.refresh();
   };

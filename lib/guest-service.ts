@@ -53,7 +53,11 @@ export function isGuestMode(): boolean {
     const raw = localStorage.getItem(GUEST_STORAGE_KEY);
     if (!raw) return false;
     const parsed = JSON.parse(raw);
-    return Boolean(parsed?.isGuest);
+    const active = Boolean(parsed?.isGuest);
+    if (active && typeof document !== "undefined") {
+      document.cookie = "anchor_guest=true; path=/; max-age=2592000; SameSite=Lax";
+    }
+    return active;
   } catch {
     return false;
   }
@@ -90,6 +94,9 @@ export function initializeGuestCommitment(commitment: Omit<GuestCommitment, "id"
     },
   };
   setGuestState(updated);
+  if (typeof document !== "undefined") {
+    document.cookie = "anchor_guest=true; path=/; max-age=2592000; SameSite=Lax";
+  }
   return updated;
 }
 
@@ -132,5 +139,9 @@ export function clearGuestState(): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(GUEST_STORAGE_KEY);
+    if (typeof document !== "undefined") {
+      document.cookie = "anchor_guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
   } catch {}
 }
+

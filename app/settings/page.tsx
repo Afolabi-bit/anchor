@@ -7,6 +7,7 @@ import ExportReportModal from "@/app/components/ExportReportModal";
 import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
 import PageTransition from "@/app/components/PageTransition";
+import { SettingsSkeleton } from "@/app/components/Skeletons";
 import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-summary-service";
 import {
   Anchor,
@@ -41,6 +42,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { registerServiceWorker, subscribeToPush, unsubscribeFromPush } from "@/lib/push-client";
+import { performClientLogout } from "@/lib/client-storage";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
@@ -421,10 +423,19 @@ export default function SettingsPage() {
 
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await performClientLogout();
     router.push("/login");
     router.refresh();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
+        <Navigation />
+        <SettingsSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">

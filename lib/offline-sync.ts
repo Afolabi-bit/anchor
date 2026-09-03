@@ -161,3 +161,20 @@ export async function getLocalSnapshot<T>(key: string): Promise<T | null> {
     return null;
   }
 }
+
+export async function clearOfflineDatabase(): Promise<void> {
+  if (typeof window === "undefined" || !window.indexedDB) return;
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction([STORE_PENDING, STORE_CACHE], "readwrite");
+      tx.objectStore(STORE_PENDING).clear();
+      tx.objectStore(STORE_CACHE).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  } catch (err) {
+    console.warn("Could not clear offline indexedDB database:", err);
+  }
+}
+

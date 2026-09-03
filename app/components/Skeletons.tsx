@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export function TodaySkeleton() {
   return (
@@ -91,10 +91,38 @@ export function ProgressSkeleton() {
   );
 }
 
+export function SettingsSkeleton() {
+  return (
+    <div className="space-y-6 max-w-xl mx-auto w-full px-5 py-8 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-3 w-28 rounded-full skeleton-shimmer" />
+          <div className="h-7 w-48 rounded-2xl skeleton-shimmer" />
+        </div>
+      </div>
+
+      <div className="p-6 rounded-3xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FFFFFF] dark:bg-[#25221F] space-y-4 shadow-organic-md">
+        <div className="h-4 w-36 rounded-full skeleton-shimmer" />
+        <div className="space-y-3 pt-2">
+          <div className="h-10 rounded-xl skeleton-shimmer" />
+          <div className="h-10 rounded-xl skeleton-shimmer" />
+        </div>
+      </div>
+
+      <div className="p-6 rounded-3xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FFFFFF] dark:bg-[#25221F] space-y-4 shadow-organic-md">
+        <div className="h-4 w-40 rounded-full skeleton-shimmer" />
+        <div className="h-20 rounded-xl skeleton-shimmer" />
+      </div>
+    </div>
+  );
+}
+
 const Skeletons = {
   TodaySkeleton,
   JournalSkeleton,
   ProgressSkeleton,
+  SettingsSkeleton,
 };
 
 export default Skeletons;
+
