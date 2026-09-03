@@ -11,25 +11,50 @@ export default function PWAInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if already in standalone mode
-    if (
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true
-    ) {
-      setIsInstalled(true);
-      return;
-    }
+    // Check if already in standalone mode or marked as installed
+    try {
+      if (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone === true ||
+        localStorage.getItem("anchor_pwa_installed") === "true"
+      ) {
+        setIsInstalled(true);
+        return;
+      }
+    } catch {}
 
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Wait 3 seconds after page load before showing gentle prompt
-      setTimeout(() => setShowPrompt(true), 3000);
+
+      // Check if already prompted in this session
+      try {
+        const alreadyPrompted = sessionStorage.getItem(
+          "anchor_pwa_prompt_shown",
+        );
+        if (alreadyPrompted === "true") {
+          return;
+        }
+      } catch {}
+
+      // Wait 10 seconds after initial page interaction before showing gentle prompt once per session
+      setTimeout(() => {
+        try {
+          if (sessionStorage.getItem("anchor_pwa_prompt_shown") === "true")
+            return;
+          sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
+        } catch {}
+        setShowPrompt(true);
+      }, 10000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
     window.addEventListener("appinstalled", () => {
+      try {
+        localStorage.setItem("anchor_pwa_installed", "true");
+        sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
+      } catch {}
       setIsInstalled(true);
       setShowPrompt(false);
     });
@@ -42,9 +67,15 @@ export default function PWAInstallPrompt() {
   const handleInstall = async () => {
     if (!deferredPrompt) return;
     triggerHaptic(12);
+    try {
+      sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
+    } catch {}
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
+      try {
+        localStorage.setItem("anchor_pwa_installed", "true");
+      } catch {}
       setShowPrompt(false);
     }
     setDeferredPrompt(null);
@@ -52,6 +83,9 @@ export default function PWAInstallPrompt() {
 
   const handleDismiss = () => {
     triggerHaptic(8);
+    try {
+      sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
+    } catch {}
     setShowPrompt(false);
   };
 
