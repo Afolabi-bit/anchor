@@ -36,10 +36,14 @@ export const checkIns = pgTable("check_ins", {
   // Morning fields
   plannedActions: jsonb("planned_actions").$type<string[]>(),
   intentionNote: text("intention_note"),
+  intentionNoteIv: varchar("intention_note_iv", { length: 64 }),
+  intentionNoteKeyVersion: varchar("intention_note_key_version", { length: 32 }),
   
   // Evening fields
   status: varchar("status", { length: 16 }), // 'yes' | 'partial' | 'no'
   reflection: text("reflection"),
+  reflectionIv: varchar("reflection_iv", { length: 64 }),
+  reflectionKeyVersion: varchar("reflection_key_version", { length: 32 }),
   lessonsLearned: text("lessons_learned"),
   blockerTags: jsonb("blocker_tags").$type<string[]>(), // ['stress', 'time', 'urge', 'forgot', 'unmotivated', 'other']
   moodOrCraving: integer("mood_or_craving"), // 1 - 5 (kept for backward compat)
@@ -84,6 +88,36 @@ export const communityReflections = pgTable("community_reflections", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const journalEntries = pgTable("journal_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  title: varchar("title", { length: 255 }),
+  content: text("content").notNull(),
+  encryptionIv: varchar("encryption_iv", { length: 64 }),
+  encryptionKeyVersion: varchar("encryption_key_version", { length: 32 }),
+  moodValence: integer("mood_valence"),
+  moodEnergy: integer("mood_energy"),
+  tags: jsonb("tags").$type<string[]>(),
+  isStarred: boolean("is_starred").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const partnerPermissions = pgTable("partner_permissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  partnerEmail: varchar("partner_email", { length: 255 }),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  shareConsistency: boolean("share_consistency").default(false).notNull(),
+  shareMilestones: boolean("share_milestones").default(false).notNull(),
+  shareMoodTrends: boolean("share_mood_trends").default(false).notNull(),
+  shareBlockers: boolean("share_blockers").default(false).notNull(),
+  shareJournalNotes: boolean("share_journal_notes").default(false).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Commitment = typeof commitments.$inferSelect;
@@ -95,3 +129,8 @@ export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type CommunityReflection = typeof communityReflections.$inferSelect;
 export type NewCommunityReflection = typeof communityReflections.$inferInsert;
+export type JournalEntry = typeof journalEntries.$inferSelect;
+export type NewJournalEntry = typeof journalEntries.$inferInsert;
+export type PartnerPermission = typeof partnerPermissions.$inferSelect;
+export type NewPartnerPermission = typeof partnerPermissions.$inferInsert;
+

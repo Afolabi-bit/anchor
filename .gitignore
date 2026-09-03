@@ -35,8 +35,9 @@ yarn-error.log*
 .env*.local
 !.env.example
 
-# vercel
-.vercel
+# local data & backups
+.local-db-store.json
+scripts/backups/
 
 # typescript
 *.tsbuildinfo

@@ -7,6 +7,7 @@ import PageTransition from "@/app/components/PageTransition";
 import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import CheckInStepper from "@/app/components/CheckInStepper";
 import { JournalSkeleton } from "@/app/components/Skeletons";
+import JournalComposer from "@/app/components/JournalComposer";
 import {
   BookOpen,
   Calendar,
@@ -22,7 +23,9 @@ import {
   HeartHandshake,
   Plus,
   Star,
-  Quote
+  Quote,
+  Trash2,
+  PenLine
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
@@ -32,6 +35,7 @@ export default function JournalPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [checkIns, setCheckIns] = useState<any[]>([]);
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
   const [activeCommitment, setActiveCommitment] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<"all" | "yes" | "partial" | "no">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,10 +83,19 @@ export default function JournalPage() {
         setUser(meData.user);
         setActiveCommitment(meData.commitment);
 
-        const checkInsRes = await fetch("/api/checkins");
+        const [checkInsRes, journalRes] = await Promise.all([
+          fetch("/api/checkins"),
+          fetch("/api/journal"),
+        ]);
+
         if (checkInsRes.ok) {
           const data = await checkInsRes.json();
           setCheckIns(data.checkIns || []);
+        }
+
+        if (journalRes.ok) {
+          const jData = await journalRes.json();
+          setJournalEntries(jData.entries || []);
         }
       } catch (err) {
         console.error("Journal loading error:", err);
@@ -93,14 +106,46 @@ export default function JournalPage() {
     loadData();
   }, [router]);
 
-  // Group check-ins by Date
-  const groupedByDate: Record<string, { morning?: any; evening?: any }> = {};
+  const handleNewJournalEntry = (newEntry: any) => {
+    setJournalEntries((prev) => [newEntry, ...prev.filter((j) => j.id !== newEntry.id)]);
+    setExpandedDates((prev) => ({ ...prev, [newEntry.date]: true }));
+  };
+
+  const handleDeleteJournalEntry = async (entryId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!confirm("Are you sure you want to remove this reflection?")) return;
+    try {
+      triggerHaptic(10);
+      const res = await fetch(`/api/journal/${entryId}`, { method: "DELETE" });
+      if (res.ok) {
+        setJournalEntries((prev) => prev.filter((j) => j.id !== entryId));
+      }
+    } catch (err) {
+      console.error("Delete journal entry error:", err);
+    }
+  };
+
+  // Group check-ins and journal entries by Date
+  interface DayGroup {
+    morning?: any;
+    evening?: any;
+    journals: any[];
+  }
+
+  const groupedByDate: Record<string, DayGroup> = {};
   checkIns.forEach((item) => {
     if (!groupedByDate[item.date]) {
-      groupedByDate[item.date] = {};
+      groupedByDate[item.date] = { journals: [] };
     }
     if (item.type === "morning") groupedByDate[item.date].morning = item;
     if (item.type === "evening") groupedByDate[item.date].evening = item;
+  });
+
+  journalEntries.forEach((entry) => {
+    if (!groupedByDate[entry.date]) {
+      groupedByDate[entry.date] = { journals: [] };
+    }
+    groupedByDate[entry.date].journals.push(entry);
   });
 
   const sortedDates = Object.keys(groupedByDate).sort((a, b) => (b > a ? 1 : -1));
@@ -142,7 +187,13 @@ export default function JournalPage() {
           evening?.lessonsLearned?.toLowerCase().includes(q) ||
           evening?.blockerTags?.some((t: string) => t.toLowerCase().includes(q)) ||
           evening?.emotionName?.toLowerCase().includes(q);
-        return Boolean(morningMatches || eveningMatches || dateStr.includes(q));
+        const journalMatches = entry.journals?.some(
+          (j: any) =>
+            j.content?.toLowerCase().includes(q) ||
+            j.title?.toLowerCase().includes(q) ||
+            (j.tags && j.tags.some((t: string) => t.toLowerCase().includes(q)))
+        );
+        return Boolean(morningMatches || eveningMatches || journalMatches || dateStr.includes(q));
       }
 
       return true;
@@ -240,6 +291,9 @@ export default function JournalPage() {
               {filteredDates.length} {filteredDates.length === 1 ? "entry" : "entries"}
             </span>
           </div>
+
+          {/* Prominent Freeform Journal Composer */}
+          <JournalComposer onEntryCreated={handleNewJournalEntry} variant="full" />
 
           {/* Compact 7-Day Timeline Pebble Strip */}
           <div className="p-3.5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-2">
@@ -467,12 +521,18 @@ export default function JournalPage() {
                     </div>
 
                     {/* Excerpt preview when collapsed */}
-                    {!isExpanded && (evening?.reflection || morning?.intentionNote) && (
+                    {!isExpanded && (
                       <p
                         onClick={() => toggleExpand(dateStr)}
                         className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] truncate cursor-pointer"
                       >
-                        "{evening?.reflection || morning?.intentionNote}"
+                        {entry.journals?.[0]?.content
+                          ? `"${entry.journals[0].content}"`
+                          : evening?.reflection
+                          ? `"${evening.reflection}"`
+                          : morning?.intentionNote
+                          ? `"${morning.intentionNote}"`
+                          : "Tap to view day details"}
                       </p>
                     )}
 
@@ -535,6 +595,60 @@ export default function JournalPage() {
                                   <p className="text-[#2C2520] dark:text-[#ECE7E0] italic">{evening.lessonsLearned}</p>
                                 </div>
                               )}
+                            </div>
+                          )}
+
+                          {/* Freeform Journal Reflections Section */}
+                          {entry.journals && entry.journals.length > 0 && (
+                            <div className="space-y-2.5">
+                              <span className="text-[10px] uppercase tracking-wider font-bold text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
+                                <PenLine className="w-3 h-3 text-[#C86D51]" />
+                                Written Reflections ({entry.journals.length})
+                              </span>
+                              {entry.journals.map((journal: any) => (
+                                <div
+                                  key={journal.id}
+                                  className="p-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#201D1A] border border-[#EAE3D7] dark:border-[#38332E] space-y-2 shadow-2xs"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
+                                        {journal.title || "Daily Reflection"}
+                                      </span>
+                                      {journal.moodValence !== null && journal.moodValence !== undefined && (
+                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold">
+                                          Mood {journal.moodValence > 0 ? `+${journal.moodValence}` : journal.moodValence}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDeleteJournalEntry(journal.id, e)}
+                                      className="text-[#9E948A] hover:text-[#C86D51] p-1 cursor-pointer"
+                                      title="Delete reflection"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+
+                                  <p className="font-serif text-xs text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed whitespace-pre-wrap">
+                                    {journal.content}
+                                  </p>
+
+                                  {journal.tags && journal.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 pt-1">
+                                      {journal.tags.map((tg: string) => (
+                                        <span
+                                          key={tg}
+                                          className="text-[10px] px-2 py-0.5 rounded-md bg-[#F3EFE7] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096]"
+                                        >
+                                          #{tg}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </motion.div>

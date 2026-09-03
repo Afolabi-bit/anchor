@@ -21,7 +21,8 @@ export function createSpeechRecognizer(
     (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
   const recognition = new SpeechRecognition();
-  recognition.continuous = true;
+  // continuous = false is significantly more reliable across localhost and desktop Chromium
+  recognition.continuous = false;
   recognition.interimResults = true;
   recognition.lang = "en-US";
 
@@ -34,9 +35,21 @@ export function createSpeechRecognizer(
   };
 
   recognition.onerror = (event: any) => {
-    console.error("Speech recognition error:", event.error);
     onStateChange(false);
-    if (onError) onError(event.error);
+
+    // Filter out normal silence/aborts without noisy warnings
+    if (event.error === "no-speech" || event.error === "aborted") {
+      return;
+    }
+
+    let userFriendlyMsg = "Voice dictation is temporarily unavailable. You can type freely.";
+    if (event.error === "network") {
+      userFriendlyMsg = "Speech service couldn't connect. You can type your reflection directly.";
+    } else if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+      userFriendlyMsg = "Microphone access was not permitted. You can type your reflection.";
+    }
+
+    if (onError) onError(userFriendlyMsg);
   };
 
   recognition.onresult = (event: any) => {

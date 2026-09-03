@@ -30,6 +30,7 @@ export default function SponsorSharePage() {
   const params = useParams();
   const token = params?.token as string;
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
 
   // Encouragement Form State
@@ -42,13 +43,17 @@ export default function SponsorSharePage() {
     async function loadData() {
       try {
         setLoading(true);
+        setErrorMsg(null);
         const res = await fetch(`/api/sponsor/${token || "default"}`);
-        if (res.ok) {
-          const json = await res.json();
+        const json = await res.json();
+        if (!res.ok) {
+          setErrorMsg(json.error || "This companion link is no longer available.");
+        } else {
           setData(json);
         }
       } catch (err) {
         console.error("Companion load error:", err);
+        setErrorMsg("Failed to connect to the companion portal.");
       } finally {
         setLoading(false);
       }
@@ -113,6 +118,24 @@ export default function SponsorSharePage() {
         {loading ? (
           <div className="p-12 text-center text-sm font-serif text-[#786F66] dark:text-[#A8A096]">
             Connecting to companion stream...
+          </div>
+        ) : errorMsg ? (
+          <div className="p-8 rounded-3xl bg-white dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-md text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#FDF2E9] dark:bg-[#352518] text-[#C86D51] flex items-center justify-center mx-auto">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
+              Partner Link Inactive
+            </h2>
+            <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed max-w-sm mx-auto">
+              {errorMsg}
+            </p>
+            <Link
+              href="/"
+              className="inline-block px-5 py-2.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] border border-[#EAE3D7] dark:border-[#38332E] hover:border-[#C86D51] transition-colors"
+            >
+              Return Home
+            </Link>
           </div>
         ) : (
           <div className="space-y-6">

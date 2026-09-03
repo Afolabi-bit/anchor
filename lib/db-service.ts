@@ -2,6 +2,30 @@ import { db, schema } from "@/db";
 import { eq, and, desc, asc } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
+import { encryptField, decryptField } from "@/lib/encryption";
+
+// Helpers for transparent field decryption
+function decryptCheckIn(c: schema.CheckIn): schema.CheckIn {
+  return {
+    ...c,
+    intentionNote: c.intentionNote
+      ? decryptField(c.intentionNote, c.intentionNoteIv, c.intentionNoteKeyVersion) ?? c.intentionNote
+      : c.intentionNote,
+    reflection: c.reflection
+      ? decryptField(c.reflection, c.reflectionIv, c.reflectionKeyVersion) ?? c.reflection
+      : c.reflection,
+  };
+}
+
+function decryptJournalEntry(j: schema.JournalEntry): schema.JournalEntry {
+  return {
+    ...j,
+    content: j.content
+      ? decryptField(j.content, j.encryptionIv, j.encryptionKeyVersion) ?? j.content
+      : j.content,
+  };
+}
+
 
 // Local storage fallback for seamless testing when DATABASE_URL is not yet connected
 const LOCAL_STORE_FILE = path.join(process.cwd(), ".local-db-store.json");
@@ -11,18 +35,26 @@ interface LocalDBStore {
   commitments: Array<schema.Commitment>;
   checkIns: Array<schema.CheckIn>;
   weeklyRecaps: Array<schema.WeeklyRecap>;
+  journalEntries: Array<schema.JournalEntry>;
 }
 
 function readLocalStore(): LocalDBStore {
   try {
     if (fs.existsSync(LOCAL_STORE_FILE)) {
       const data = fs.readFileSync(LOCAL_STORE_FILE, "utf-8");
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      return {
+        users: parsed.users || [],
+        commitments: parsed.commitments || [],
+        checkIns: parsed.checkIns || [],
+        weeklyRecaps: parsed.weeklyRecaps || [],
+        journalEntries: parsed.journalEntries || [],
+      };
     }
   } catch (e) {
     console.error("Error reading local DB store:", e);
   }
-  return { users: [], commitments: [], checkIns: [], weeklyRecaps: [] };
+  return { users: [], commitments: [], checkIns: [], weeklyRecaps: [], journalEntries: [] };
 }
 
 function writeLocalStore(store: LocalDBStore) {
@@ -221,27 +253,32 @@ export async function updateCommitment(
 // ----------------- CHECK-INS -----------------
 export async function getCheckInsByUserId(userId: string): Promise<schema.CheckIn[]> {
   if (db) {
-    return db
+    const rows = await db
       .select()
       .from(schema.checkIns)
       .where(eq(schema.checkIns.userId, userId))
       .orderBy(desc(schema.checkIns.date), desc(schema.checkIns.createdAt));
+    return rows.map(decryptCheckIn);
   }
   const store = readLocalStore();
-  return store.checkIns
+  return (store.checkIns || [])
     .filter((c) => c.userId === userId)
-    .sort((a, b) => (b.date > a.date ? 1 : -1));
+    .sort((a, b) => (b.date > a.date ? 1 : -1))
+    .map(decryptCheckIn);
 }
 
 export async function getCheckInsForDate(userId: string, dateStr: string): Promise<schema.CheckIn[]> {
   if (db) {
-    return db
+    const rows = await db
       .select()
       .from(schema.checkIns)
       .where(and(eq(schema.checkIns.userId, userId), eq(schema.checkIns.date, dateStr)));
+    return rows.map(decryptCheckIn);
   }
   const store = readLocalStore();
-  return store.checkIns.filter((c) => c.userId === userId && c.date === dateStr);
+  return (store.checkIns || [])
+    .filter((c) => c.userId === userId && c.date === dateStr)
+    .map(decryptCheckIn);
 }
 
 export async function upsertCheckIn(data: {
@@ -261,16 +298,49 @@ export async function upsertCheckIn(data: {
   moodArousal?: number;
   isLate?: boolean;
 }): Promise<schema.CheckIn> {
+  // Transparently encrypt sensitive free-text fields before writing
+  const writeData: any = { ...data };
+
+  if (data.intentionNote !== undefined) {
+    if (data.intentionNote && data.intentionNote.trim()) {
+      const enc = encryptField(data.intentionNote);
+      if (enc) {
+        writeData.intentionNote = enc.ciphertext;
+        writeData.intentionNoteIv = enc.iv;
+        writeData.intentionNoteKeyVersion = enc.keyVersion;
+      }
+    } else {
+      writeData.intentionNote = null;
+      writeData.intentionNoteIv = null;
+      writeData.intentionNoteKeyVersion = null;
+    }
+  }
+
+  if (data.reflection !== undefined) {
+    if (data.reflection && data.reflection.trim()) {
+      const enc = encryptField(data.reflection);
+      if (enc) {
+        writeData.reflection = enc.ciphertext;
+        writeData.reflectionIv = enc.iv;
+        writeData.reflectionKeyVersion = enc.keyVersion;
+      }
+    } else {
+      writeData.reflection = null;
+      writeData.reflectionIv = null;
+      writeData.reflectionKeyVersion = null;
+    }
+  }
+
   if (db) {
     const existing = await db
       .select()
       .from(schema.checkIns)
       .where(
         and(
-          eq(schema.checkIns.userId, data.userId),
-          eq(schema.checkIns.commitmentId, data.commitmentId),
-          eq(schema.checkIns.date, data.date),
-          eq(schema.checkIns.type, data.type)
+          eq(schema.checkIns.userId, writeData.userId),
+          eq(schema.checkIns.commitmentId, writeData.commitmentId),
+          eq(schema.checkIns.date, writeData.date),
+          eq(schema.checkIns.type, writeData.type)
         )
       )
       .limit(1);
@@ -278,56 +348,60 @@ export async function upsertCheckIn(data: {
     if (existing.length > 0) {
       const result = await db
         .update(schema.checkIns)
-        .set(data)
+        .set(writeData)
         .where(eq(schema.checkIns.id, existing[0].id))
         .returning();
-      return result[0];
+      return decryptCheckIn(result[0]);
     }
 
-    const result = await db.insert(schema.checkIns).values(data).returning();
-    return result[0];
+    const result = await db.insert(schema.checkIns).values(writeData).returning();
+    return decryptCheckIn(result[0]);
   }
 
   const store = readLocalStore();
   const index = store.checkIns.findIndex(
     (c) =>
-      c.userId === data.userId &&
-      c.commitmentId === data.commitmentId &&
-      c.date === data.date &&
-      c.type === data.type
+      c.userId === writeData.userId &&
+      c.commitmentId === writeData.commitmentId &&
+      c.date === writeData.date &&
+      c.type === writeData.type
   );
 
   if (index !== -1) {
     store.checkIns[index] = {
       ...store.checkIns[index],
-      ...data,
+      ...writeData,
     };
     writeLocalStore(store);
-    return store.checkIns[index];
+    return decryptCheckIn(store.checkIns[index]);
   }
 
   const newCheckIn: schema.CheckIn = {
     id: crypto.randomUUID(),
-    userId: data.userId,
-    commitmentId: data.commitmentId,
-    date: data.date,
-    type: data.type,
-    plannedActions: data.plannedActions || null,
-    intentionNote: data.intentionNote || null,
-    status: data.status || null,
-    reflection: data.reflection || null,
-    lessonsLearned: data.lessonsLearned || null,
-    blockerTags: data.blockerTags || null,
-    moodOrCraving: data.moodOrCraving ?? null,
-    emotionName: data.emotionName || null,
-    moodValence: data.moodValence ?? null,
-    moodArousal: data.moodArousal ?? null,
-    isLate: data.isLate ?? false,
+    userId: writeData.userId,
+    commitmentId: writeData.commitmentId,
+    date: writeData.date,
+    type: writeData.type,
+    plannedActions: writeData.plannedActions || null,
+    intentionNote: writeData.intentionNote || null,
+    intentionNoteIv: writeData.intentionNoteIv || null,
+    intentionNoteKeyVersion: writeData.intentionNoteKeyVersion || null,
+    status: writeData.status || null,
+    reflection: writeData.reflection || null,
+    reflectionIv: writeData.reflectionIv || null,
+    reflectionKeyVersion: writeData.reflectionKeyVersion || null,
+    lessonsLearned: writeData.lessonsLearned || null,
+    blockerTags: writeData.blockerTags || null,
+    moodOrCraving: writeData.moodOrCraving ?? null,
+    emotionName: writeData.emotionName || null,
+    moodValence: writeData.moodValence ?? null,
+    moodArousal: writeData.moodArousal ?? null,
+    isLate: writeData.isLate ?? false,
     createdAt: new Date(),
   };
   store.checkIns.push(newCheckIn);
   writeLocalStore(store);
-  return newCheckIn;
+  return decryptCheckIn(newCheckIn);
 }
 
 // ----------------- WEEKLY RECAPS -----------------
@@ -506,4 +580,162 @@ export async function incrementReflectionResonates(id: string): Promise<boolean>
   }
   return false;
 }
+
+// ----------------- JOURNAL ENTRIES -----------------
+export async function getJournalEntriesForUser(userId: string): Promise<schema.JournalEntry[]> {
+  if (db) {
+    const rows = await db
+      .select()
+      .from(schema.journalEntries)
+      .where(eq(schema.journalEntries.userId, userId))
+      .orderBy(desc(schema.journalEntries.date), desc(schema.journalEntries.createdAt));
+    return rows.map(decryptJournalEntry);
+  }
+  const store = readLocalStore();
+  return (store.journalEntries || [])
+    .filter((j) => j.userId === userId)
+    .sort((a, b) => (b.date > a.date ? 1 : -1))
+    .map(decryptJournalEntry);
+}
+
+export async function getJournalEntriesForDate(userId: string, dateStr: string): Promise<schema.JournalEntry[]> {
+  if (db) {
+    const rows = await db
+      .select()
+      .from(schema.journalEntries)
+      .where(and(eq(schema.journalEntries.userId, userId), eq(schema.journalEntries.date, dateStr)))
+      .orderBy(desc(schema.journalEntries.createdAt));
+    return rows.map(decryptJournalEntry);
+  }
+  const store = readLocalStore();
+  return (store.journalEntries || [])
+    .filter((j) => j.userId === userId && j.date === dateStr)
+    .map(decryptJournalEntry);
+}
+
+export async function createJournalEntry(data: {
+  userId: string;
+  date: string;
+  title?: string;
+  content: string;
+  moodValence?: number;
+  moodEnergy?: number;
+  tags?: string[];
+  isStarred?: boolean;
+}): Promise<schema.JournalEntry> {
+  const now = new Date();
+  let contentPayload = data.content.trim();
+  let ivPayload: string | null = null;
+  let keyVerPayload: string | null = null;
+
+  const enc = encryptField(contentPayload);
+  if (enc) {
+    contentPayload = enc.ciphertext;
+    ivPayload = enc.iv;
+    keyVerPayload = enc.keyVersion;
+  }
+
+  if (db) {
+    const result = await db
+      .insert(schema.journalEntries)
+      .values({
+        userId: data.userId,
+        date: data.date,
+        title: data.title?.trim() || null,
+        content: contentPayload,
+        encryptionIv: ivPayload,
+        encryptionKeyVersion: keyVerPayload,
+        moodValence: typeof data.moodValence === "number" ? data.moodValence : null,
+        moodEnergy: typeof data.moodEnergy === "number" ? data.moodEnergy : null,
+        tags: data.tags || [],
+        isStarred: data.isStarred || false,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    return decryptJournalEntry(result[0]);
+  }
+
+  const store = readLocalStore();
+  const newEntry: schema.JournalEntry = {
+    id: crypto.randomUUID(),
+    userId: data.userId,
+    date: data.date,
+    title: data.title?.trim() || null,
+    content: contentPayload,
+    encryptionIv: ivPayload,
+    encryptionKeyVersion: keyVerPayload,
+    moodValence: typeof data.moodValence === "number" ? data.moodValence : null,
+    moodEnergy: typeof data.moodEnergy === "number" ? data.moodEnergy : null,
+    tags: data.tags || [],
+    isStarred: data.isStarred || false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  store.journalEntries = store.journalEntries || [];
+  store.journalEntries.unshift(newEntry);
+  writeLocalStore(store);
+  return decryptJournalEntry(newEntry);
+}
+
+export async function updateJournalEntry(
+  id: string,
+  userId: string,
+  updates: Partial<Omit<schema.JournalEntry, "id" | "userId" | "createdAt">>
+): Promise<schema.JournalEntry | null> {
+  const now = new Date();
+  const writeUpdates: any = { ...updates, updatedAt: now };
+
+  if (updates.content !== undefined) {
+    if (updates.content && updates.content.trim()) {
+      const enc = encryptField(updates.content);
+      if (enc) {
+        writeUpdates.content = enc.ciphertext;
+        writeUpdates.encryptionIv = enc.iv;
+        writeUpdates.encryptionKeyVersion = enc.keyVersion;
+      }
+    } else {
+      writeUpdates.content = "";
+      writeUpdates.encryptionIv = null;
+      writeUpdates.encryptionKeyVersion = null;
+    }
+  }
+
+  if (db) {
+    const result = await db
+      .update(schema.journalEntries)
+      .set(writeUpdates)
+      .where(and(eq(schema.journalEntries.id, id), eq(schema.journalEntries.userId, userId)))
+      .returning();
+    return result[0] ? decryptJournalEntry(result[0]) : null;
+  }
+
+  const store = readLocalStore();
+  store.journalEntries = store.journalEntries || [];
+  const index = store.journalEntries.findIndex((j) => j.id === id && j.userId === userId);
+  if (index === -1) return null;
+  store.journalEntries[index] = {
+    ...store.journalEntries[index],
+    ...writeUpdates,
+  };
+  writeLocalStore(store);
+  return decryptJournalEntry(store.journalEntries[index]);
+}
+
+export async function deleteJournalEntry(id: string, userId: string): Promise<boolean> {
+  if (db) {
+    const result = await db
+      .delete(schema.journalEntries)
+      .where(and(eq(schema.journalEntries.id, id), eq(schema.journalEntries.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+  const store = readLocalStore();
+  store.journalEntries = store.journalEntries || [];
+  const initialLen = store.journalEntries.length;
+  store.journalEntries = store.journalEntries.filter((j) => !(j.id === id && j.userId === userId));
+  writeLocalStore(store);
+  return store.journalEntries.length < initialLen;
+}
+
 

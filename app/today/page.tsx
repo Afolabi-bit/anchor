@@ -10,6 +10,7 @@ import PageTransition from "@/app/components/PageTransition";
 import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import { TodaySkeleton } from "@/app/components/Skeletons";
 import { getTodayAffirmation } from "@/lib/affirmations";
+import JournalComposer from "@/app/components/JournalComposer";
 import {
   Sun,
   Moon,
@@ -507,6 +508,11 @@ export default function TodayPage() {
               )}
             </div>
           )}
+
+          {/* Lightweight Daily Reflection Composer */}
+          <div className="pt-1">
+            <JournalComposer variant="compact" />
+          </div>
         </main>
       </PageTransition>
 
