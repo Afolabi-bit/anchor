@@ -13,33 +13,51 @@ import {
   HeartHandshake,
   Shield,
   Clock,
-  Compass
+  Compass,
+  Sliders,
+  CheckCircle2,
+  Lock,
+  Volume2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
+import { initializeGuestCommitment } from "@/lib/guest-service";
 
-const SUGGESTED_COMMITMENTS = [
-  { name: "Stay sober & clean", why: "To stay clear-headed and present for the people I love.", tag: "Recovery" },
-  { name: "20-minute daily walk", why: "To breathe fresh air and calm my nervous system.", tag: "Wellness" },
-  { name: "Mindful evening wind-down", why: "To protect my sleep and decompress peacefully.", tag: "Rest" },
-  { name: "No compulsive spending", why: "To rebuild financial peace and stability.", tag: "Habits" },
-  { name: "1 hour of focused craft", why: "To make steady progress without rushing.", tag: "Growth" },
+const INTENTION_PRESETS = [
+  {
+    name: "Stay clean & sober",
+    why: "To stay clear-headed and present for the people I love.",
+    tag: "Recovery",
+  },
+  {
+    name: "Nervous system calm & grounding",
+    why: "To breathe through midday stress and respond with patience.",
+    tag: "Calm",
+  },
+  {
+    name: "Mindful evening wind-down",
+    why: "To protect my sleep quality and decompress peacefully.",
+    tag: "Rest",
+  },
+  {
+    name: "1 hour of focused craft",
+    why: "To make steady creative progress without distraction.",
+    tag: "Focus",
+  },
 ];
 
-const DAYS_OF_WEEK = [
-  { id: 0, label: "Sun" },
-  { id: 1, label: "Mon" },
-  { id: 2, label: "Tue" },
-  { id: 3, label: "Wed" },
-  { id: 4, label: "Thu" },
-  { id: 5, label: "Fri" },
-  { id: 6, label: "Sat" },
+const PREVIEW_BLOCKER_TAGS = [
+  { id: "stress", label: "Stress" },
+  { id: "fatigue", label: "Fatigue" },
+  { id: "time", label: "Time strain" },
+  { id: "urges", label: "Impulse urges" },
+  { id: "distraction", label: "Distraction" },
 ];
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   useEffect(() => {
     async function loadUser() {
@@ -55,33 +73,55 @@ export default function OnboardingPage() {
   }, []);
 
   // Form State
-  const [commitmentName, setCommitmentName] = useState("");
-  const [commitmentWhy, setCommitmentWhy] = useState("");
+  const [commitmentName, setCommitmentName] = useState("Stay clean & sober");
+  const [commitmentWhy, setCommitmentWhy] = useState("To stay clear-headed and present for the people I love.");
   const [frequency, setFrequency] = useState<"daily" | "custom_days">("daily");
-  const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [morningTime, setMorningTime] = useState("08:00");
   const [eveningTime, setEveningTime] = useState("20:00");
+
+  // Screen 2 Interactive Preview State
+  const [previewStatus, setPreviewStatus] = useState<"yes" | "partial" | "no">("yes");
+  const [previewValence, setPreviewValence] = useState<number>(2);
+  const [previewEnergy, setPreviewEnergy] = useState<number>(3);
+  const [previewBlockers, setPreviewBlockers] = useState<string[]>([]);
+  const [previewSealed, setPreviewSealed] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const toggleDay = (dayId: number) => {
-    triggerHaptic(10);
-    if (customDays.includes(dayId)) {
-      if (customDays.length > 1) {
-        setCustomDays(customDays.filter((d) => d !== dayId));
-      }
-    } else {
-      setCustomDays([...customDays, dayId].sort());
-    }
+  const togglePreviewBlocker = (id: string) => {
+    triggerHaptic(8);
+    setPreviewBlockers((prev) =>
+      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]
+    );
   };
 
-  const handleComplete = async () => {
+  const handleSealPreview = () => {
+    playSingingBowlChime(432);
+    triggerHaptic([15, 30, 20]);
+    setPreviewSealed(true);
+  };
+
+  // Complete onboarding for authenticated user
+  const handleCompleteAccount = async () => {
     try {
       setLoading(true);
       setError("");
-      playSingingBowlChime(528);
+      playSingingBowlChime(432);
       triggerHaptic([20, 50, 30]);
+
+      // If user is not yet signed up, save state locally and route to signup
+      if (!user) {
+        initializeGuestCommitment({
+          name: commitmentName.trim(),
+          why: commitmentWhy.trim(),
+          frequency,
+          morningTime,
+          eveningTime,
+        });
+        router.push("/signup?from=onboarding");
+        return;
+      }
 
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
@@ -89,10 +129,10 @@ export default function OnboardingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          commitmentName,
-          commitmentWhy,
+          commitmentName: commitmentName.trim(),
+          commitmentWhy: commitmentWhy.trim(),
           frequency,
-          customDays: frequency === "daily" ? [0, 1, 2, 3, 4, 5, 6] : customDays,
+          customDays: [0, 1, 2, 3, 4, 5, 6],
           morningNotificationTime: morningTime,
           eveningNotificationTime: eveningTime,
           timezone: userTimezone,
@@ -114,10 +154,24 @@ export default function OnboardingPage() {
     }
   };
 
+  // Complete onboarding in Guest Mode (No account required!)
+  const handleContinueAsGuest = () => {
+    triggerHaptic(12);
+    playSingingBowlChime(432);
+    initializeGuestCommitment({
+      name: commitmentName.trim(),
+      why: commitmentWhy.trim(),
+      frequency,
+      morningTime,
+      eveningTime,
+    });
+    router.push("/today");
+  };
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-5 py-8 sm:py-12 bg-[#FAF7F2] dark:bg-[#1C1917] transition-colors duration-200">
       <div className="w-full max-w-lg">
-        {/* Top Indicator */}
+        {/* Top Brand & Step Indicator */}
         <div className="text-center mb-6 sm:mb-8">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -127,284 +181,270 @@ export default function OnboardingPage() {
             <Anchor className="w-6 h-6 sm:w-7 sm:h-7" />
           </motion.div>
 
-          {step > 0 && (
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className={`h-1.5 w-8 sm:w-10 rounded-full transition-colors duration-300 ${step >= 1 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
-              <div className={`h-1.5 w-8 sm:w-10 rounded-full transition-colors duration-300 ${step >= 2 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
-              <div className={`h-1.5 w-8 sm:w-10 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
-            </div>
-          )}
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className={`h-1.5 w-10 sm:w-12 rounded-full transition-colors duration-300 ${step >= 1 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
+            <div className={`h-1.5 w-10 sm:w-12 rounded-full transition-colors duration-300 ${step >= 2 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
+            <div className={`h-1.5 w-10 sm:w-12 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
+          </div>
 
           <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
-            {step === 0
-              ? "Welcome to Anchor"
-              : step === 1
-              ? "Step 1 of 3: Core Commitment"
+            {step === 1
+              ? "Screen 1 of 3: Primary Intention"
               : step === 2
-              ? "Step 2 of 3: Grounding Reason"
-              : "Step 3 of 3: Daily Cadence"}
+              ? "Screen 2 of 3: Check-in Preview"
+              : "Screen 3 of 3: Cadence & Privacy"}
           </span>
         </div>
 
-        {/* Card Frame with Animated Transitions */}
+        {/* Card Frame */}
         <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-5 sm:p-8 shadow-organic-md clay-card">
-          {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-[#FAF2EA] border border-[#F2D7CE] text-[#B88452] text-xs">
-              {error}
-            </div>
-          )}
-
           <AnimatePresence mode="wait">
-            {/* ---------------- STEP 0: SANCTUARY WELCOME ---------------- */}
-            {step === 0 && (
-              <motion.div
-                key="step0"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25 }}
-                className="space-y-6 text-center"
-              >
-                <div>
-                  <h2 className="font-serif-title text-3xl text-[#2C2520] dark:text-[#ECE7E0] leading-snug">
-                    Take a breath{user?.firstName ? `, ${user.firstName}` : ""}. <br />
-                    <span className="italic text-[#C86D51] dark:text-[#DB8165]">You are safe here.</span>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-3 leading-relaxed max-w-sm mx-auto">
-                    Anchor is built differently. There are no shame scorecards, no broken streak punishments, and no judgment.
-                  </p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-left space-y-3 text-xs">
-                  <div className="flex items-center gap-2.5 text-[#2C2520] dark:text-[#ECE7E0]">
-                    <Sparkles className="w-4 h-4 text-[#B88452] shrink-0" />
-                    <span>Two quiet moments each day: Morning & Evening.</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-[#2C2520] dark:text-[#ECE7E0]">
-                    <HeartHandshake className="w-4 h-4 text-[#658B70] shrink-0" />
-                    <span>Soft landings when days don't go according to plan.</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-[#2C2520] dark:text-[#ECE7E0]">
-                    <Shield className="w-4 h-4 text-[#C86D51] shrink-0" />
-                    <span>Encrypted and private to you.</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic(12);
-                    setStep(1);
-                  }}
-                  className="w-full py-4 px-6 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-organic-sm hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <span>Set up my daily anchor</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </motion.div>
-            )}
-
-            {/* ---------------- STEP 1: COMMITMENT DISCOVERY ---------------- */}
+            {/* ================= SCREEN 1: PRIMARY INTENTION ================= */}
             {step === 1 && (
               <motion.div
-                key="step1"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
+                key="step-1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25 }}
                 className="space-y-6"
               >
-                <div>
-                  <h2 className="font-serif-title text-2xl sm:text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
-                    {user?.firstName ? `${user.firstName}, what` : "What"} are you showing up for?
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-1.5 leading-relaxed">
-                    Anchor works best when focused on one core daily anchor.
+                <div className="space-y-2">
+                  <h1 className="font-serif-title text-2xl sm:text-3xl text-[#2C2520] dark:text-[#ECE7E0] leading-tight">
+                    What anchor are you anchoring right now?
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    Choose one core focus to show up for each day. Anchor is designed around single-habit clarity.
                   </p>
                 </div>
 
-                {/* Commitment Input */}
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5" htmlFor="commitmentName">
-                    Your Commitment
+                {/* Presets Grid */}
+                <div className="space-y-2.5">
+                  <label className="text-[11px] uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096] block">
+                    Suggested Focuses
                   </label>
-                  <input
-                    id="commitmentName"
-                    type="text"
-                    required
-                    value={commitmentName}
-                    onChange={(e) => setCommitmentName(e.target.value)}
-                    placeholder="e.g. Stay sober, 20m daily walk, Mindful wind-down"
-                    className="w-full px-4 py-3.5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] text-sm focus:outline-none focus:border-[#C86D51] transition-colors shadow-2xs"
-                  />
-                </div>
-
-                {/* Inspiration Quick-picks */}
-                <div>
-                  <span className="block text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-2">
-                    Gentle ideas you can tap:
-                  </span>
-                  <div className="space-y-2">
-                    {SUGGESTED_COMMITMENTS.map((item) => (
-                      <button
-                        key={item.name}
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic(10);
-                          setCommitmentName(item.name);
-                          setCommitmentWhy(item.why);
-                        }}
-                        className={`w-full text-left p-3 rounded-2xl border transition-all flex items-center justify-between text-xs cursor-pointer ${
-                          commitmentName === item.name
-                            ? "border-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] font-medium"
-                            : "border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520]"
-                        }`}
-                      >
-                        <span>{item.name}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]">
-                          {item.tag}
-                        </span>
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-1 gap-2">
+                    {INTENTION_PRESETS.map((preset) => {
+                      const isSelected = commitmentName === preset.name;
+                      return (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic(10);
+                            setCommitmentName(preset.name);
+                            setCommitmentWhy(preset.why);
+                          }}
+                          className={`w-full p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                            isSelected
+                              ? "bg-[#FAF2EA] dark:bg-[#352A1E] border-[#C86D51] text-[#2C2520] dark:text-[#ECE7E0] shadow-2xs"
+                              : "bg-[#FAF7F2] dark:bg-[#1E1B18] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:border-[#B88452]"
+                          }`}
+                        >
+                          <div className="space-y-0.5 min-w-0">
+                            <span className="font-semibold text-xs sm:text-sm block text-[#2C2520] dark:text-[#ECE7E0] truncate">
+                              {preset.name}
+                            </span>
+                            <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] line-clamp-1">
+                              {preset.why}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-[#C86D51] text-white flex items-center justify-center shrink-0 mt-0.5">
+                              <Check className="w-3 h-3" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(10);
-                      setStep(0);
-                    }}
-                    className="py-4 px-5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] text-sm font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back</span>
-                  </button>
+                {/* Custom Name & Why Input */}
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block mb-1">
+                      Anchor Name
+                    </label>
+                    <input
+                      type="text"
+                      value={commitmentName}
+                      onChange={(e) => setCommitmentName(e.target.value)}
+                      placeholder="e.g. Daily breathwork & sobriety"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-xs text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51]"
+                    />
+                  </div>
 
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block mb-1">
+                      Your Grounding Why
+                    </label>
+                    <input
+                      type="text"
+                      value={commitmentWhy}
+                      onChange={(e) => setCommitmentWhy(e.target.value)}
+                      placeholder="e.g. To stay clear-headed and calm"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-xs text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51]"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
                   <button
                     type="button"
+                    disabled={!commitmentName.trim()}
                     onClick={() => {
-                      if (!commitmentName.trim()) {
-                        setError("Please enter your commitment.");
-                        return;
-                      }
-                      setError("");
                       triggerHaptic(12);
                       setStep(2);
                     }}
-                    className="flex-1 py-4 px-5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-organic-sm hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full py-3 rounded-full bg-[#C86D51] hover:bg-[#B35D43] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-organic-sm cursor-pointer transition-colors"
                   >
-                    <span>Continue</span>
+                    <span>Try a Check-In Preview</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </motion.div>
             )}
 
-            {/* ---------------- STEP 2: THE GROUNDING WHY ---------------- */}
+            {/* ================= SCREEN 2: CHECK-IN PREVIEW (TRY BEFORE COMMIT) ================= */}
             {step === 2 && (
               <motion.div
-                key="step2"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
+                key="step-2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25 }}
-                className="space-y-6"
+                className="space-y-5"
               >
-                <div>
-                  <h2 className="font-serif-title text-2xl sm:text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
-                    Your Grounding "Why"
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] text-[10px] font-semibold">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Interactive Preview • Try It Now</span>
+                  </div>
+                  <h2 className="font-serif-title text-xl sm:text-2xl text-[#2C2520] dark:text-[#ECE7E0]">
+                    Experience the Evening Ritual
                   </h2>
-                  <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-1.5 leading-relaxed">
-                    When urges or resistance surface, Anchor will gently remind you of this grounding thought.
+                  <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    Check-ins take under 45 seconds. Tap below to see how Anchor reflects self-honesty without shame or guilt.
                   </p>
                 </div>
 
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5" htmlFor="commitmentWhy">
-                    Personal Reason
-                  </label>
-                  <textarea
-                    id="commitmentWhy"
-                    rows={3}
-                    value={commitmentWhy}
-                    onChange={(e) => setCommitmentWhy(e.target.value)}
-                    placeholder="e.g. To be fully present for my children, to wake up without regret..."
-                    className="w-full px-4 py-3.5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] text-sm focus:outline-none focus:border-[#C86D51] transition-colors resize-none leading-relaxed shadow-2xs"
-                  />
-                </div>
-
-                {/* Target Frequency */}
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-2">
-                    Cadence
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic(10);
-                        setFrequency("daily");
-                      }}
-                      className={`py-3.5 px-4 rounded-2xl border text-sm font-medium transition-all text-center cursor-pointer ${
-                        frequency === "daily"
-                          ? "border-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] font-semibold"
-                          : "border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096]"
-                      }`}
-                    >
-                      Every Day
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic(10);
-                        setFrequency("custom_days");
-                      }}
-                      className={`py-3.5 px-4 rounded-2xl border text-sm font-medium transition-all text-center cursor-pointer ${
-                        frequency === "custom_days"
-                          ? "border-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] font-semibold"
-                          : "border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096]"
-                      }`}
-                    >
-                      Specific Days
-                    </button>
+                {/* Simulated Interactive Check-in Card */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-4">
+                  {/* Focus Header */}
+                  <div className="border-b border-[#EAE3D7] dark:border-[#38332E] pb-3">
+                    <span className="text-[10px] uppercase tracking-wider text-[#C86D51] font-semibold block">
+                      Focus: {commitmentName}
+                    </span>
+                    <p className="text-xs font-serif italic text-[#786F66] dark:text-[#A8A096] mt-0.5">
+                      "{commitmentWhy}"
+                    </p>
                   </div>
 
-                  {frequency === "custom_days" && (
-                    <div className="mt-3 flex items-center justify-between gap-1 pt-1">
-                      {DAYS_OF_WEEK.map((d) => {
-                        const isSelected = customDays.includes(d.id);
+                  {/* Question 1: Follow-through */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
+                      Did you honor your intention today?
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "yes", label: "Yes ✓", color: "text-[#658B70]" },
+                        { id: "partial", label: "Partial ~", color: "text-[#B88452]" },
+                        { id: "no", label: "Paused •", color: "text-[#C86D51]" },
+                      ].map((opt) => {
+                        const isSelected = previewStatus === opt.id;
                         return (
                           <button
-                            key={d.id}
+                            key={opt.id}
                             type="button"
-                            onClick={() => toggleDay(d.id)}
-                            className={`w-9 h-9 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                            onClick={() => {
+                              triggerHaptic(10);
+                              setPreviewStatus(opt.id as any);
+                            }}
+                            className={`py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
                               isSelected
-                                ? "bg-[#C86D51] text-white font-semibold"
-                                : "bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096]"
+                                ? "bg-white dark:bg-[#25221F] border-[#658B70] shadow-2xs " + opt.color
+                                : "border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
                             }`}
                           >
-                            {d.label}
+                            {opt.label}
                           </button>
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Question 2: Mood & Energy */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
+                        Emotional Valence (Mood)
+                      </span>
+                      <span className="font-medium text-[#658B70]">
+                        {previewValence > 0 ? `+${previewValence} (Grounded)` : `${previewValence} (Low)`}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-5"
+                      max="5"
+                      value={previewValence}
+                      onChange={(e) => setPreviewValence(Number(e.target.value))}
+                      className="w-full accent-[#658B70] cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Question 3: Obstacle Tags */}
+                  <div className="space-y-2 pt-1">
+                    <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
+                      Did any obstacles arise?
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {PREVIEW_BLOCKER_TAGS.map((tag) => {
+                        const isSelected = previewBlockers.includes(tag.id);
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => togglePreviewBlocker(tag.id)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
+                              isSelected
+                                ? "bg-[#C86D51] border-[#C86D51] text-white shadow-2xs"
+                                : "bg-white dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
+                            }`}
+                          >
+                            {tag.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Interactive Seal Button */}
+                  {!previewSealed ? (
+                    <button
+                      type="button"
+                      onClick={handleSealPreview}
+                      className="w-full py-2.5 rounded-xl bg-[#658B70] hover:bg-[#53735C] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-organic-sm cursor-pointer transition-colors"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Seal Sample Reflection</span>
+                    </button>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] text-xs text-center font-medium flex items-center justify-center gap-2">
+                      <Check className="w-4 h-4" />
+                      <span>Reflection sealed with gentle chime. That's the ritual!</span>
+                    </div>
                   )}
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex items-center gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      triggerHaptic(10);
-                      setStep(1);
-                    }}
-                    className="py-4 px-5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] text-sm font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    onClick={() => setStep(1)}
+                    className="p-3 rounded-full border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] hover:text-[#2C2520] cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    <span>Back</span>
                   </button>
 
                   <button
@@ -413,116 +453,101 @@ export default function OnboardingPage() {
                       triggerHaptic(12);
                       setStep(3);
                     }}
-                    className="flex-1 py-4 px-5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-organic-sm hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 py-3 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-organic-sm cursor-pointer transition-colors"
                   >
-                    <span>Check-in Times</span>
+                    <span>Next: Cadence & Privacy</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </motion.div>
             )}
 
-            {/* ---------------- STEP 3: CIRCADIAN CADENCE ---------------- */}
+            {/* ================= SCREEN 3: CADENCE, PRIVACY & GUEST MODE ================= */}
             {step === 3 && (
               <motion.div
-                key="step3"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
+                key="step-3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25 }}
-                className="space-y-6"
+                className="space-y-5"
               >
-                <div>
-                  <h2 className="font-serif-title text-2xl sm:text-3xl text-[#2C2520] dark:text-[#ECE7E0]">
-                    Your Daily Rhythm
+                <div className="space-y-1.5">
+                  <h2 className="font-serif-title text-xl sm:text-2xl text-[#2C2520] dark:text-[#ECE7E0]">
+                    Daily Cadence & Data Privacy
                   </h2>
-                  <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-1.5 leading-relaxed">
-                    Anchor invites you to check in twice a day: once in the morning to set intention, and once in the evening to reflect.
+                  <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    Set your quiet reminder times and choose how you want to start.
                   </p>
                 </div>
 
-                {/* Morning Time Box */}
-                <div className="p-5 rounded-3xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] shadow-2xs">
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] mt-0.5">
-                      <Sun className="w-5 h-5" />
+                {/* Cadence Times */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs text-[#C86D51] font-semibold">
+                      <Sun className="w-3.5 h-3.5" />
+                      <span>Morning Intention</span>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0]">Morning Intention</span>
-                        <input
-                          type="time"
-                          value={morningTime}
-                          onChange={(e) => setMorningTime(e.target.value)}
-                          className="px-3 py-1.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FFFFFF] dark:bg-[#25221F] text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51]"
-                        />
-                      </div>
-                      <p className="text-xs text-[#786F66] dark:text-[#A8A096] mt-1">
-                        Choose 1�2 small actions to guide your day.
-                      </p>
+                    <input
+                      type="time"
+                      value={morningTime}
+                      onChange={(e) => setMorningTime(e.target.value)}
+                      className="w-full bg-transparent text-sm font-semibold text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs text-[#658B70] font-semibold">
+                      <Moon className="w-3.5 h-3.5" />
+                      <span>Evening Reflection</span>
                     </div>
+                    <input
+                      type="time"
+                      value={eveningTime}
+                      onChange={(e) => setEveningTime(e.target.value)}
+                      className="w-full bg-transparent text-sm font-semibold text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none"
+                    />
                   </div>
                 </div>
 
-                {/* Evening Time Box */}
-                <div className="p-5 rounded-3xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] shadow-2xs">
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] mt-0.5">
-                      <Moon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0]">Evening Reflection</span>
-                        <input
-                          type="time"
-                          value={eveningTime}
-                          onChange={(e) => setEveningTime(e.target.value)}
-                          className="px-3 py-1.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FFFFFF] dark:bg-[#25221F] text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51]"
-                        />
-                      </div>
-                      <p className="text-xs text-[#786F66] dark:text-[#A8A096] mt-1">
-                        Honest reflection with zero judgment or streak resets.
-                      </p>
-                    </div>
+                {/* Plain-Language Privacy Box */}
+                <div className="p-4 rounded-2xl bg-[#FAF2EA] dark:bg-[#2C221A] border border-[#EAE3D7] dark:border-[#38332E] text-xs space-y-2 text-[#786F66] dark:text-[#D5CFC7]">
+                  <div className="flex items-center gap-2 font-semibold text-[#B88452] dark:text-[#E2A365]">
+                    <Shield className="w-4 h-4" />
+                    <span>How Your Reflections Are Protected</span>
                   </div>
+                  <ul className="space-y-1 text-[11px] leading-relaxed">
+                    <li>• Sensitive free-text is encrypted with server-managed <strong>AES-256-GCM</strong>.</li>
+                    <li>• <strong>Zero third-party trackers</strong>, zero advertising pixels, no data brokers.</li>
+                    <li>• Partner sharing is strictly <strong>opt-in and defaults to zero</strong>.</li>
+                  </ul>
                 </div>
 
-                {/* Soft Landing Reassurance Banner */}
-                <div className="p-4 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-xs text-[#2C2520] dark:text-[#ECE7E0] flex items-start gap-2.5 shadow-2xs">
-                  <HeartHandshake className="w-4 h-4 text-[#658B70] shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    Missing a day will never erase your journey. Tomorrow is always a clean slate.
-                  </p>
-                </div>
+                {error && (
+                  <div className="p-3 rounded-xl bg-[#F9EBE7] text-[#C86D51] text-xs text-center font-medium">
+                    {error}
+                  </div>
+                )}
 
-                <div className="flex gap-3 pt-2">
+                {/* Primary Dual Action Choice */}
+                <div className="space-y-2.5 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      triggerHaptic(10);
-                      setStep(2);
-                    }}
                     disabled={loading}
-                    className="py-4 px-5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] text-sm font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    onClick={handleCompleteAccount}
+                    className="w-full py-3.5 rounded-full bg-[#C86D51] hover:bg-[#B35D43] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-organic-md cursor-pointer transition-colors"
                   >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back</span>
+                    <span>{user ? "Save Anchor & Go to Dashboard" : "Create Free Account (Encrypted Cloud Sync)"}</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
 
                   <button
                     type="button"
-                    onClick={handleComplete}
                     disabled={loading}
-                    className="flex-1 py-4 px-5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-organic-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    onClick={handleContinueAsGuest}
+                    className="w-full py-2.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] hover:bg-[#FAF7F2] dark:hover:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] text-xs font-medium cursor-pointer transition-colors"
                   >
-                    {loading ? (
-                      <span>Anchoring your sanctuary...</span>
-                    ) : (
-                      <>
-                        <span>Seal & Begin with Anchor</span>
-                        <Check className="w-4 h-4" />
-                      </>
-                    )}
+                    <span>Explore in Guest Mode first (Local to this device)</span>
                   </button>
                 </div>
               </motion.div>

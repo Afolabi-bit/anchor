@@ -49,9 +49,9 @@ export default function ExportReportModal({
             </div>
             <div>
               <h3 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-                Clinical & Session Report
+                Accountability & Session Report
               </h3>
-              <p className="text-xs text-[#786F66] dark:text-[#A8A096]">Printable summary for therapy or recovery check-ins</p>
+              <p className="text-xs text-[#786F66] dark:text-[#A8A096]">Export full accountability telemetry or review raw reflection metrics</p>
             </div>
           </div>
 

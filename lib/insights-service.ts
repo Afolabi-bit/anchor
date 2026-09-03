@@ -1,293 +1,186 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// Transparent, Explainable Pattern Surfacing Service
+// Computes direct statistical correlations from the user's self-reported check-ins.
+// No external LLM or opaque AI calls are used.
+
 import { schema } from "@/db";
 
-export interface AIInsight {
+export const MIN_PATTERN_SAMPLE_SIZE = 3; // Minimum occurrences required before surfacing a pattern
+
+export interface LoggedPattern {
   id: string;
-  category: "breakthrough" | "recommendation" | "rhythm";
+  category: "blocker" | "rhythm" | "consistency";
   title: string;
   observation: string;
   evidence: string;
   tag: string;
   accentColor: string;
+  sampleSize: number;
 }
 
 export interface InsightsSynthesis {
   headline: string;
   analyzedDaysCount: number;
   overallHealthScore: number;
-  isAiGenerated?: boolean;
-  insights: AIInsight[];
+  insights: LoggedPattern[];
 }
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const BLOCKER_DISPLAY_NAMES: Record<string, string> = {
+  stress: "Stress",
+  time: "Time constraints",
+  urge: "Cravings / Urges",
+  forgot: "Distraction",
+  unmotivated: "Fatigue / Low Motivation",
+  other: "Situational friction",
+};
 
+/**
+ * Computes direct, explainable statistical correlations on the user's logged check-ins.
+ * Identifies blocker tag frequencies by day of week and check-in time (morning vs evening).
+ */
+export function computeBlockerCorrelations(checkIns: schema.CheckIn[]): LoggedPattern[] {
+  if (!checkIns || checkIns.length === 0) return [];
+
+  const patterns: LoggedPattern[] = [];
+
+  // Group check-ins by day-of-week and time-of-day
+  // Key format: `${tag}:${dayOfWeek}:${type}`
+  const tagWindowCounts: Record<string, { count: number; tag: string; day: string; type: string }> = {};
+  const tagOverallCounts: Record<string, number> = {};
+
+  const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  checkIns.forEach((c) => {
+    if (!c.date) return;
+    const dateObj = new Date(c.date + "T12:00:00Z"); // Neutral UTC midday to avoid timezone shifts
+    const dayName = DAYS_OF_WEEK[dateObj.getUTCDay()];
+    const timeType = c.type === "morning" ? "morning" : "evening";
+
+    if (Array.isArray(c.blockerTags)) {
+      c.blockerTags.forEach((tag) => {
+        if (!tag) return;
+        const normalizedTag = tag.toLowerCase().trim();
+        tagOverallCounts[normalizedTag] = (tagOverallCounts[normalizedTag] || 0) + 1;
+
+        const windowKey = `${normalizedTag}:${dayName}:${timeType}`;
+        if (!tagWindowCounts[windowKey]) {
+          tagWindowCounts[windowKey] = {
+            count: 0,
+            tag: normalizedTag,
+            day: dayName,
+            type: timeType,
+          };
+        }
+        tagWindowCounts[windowKey].count++;
+      });
+    }
+  });
+
+  // 1. Surface day/time specific blocker patterns that meet the threshold (>= 3)
+  Object.entries(tagWindowCounts).forEach(([key, data]) => {
+    if (data.count >= MIN_PATTERN_SAMPLE_SIZE) {
+      const displayTag = BLOCKER_DISPLAY_NAMES[data.tag] || data.tag;
+      patterns.push({
+        id: `pattern-${data.tag}-${data.day.toLowerCase()}-${data.type}`,
+        category: "blocker",
+        title: `${data.day} ${data.type === "morning" ? "Morning" : "Evening"} ${displayTag}`,
+        observation: `You've logged "${displayTag.toLowerCase()}" on ${data.count} recent ${data.day} ${data.type} check-ins. Want to set an earlier grounding reminder for that window?`,
+        evidence: `Logged ${data.count} times during ${data.day} ${data.type}s`,
+        tag: displayTag,
+        accentColor: "#C86D51",
+        sampleSize: data.count,
+      });
+    }
+  });
+
+  // 2. Surface general obstacle recurrence if a tag has >= 3 occurrences overall but not clustered on a single day
+  if (patterns.length === 0) {
+    Object.entries(tagOverallCounts).forEach(([tag, count]) => {
+      if (count >= MIN_PATTERN_SAMPLE_SIZE) {
+        const displayTag = BLOCKER_DISPLAY_NAMES[tag] || tag;
+        patterns.push({
+          id: `pattern-${tag}-overall`,
+          category: "blocker",
+          title: `Recurring Barrier: ${displayTag}`,
+          observation: `"${displayTag}" was noted as a barrier ${count} times in your recent reflections. Consider dedicating your next morning intention to supporting yourself through it.`,
+          evidence: `Logged ${count} times across evaluated check-ins`,
+          tag: displayTag,
+          accentColor: "#B88452",
+          sampleSize: count,
+        });
+      }
+    });
+  }
+
+  // 3. Positive consistency rhythm pattern
+  const eveningCheckIns = checkIns.filter((c) => c.type === "evening");
+  const followThroughCount = eveningCheckIns.filter((c) => c.status === "yes").length;
+  if (followThroughCount >= MIN_PATTERN_SAMPLE_SIZE) {
+    const rate = Math.round((followThroughCount / eveningCheckIns.length) * 100);
+    patterns.push({
+      id: `pattern-consistency-momentum`,
+      category: "consistency",
+      title: "Follow-Through Momentum",
+      observation: `You have successfully completed ${followThroughCount} evening anchor commitments (${rate}% follow-through). Consistent presence creates the foundation for steady recovery.`,
+      evidence: `${followThroughCount} completed evening check-ins`,
+      tag: "Anchored Habit",
+      accentColor: "#658B70",
+      sampleSize: followThroughCount,
+    });
+  }
+
+  return patterns;
+}
+
+/**
+ * Main synthesis function called by route handlers.
+ * Computes transparent, non-diagnostic pattern reflections.
+ */
 export async function generateAIPatternInsights(
   checkIns: schema.CheckIn[],
   commitmentName: string = "Daily Anchor",
   commitmentWhy?: string | null
 ): Promise<InsightsSynthesis> {
-  // If no check-ins exist, return welcome state
-  if (!checkIns || checkIns.length === 0) {
-    return synthesizeDeterministicInsights(checkIns, commitmentName);
-  }
+  const analyzedDates = [...new Set(checkIns.map((c) => c.date))];
+  const daysCount = analyzedDates.length || 1;
 
-  // Attempt live Gemini synthesis if API key is present
-  if (genAI) {
-    try {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-3.6-flash",
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.4,
-        },
-      });
-
-      const checkInSummary = checkIns.map((c) => ({
-        date: c.date,
-        type: c.type,
-        status: c.status,
-        plannedActions: c.plannedActions,
-        intentionNote: c.intentionNote,
-        reflection: c.reflection,
-        blockerTags: c.blockerTags,
-        emotionName: c.emotionName,
-        moodValence: c.moodValence,
-        moodArousal: c.moodArousal,
-        lessonsLearned: c.lessonsLearned,
-      }));
-
-      const prompt = `
-You are an expert clinical psychologist and supportive behavioral mentor specializing in Acceptance and Commitment Therapy (ACT) and gentle habit recovery.
-You are analyzing a user's recent daily reflections for their anchor goal: "${commitmentName}"${commitmentWhy ? ` (Why: "${commitmentWhy}")` : ""}.
-
-Here are their recent reflection logs:
-${JSON.stringify(checkInSummary, null, 2)}
-
-Synthesize these reflections into 3 deeply supportive, non-judgmental, psychologically grounded pattern insights.
-
-Respond ONLY with valid JSON matching this exact structure:
-{
-  "headline": "A short, warm 3-6 word summary headline for their journey",
-  "analyzedDaysCount": ${[...new Set(checkIns.map((c) => c.date))].length || 1},
-  "overallHealthScore": 85,
-  "insights": [
-    {
-      "id": "breakthrough-1",
-      "category": "breakthrough",
-      "title": "Short title (e.g. Morning Intention Anchor)",
-      "observation": "A 1-2 sentence empathetic behavioral observation explaining what helps them succeed.",
-      "evidence": "Evidence from their data (e.g. 'Observed across 5 morning rituals')",
-      "tag": "Habit Anchor",
-      "accentColor": "#658B70"
-    },
-    {
-      "id": "recommendation-1",
-      "category": "recommendation",
-      "title": "Short title (e.g. Navigating Fatigue with Self-Compassion)",
-      "observation": "A 1-2 sentence gentle, practical recommendation for when blockers or challenging emotions arise.",
-      "evidence": "Evidence from blockers/emotions (e.g. 'Noted when stress was logged')",
-      "tag": "Emotional Grounding",
-      "accentColor": "#C86D51"
-    },
-    {
-      "id": "rhythm-1",
-      "category": "rhythm",
-      "title": "Short title (e.g. Mid-Week Circadian Momentum)",
-      "observation": "A 1-2 sentence reflection on their weekly rhythm, time cadence, or consistency pattern.",
-      "evidence": "Timing / cadence pattern",
-      "tag": "Circadian Rhythm",
-      "accentColor": "#B88452"
-    }
-  ]
-}
-`;
-
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      const parsed = JSON.parse(text);
-
-      if (parsed && Array.isArray(parsed.insights) && parsed.insights.length > 0) {
-        return {
-          ...parsed,
-          isAiGenerated: true,
-          analyzedDaysCount: checkIns.length,
-        };
-      }
-    } catch (error) {
-      console.error("Gemini AI synthesis error, using deterministic fallback:", error);
-    }
-  }
-
-  // Graceful deterministic fallback if API is unavailable or rate-limited
-  return synthesizeDeterministicInsights(checkIns, commitmentName);
-}
-
-export function synthesizeDeterministicInsights(
-  checkIns: schema.CheckIn[],
-  commitmentName: string = "Daily Anchor"
-): InsightsSynthesis {
   if (!checkIns || checkIns.length === 0) {
     return {
-      headline: "Welcome to your reflection journey",
+      headline: "Welcome to your reflection space",
       analyzedDaysCount: 0,
       overallHealthScore: 100,
-      isAiGenerated: false,
       insights: [
         {
           id: "welcome-1",
-          category: "breakthrough",
-          title: "Starting with a quiet pause",
-          observation: "Every steady habit begins with a single honest check-in.",
-          evidence: "First day in sanctuary",
-          tag: "Beginning",
+          category: "rhythm",
+          title: "Your Reflection Space",
+          observation: "As you complete daily morning and evening check-ins, Anchor will gently observe recurring rhythms and obstacles you log.",
+          evidence: "Start by completing your first check-in",
+          tag: "Daily Rhythm",
           accentColor: "#658B70",
+          sampleSize: 0,
         },
       ],
     };
   }
 
-  const dateMap: Record<string, { morning?: schema.CheckIn; evening?: schema.CheckIn }> = {};
-  checkIns.forEach((c) => {
-    if (!dateMap[c.date]) dateMap[c.date] = {};
-    if (c.type === "morning") dateMap[c.date].morning = c;
-    if (c.type === "evening") dateMap[c.date].evening = c;
-  });
+  const eveningCheckIns = checkIns.filter((c) => c.type === "evening");
+  const followedThrough = eveningCheckIns.filter((c) => c.status === "yes").length;
+  const rate = eveningCheckIns.length > 0 ? Math.round((followedThrough / eveningCheckIns.length) * 100) : 100;
 
-  const dates = Object.keys(dateMap);
-  const totalDays = dates.length;
+  const insights = computeBlockerCorrelations(checkIns);
 
-  let daysWithMorning = 0;
-  let morningFollowThrough = 0;
-  let daysWithoutMorning = 0;
-  let noMorningFollowThrough = 0;
-
-  const blockerCounts: Record<string, number> = {};
-  const dayOfWeekCounts: Record<number, { total: number; followed: number }> = {};
-
-  dates.forEach((dateStr) => {
-    const { morning, evening } = dateMap[dateStr];
-    const d = new Date(dateStr + "T12:00:00Z");
-    const dayOfWeek = d.getDay();
-
-    if (!dayOfWeekCounts[dayOfWeek]) {
-      dayOfWeekCounts[dayOfWeek] = { total: 0, followed: 0 };
-    }
-    dayOfWeekCounts[dayOfWeek].total++;
-
-    if (morning) {
-      daysWithMorning++;
-      if (evening?.status === "yes" || evening?.status === "partial") {
-        morningFollowThrough++;
-      }
-    } else {
-      daysWithoutMorning++;
-      if (evening?.status === "yes" || evening?.status === "partial") {
-        noMorningFollowThrough++;
-      }
-    }
-
-    if (evening) {
-      if (evening.status === "yes" || evening.status === "partial") {
-        dayOfWeekCounts[dayOfWeek].followed++;
-      }
-      if (evening.blockerTags && Array.isArray(evening.blockerTags)) {
-        evening.blockerTags.forEach((tag) => {
-          blockerCounts[tag] = (blockerCounts[tag] || 0) + 1;
-        });
-      }
-    }
-  });
-
-  const morningRate =
-    daysWithMorning > 0 ? Math.round((morningFollowThrough / daysWithMorning) * 100) : 75;
-  const noMorningRate =
-    daysWithoutMorning > 0 ? Math.round((noMorningFollowThrough / daysWithoutMorning) * 100) : 45;
-
-  const topBlockers = Object.entries(blockerCounts).sort((a, b) => b[1] - a[1]);
-  const dominantBlocker = topBlockers[0];
-
-  const insights: AIInsight[] = [];
-
-  if (daysWithMorning > 0) {
-    insights.push({
-      id: "morning-impact",
-      category: "breakthrough",
-      title: "Morning Intention Multiplier",
-      observation: `Days where you set a morning intention had an estimated ${morningRate}% follow-through rate vs ${noMorningRate}% without one.`,
-      evidence: `Based on ${daysWithMorning} morning intention rituals`,
-      tag: "Habit Anchor",
-      accentColor: "#658B70",
-    });
-  } else {
-    insights.push({
-      id: "morning-recommend",
-      category: "breakthrough",
-      title: "The Power of Morning Framing",
-      observation: `Setting a quiet 1-minute morning intention primes your nervous system and significantly protects evening follow-through.`,
-      evidence: "Clinical behavioural observation",
-      tag: "Mindset",
-      accentColor: "#B88452",
-    });
-  }
-
-  if (dominantBlocker) {
-    const blockerNames: Record<string, string> = {
-      stress: "Stress & Anxiety",
-      time: "Time & Schedule Pressures",
-      urge: "Urges & Impulses",
-      forgot: "Distraction / Forgetting",
-      unmotivated: "Fatigue & Low Energy",
-      other: "Unexpected Circumstances",
-    };
-    const friendlyName = blockerNames[dominantBlocker[0]] || dominantBlocker[0];
-    insights.push({
-      id: "blocker-pattern",
-      category: "recommendation",
-      title: `Navigating "${friendlyName}"`,
-      observation: `When ${friendlyName.toLowerCase()} arises, pausing with the 4-4-4-4 Grounding Drawer reduces urgency before decision moments.`,
-      evidence: `Noted ${dominantBlocker[1]} times in recent reflections`,
-      tag: "Emotional Grounding",
-      accentColor: "#C86D51",
-    });
-  } else {
-    insights.push({
-      id: "steady-rhythm",
-      category: "recommendation",
-      title: "Steady Compass Grounding",
-      observation: `You are sustaining clear self-honesty with ${commitmentName}. Protecting sleep and rest keeps this momentum effortless.`,
-      evidence: `${totalDays} reflections logged`,
-      tag: "Resilience",
-      accentColor: "#658B70",
-    });
-  }
-
-  const dayNames = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
-  let strongestDayIdx = 1;
-  let highestRatio = -1;
-  Object.entries(dayOfWeekCounts).forEach(([day, stat]) => {
-    const ratio = stat.total > 0 ? stat.followed / stat.total : 0;
-    if (ratio > highestRatio && stat.total >= 1) {
-      highestRatio = ratio;
-      strongestDayIdx = Number(day);
-    }
-  });
-
-  insights.push({
-    id: "rhythm-pattern",
-    category: "rhythm",
-    title: "Weekly Circadian Momentum",
-    observation: `${dayNames[strongestDayIdx]} have shown your most peaceful alignment. Scheduling restful transition buffers on other days supports steady ease.`,
-    evidence: "Weekly cadence pattern",
-    tag: "Circadian Rhythm",
-    accentColor: "#B88452",
-  });
+  let headline = "Steady daily rhythm";
+  if (rate >= 80) headline = "Strong, grounded follow-through";
+  else if (rate >= 50) headline = "Honest, mindful engagement";
+  else headline = "Gentle daily presence";
 
   return {
-    headline: `Patterns & Insights for ${commitmentName}`,
-    analyzedDaysCount: totalDays,
-    overallHealthScore: Math.min(100, Math.max(60, morningRate)),
-    isAiGenerated: false,
+    headline,
+    analyzedDaysCount: daysCount,
+    overallHealthScore: rate,
     insights,
   };
 }
+
+// Backwards compatibility alias
+export type AIInsight = LoggedPattern;

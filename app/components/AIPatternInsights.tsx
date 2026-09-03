@@ -1,21 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, ThumbsUp, ThumbsDown, Check, Compass, TrendingUp, ShieldAlert, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { Compass, ThumbsUp, ThumbsDown, Check, X, ArrowRight, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
-import { AIInsight, InsightsSynthesis } from "@/lib/insights-service";
+import { LoggedPattern, InsightsSynthesis } from "@/lib/insights-service";
+import Link from "next/link";
 
 interface AIPatternInsightsProps {
   commitmentId?: string;
 }
 
+const DISMISSED_PATTERNS_STORAGE_KEY = "anchor_dismissed_patterns";
+
 export default function AIPatternInsights({ commitmentId }: AIPatternInsightsProps) {
   const [data, setData] = useState<InsightsSynthesis | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [reactions, setReactions] = useState<Record<string, "helpful" | "unhelpful">>({});
 
   useEffect(() => {
+    // Load dismissed patterns from localStorage
+    try {
+      const saved = localStorage.getItem(DISMISSED_PATTERNS_STORAGE_KEY);
+      if (saved) {
+        setDismissedIds(JSON.parse(saved));
+      }
+    } catch {}
+
     async function loadInsights() {
       try {
         setLoading(true);
@@ -35,6 +47,15 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
     }
     loadInsights();
   }, [commitmentId]);
+
+  const handleDismiss = (patternId: string) => {
+    triggerHaptic(8);
+    const next = [...dismissedIds, patternId];
+    setDismissedIds(next);
+    try {
+      localStorage.setItem(DISMISSED_PATTERNS_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+  };
 
   const handleReaction = async (insightId: string, helpful: boolean) => {
     triggerHaptic(10);
@@ -62,94 +83,123 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
     );
   }
 
-  if (!data || data.insights.length === 0) return null;
+  // Filter out any dismissed patterns
+  const activeInsights = (data?.insights || []).filter(
+    (item) => !dismissedIds.includes(item.id)
+  );
+
+  if (!data || activeInsights.length === 0) return null;
 
   return (
     <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-4 sm:p-6 clay-card shadow-organic-md space-y-4 sm:space-y-5">
       {/* Header */}
       <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#658B70] dark:text-[#82A78C]">
-          <Sparkles className="w-4 h-4 shrink-0" />
-          <span className="truncate">AI Pattern Synthesis</span>
+          <Compass className="w-4 h-4 shrink-0" />
+          <span className="truncate">Patterns You've Logged</span>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {data.isAiGenerated && (
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] dark:text-[#E2A365] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] flex items-center gap-1 shrink-0">
-              <span>✦</span>
-              <span>Gemini 3.6</span>
-            </span>
-          )}
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shrink-0">
+            Statistical Observations
+          </span>
           <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold border border-[#D9E6DD] dark:border-[#2C4032] shrink-0">
-            {data.analyzedDaysCount} Days
+            {data.analyzedDaysCount} Days Evaluated
           </span>
         </div>
       </div>
 
       <div className="space-y-3.5">
-        {data.insights.map((insight: AIInsight) => {
-          const userReaction = reactions[insight.id];
-          return (
-            <motion.div
-              key={insight.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 shadow-2xs"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: insight.accentColor }}
-                  />
-                  <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
-                    {insight.title}
+        <AnimatePresence mode="popLayout">
+          {activeInsights.map((insight: LoggedPattern) => {
+            const userReaction = reactions[insight.id];
+            const isBlocker = insight.category === "blocker";
+
+            return (
+              <motion.div
+                key={insight.id}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-3 shadow-2xs relative group"
+              >
+                {/* Dismiss Button (top right) */}
+                <button
+                  type="button"
+                  onClick={() => handleDismiss(insight.id)}
+                  title="Dismiss this pattern"
+                  className="absolute top-3.5 right-3.5 p-1 rounded-lg text-[#9E948A] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] hover:bg-[#EAE3D7]/60 dark:hover:bg-[#38332E]/60 transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+
+                <div className="flex items-center justify-between pr-6">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: insight.accentColor }}
+                    />
+                    <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
+                      {insight.title}
+                    </span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] font-medium shrink-0">
+                    {insight.tag}
                   </span>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] font-medium">
-                  {insight.tag}
-                </span>
-              </div>
 
-              <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                {insight.observation}
-              </p>
+                <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                  {insight.observation}
+                </p>
 
-              <div className="pt-2 border-t border-[#EAE3D7]/60 dark:border-[#38332E]/60 flex items-center justify-between text-[11px] text-[#9E948A]">
-                <span className="italic">{insight.evidence}</span>
+                <div className="pt-2 border-t border-[#EAE3D7]/60 dark:border-[#38332E]/60 flex items-center justify-between text-[11px] text-[#9E948A] flex-wrap gap-2">
+                  <span className="italic">{insight.evidence}</span>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleReaction(insight.id, true)}
-                    className={`p-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
-                      userReaction === "helpful"
-                        ? "text-[#658B70] bg-[#EEF4F0] dark:bg-[#202D24]"
-                        : "hover:text-[#2C2520]"
-                    }`}
-                    title="Helpful insight"
-                  >
-                    <ThumbsUp className="w-3.5 h-3.5" />
-                    {userReaction === "helpful" && <span className="text-[9px] font-semibold">Helpful</span>}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {isBlocker && (
+                      <Link
+                        href="/settings"
+                        className="text-[10px] text-[#C86D51] hover:underline font-semibold flex items-center gap-1"
+                      >
+                        <span>Adjust reminder</span>
+                        <ArrowRight className="w-2.5 h-2.5" />
+                      </Link>
+                    )}
 
-                  <button
-                    type="button"
-                    onClick={() => handleReaction(insight.id, false)}
-                    className={`p-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
-                      userReaction === "unhelpful"
-                        ? "text-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F]"
-                        : "hover:text-[#2C2520]"
-                    }`}
-                    title="Not relevant"
-                  >
-                    <ThumbsDown className="w-3.5 h-3.5" />
-                  </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleReaction(insight.id, true)}
+                        className={`p-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
+                          userReaction === "helpful"
+                            ? "text-[#658B70] bg-[#EEF4F0] dark:bg-[#202D24]"
+                            : "hover:text-[#2C2520]"
+                        }`}
+                        title="Helpful observation"
+                      >
+                        <ThumbsUp className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleReaction(insight.id, false)}
+                        className={`p-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
+                          userReaction === "unhelpful"
+                            ? "text-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F]"
+                            : "hover:text-[#2C2520]"
+                        }`}
+                        title="Not relevant"
+                      >
+                        <ThumbsDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
     </div>
   );

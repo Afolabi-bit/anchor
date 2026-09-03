@@ -11,6 +11,8 @@ import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import { TodaySkeleton } from "@/app/components/Skeletons";
 import { getTodayAffirmation } from "@/lib/affirmations";
 import JournalComposer from "@/app/components/JournalComposer";
+import GuestBanner from "@/app/components/GuestBanner";
+import { getGuestState, saveGuestCheckIn, isGuestMode } from "@/lib/guest-service";
 import {
   Sun,
   Moon,
@@ -81,6 +83,21 @@ export default function TodayPage() {
         setLoading(true);
         const meRes = await fetch("/api/auth/me");
         if (!meRes.ok) {
+          // Check for local Guest Mode
+          if (isGuestMode()) {
+            const guest = getGuestState();
+            setUser({ firstName: "Guest", email: "local-guest" });
+            if (guest?.commitment) {
+              setCommitments([guest.commitment]);
+              setActiveCommitmentId(guest.commitment.id);
+            }
+            const m = guest?.checkIns.find((c) => c.date === todayStr && c.type === "morning");
+            const e = guest?.checkIns.find((c) => c.date === todayStr && c.type === "evening");
+            if (m) setMorningCheckIn(m);
+            if (e) setEveningCheckIn(e);
+            setLoading(false);
+            return;
+          }
           router.push("/login");
           return;
         }
@@ -151,6 +168,9 @@ export default function TodayPage() {
   const handleCheckInSuccess = (savedCheckIn: any) => {
     if (savedCheckIn.type === "morning") setMorningCheckIn(savedCheckIn);
     if (savedCheckIn.type === "evening") setEveningCheckIn(savedCheckIn);
+    if (isGuestMode()) {
+      saveGuestCheckIn(savedCheckIn);
+    }
   };
 
   const handleCommitmentCreated = (newComm: any) => {
@@ -173,6 +193,7 @@ export default function TodayPage() {
         userEmail={user?.email}
         userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
       />
+      <GuestBanner />
       <OfflineSyncBadge />
 
       <PageTransition>

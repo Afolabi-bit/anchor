@@ -95,7 +95,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
     ],
     suggestedColorIndex: 2, // Sage
     icon: "Sparkles",
-    description: "Use clinical vagus nerve regulation to prevent midday anxiety spikes.",
+    description: "Use somatic vagus nerve regulation to prevent midday anxiety spikes.",
   },
   {
     id: "mental-gratitude",

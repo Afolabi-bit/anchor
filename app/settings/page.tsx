@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navigation from "@/app/components/Navigation";
 import ExportReportModal from "@/app/components/ExportReportModal";
-import ClinicalExportModal from "@/app/components/ClinicalExportModal";
+import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
 import PageTransition from "@/app/components/PageTransition";
-import { generateClinicalSummary, ClinicalSummaryData } from "@/lib/clinical-report";
+import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-summary-service";
 import {
   Anchor,
   Sun,
@@ -81,25 +81,32 @@ export default function SettingsPage() {
 
   // Modals
   const [exportOpen, setExportOpen] = useState(false);
-  const [clinicalModalOpen, setClinicalModalOpen] = useState(false);
-  const [clinicalReport, setClinicalReport] = useState<ClinicalSummaryData | null>(null);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [summaryReport, setSummaryReport] = useState<ProgressSummaryData | null>(null);
+  const [includeJournalInSummary, setIncludeJournalInSummary] = useState(false);
   const [newModalOpen, setNewModalOpen] = useState(false);
 
-  const handleOpenClinicalReport = async () => {
+  const handleOpenSummaryReport = async () => {
     try {
       triggerHaptic(12);
-      const checkInsRes = await fetch("/api/checkins");
+      const [checkInsRes, journalRes] = await Promise.all([
+        fetch("/api/checkins"),
+        fetch("/api/journal"),
+      ]);
       const checkInsData = checkInsRes.ok ? await checkInsRes.json() : { checkIns: [] };
+      const journalData = journalRes.ok ? await journalRes.json() : { entries: [] };
       const activeComm = allCommitments.find((c) => c.active) || allCommitments[0];
-      const report = generateClinicalSummary(
+      const report = generateProgressSummary(
         user,
         activeComm,
-        checkInsData.checkIns || []
+        checkInsData.checkIns || [],
+        journalData.entries || [],
+        { includeJournalNotes: includeJournalInSummary }
       );
-      setClinicalReport(report);
-      setClinicalModalOpen(true);
+      setSummaryReport(report);
+      setSummaryModalOpen(true);
     } catch (err) {
-      console.error("Failed to generate clinical summary:", err);
+      console.error("Failed to generate summary:", err);
     }
   };
 
@@ -1019,7 +1026,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Clinical Report & Data Export Hub */}
+              {/* Progress Summary & Data Export Hub */}
               <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 clay-card shadow-organic-md space-y-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -1028,10 +1035,10 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <h3 className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0]">
-                        Clinical & Therapy Summary Export
+                        Progress Summary Export
                       </h3>
                       <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                        Print structured intake summaries for therapists or download raw datasets
+                        Print structured reflection summaries or download raw datasets
                       </p>
                     </div>
                   </div>
@@ -1041,11 +1048,11 @@ export default function SettingsPage() {
                   <motion.button
                     whileTap={{ scale: 0.96 }}
                     type="button"
-                    onClick={handleOpenClinicalReport}
+                    onClick={handleOpenSummaryReport}
                     className="p-3.5 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-[#658B70] dark:text-[#82A78C] hover:border-[#658B70] text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-2xs transition-colors"
                   >
                     <FileText className="w-4 h-4" />
-                    <span>Clinical Intake Summary (PDF)</span>
+                    <span>Progress Summary (PDF)</span>
                   </motion.button>
 
                   <motion.button
@@ -1166,12 +1173,31 @@ export default function SettingsPage() {
         />
       )}
 
-      {/* Clinical & Therapy Intake Report Modal */}
-      {clinicalModalOpen && clinicalReport && (
-        <ClinicalExportModal
-          isOpen={clinicalModalOpen}
-          onClose={() => setClinicalModalOpen(false)}
-          report={clinicalReport}
+      {/* Progress Summary Export Modal */}
+      {summaryModalOpen && summaryReport && (
+        <ProgressSummaryExportModal
+          isOpen={summaryModalOpen}
+          onClose={() => setSummaryModalOpen(false)}
+          report={summaryReport}
+          includeJournalNotes={includeJournalInSummary}
+          onToggleIncludeJournalNotes={async (include) => {
+            setIncludeJournalInSummary(include);
+            const [checkInsRes, journalRes] = await Promise.all([
+              fetch("/api/checkins"),
+              fetch("/api/journal"),
+            ]);
+            const checkInsData = checkInsRes.ok ? await checkInsRes.json() : { checkIns: [] };
+            const journalData = journalRes.ok ? await journalRes.json() : { entries: [] };
+            const activeComm = allCommitments.find((c) => c.active) || allCommitments[0];
+            const updated = generateProgressSummary(
+              user,
+              activeComm,
+              checkInsData.checkIns || [],
+              journalData.entries || [],
+              { includeJournalNotes: include }
+            );
+            setSummaryReport(updated);
+          }}
         />
       )}
 

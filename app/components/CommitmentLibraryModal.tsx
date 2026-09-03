@@ -93,7 +93,7 @@ export default function CommitmentLibraryModal({
                   Anchor Goal Library
                 </h3>
                 <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                  Clinically curated, evidence-based habit & recovery templates.
+                  Thoughtfully curated, evidence-informed habit & recovery templates.
                 </p>
               </div>
             </div>

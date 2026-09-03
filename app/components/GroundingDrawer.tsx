@@ -95,7 +95,7 @@ export default function GroundingDrawer() {
                   title={soundEnabled ? "Mute singing bowl chime" : "Enable singing bowl chime"}
                 >
                   {soundEnabled ? <Volume2 className="w-4 h-4 text-[#658B70]" /> : <VolumeX className="w-4 h-4 text-[#9E948A]" />}
-                  <span>{soundEnabled ? "432Hz Chime On" : "Chime Muted"}</span>
+                  <span>{soundEnabled ? "Grounding Chime On" : "Chime Muted"}</span>
                 </button>
 
                 <button

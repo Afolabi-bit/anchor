@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -287,7 +287,7 @@ export default function LandingHero() {
         <ShieldCheck className="w-6 h-6 text-[#658B70] shrink-0" />
         <div>
           <span className="font-semibold text-[#2C2520] dark:text-[#ECE7E0]">Private & Non-Judgemental: </span>
-          Your reflections belong entirely to you. Built with strict cryptographic encryption and clinical data export.
+          Your reflections belong entirely to you. Built with strict cryptographic encryption and structured data export.
         </div>
       </div>
     </div>

@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import Navigation from "@/app/components/Navigation";
 import StoryRecapModal from "@/app/components/StoryRecapModal";
 import ExportReportModal from "@/app/components/ExportReportModal";
-import ClinicalExportModal from "@/app/components/ClinicalExportModal";
+import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
+import MoodTimelineChart from "@/app/components/MoodTimelineChart";
 import AIPatternInsights from "@/app/components/AIPatternInsights";
 import CalendarHeatmap from "@/app/components/CalendarHeatmap";
 import MilestoneGallery from "@/app/components/MilestoneGallery";
 import PageTransition from "@/app/components/PageTransition";
 import { ProgressSkeleton } from "@/app/components/Skeletons";
-import { generateClinicalSummary, ClinicalSummaryData } from "@/lib/clinical-report";
+import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-summary-service";
 import {
   Calendar,
   Sun,
@@ -42,27 +43,30 @@ export default function ProgressPage() {
 
   const [range, setRange] = useState<"7" | "30" | "90" | "all">("30");
   const [rangeLoading, setRangeLoading] = useState(false);
+  const [allCheckIns, setAllCheckIns] = useState<any[]>([]);
+  const [allJournals, setAllJournals] = useState<any[]>([]);
 
   // Modal states
   const [storyOpen, setStoryOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-  const [clinicalModalOpen, setClinicalModalOpen] = useState(false);
-  const [clinicalReport, setClinicalReport] = useState<ClinicalSummaryData | null>(null);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [summaryReport, setSummaryReport] = useState<ProgressSummaryData | null>(null);
+  const [includeJournalInSummary, setIncludeJournalInSummary] = useState(false);
 
-  const handleOpenClinicalReport = async () => {
+  const handleOpenSummaryReport = async () => {
     try {
       triggerHaptic(12);
-      const checkInsRes = await fetch("/api/checkins");
-      const checkInsData = checkInsRes.ok ? await checkInsRes.json() : { checkIns: [] };
-      const report = generateClinicalSummary(
+      const report = generateProgressSummary(
         user,
         commitment,
-        checkInsData.checkIns || []
+        allCheckIns,
+        allJournals,
+        { includeJournalNotes: includeJournalInSummary }
       );
-      setClinicalReport(report);
-      setClinicalModalOpen(true);
+      setSummaryReport(report);
+      setSummaryModalOpen(true);
     } catch (err) {
-      console.error("Clinical summary error:", err);
+      console.error("Summary error:", err);
     }
   };
 
@@ -84,6 +88,20 @@ export default function ProgressPage() {
         if (res.ok) {
           const data = await res.json();
           setRecapData(data.recap);
+        }
+
+        // Fetch check-ins and journal entries for mood timeline and summary
+        const [checkInsRes, journalRes] = await Promise.all([
+          fetch("/api/checkins"),
+          fetch("/api/journal"),
+        ]);
+        if (checkInsRes.ok) {
+          const ciData = await checkInsRes.json();
+          setAllCheckIns(ciData.checkIns || []);
+        }
+        if (journalRes.ok) {
+          const jData = await journalRes.json();
+          setAllJournals(jData.entries || []);
         }
       } catch (err) {
         console.error("Failed to load recap:", err);
@@ -148,11 +166,11 @@ export default function ProgressPage() {
 
               <motion.button
                 whileTap={{ scale: 0.94 }}
-                onClick={handleOpenClinicalReport}
+                onClick={handleOpenSummaryReport}
                 className="text-xs px-3 py-1.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold border border-[#D9E6DD] dark:border-[#2C4032] shadow-2xs flex items-center gap-1.5 cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Clinical PDF</span>
+                <span>Export PDF</span>
               </motion.button>
             </div>
           </div>
@@ -198,6 +216,9 @@ export default function ProgressPage() {
               </span>
             </div>
           </div>
+
+          {/* 7/30/90-Day Mood & Energy Timeline Chart with Follow-Through Overlays */}
+          <MoodTimelineChart checkIns={allCheckIns} journalEntries={allJournals} />
 
           {/* 90-Day Rhythm Calendar Heatmap Matrix */}
           <div className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm space-y-4">
@@ -301,7 +322,7 @@ export default function ProgressPage() {
         />
       )}
 
-      {/* Clinical Report Export Modal */}
+      {/* Progress Report Export Modal */}
       {exportOpen && (
         <ExportReportModal
           isOpen={exportOpen}
@@ -312,12 +333,24 @@ export default function ProgressPage() {
         />
       )}
 
-      {/* Clinical & Therapy Intake Report Modal */}
-      {clinicalModalOpen && clinicalReport && (
-        <ClinicalExportModal
-          isOpen={clinicalModalOpen}
-          onClose={() => setClinicalModalOpen(false)}
-          report={clinicalReport}
+      {/* Progress Summary Export Modal */}
+      {summaryModalOpen && summaryReport && (
+        <ProgressSummaryExportModal
+          isOpen={summaryModalOpen}
+          onClose={() => setSummaryModalOpen(false)}
+          report={summaryReport}
+          includeJournalNotes={includeJournalInSummary}
+          onToggleIncludeJournalNotes={(include) => {
+            setIncludeJournalInSummary(include);
+            const updated = generateProgressSummary(
+              user,
+              commitment,
+              allCheckIns,
+              allJournals,
+              { includeJournalNotes: include }
+            );
+            setSummaryReport(updated);
+          }}
         />
       )}
     </div>
