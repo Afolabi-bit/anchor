@@ -11,8 +11,6 @@ import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import { TodaySkeleton } from "@/app/components/Skeletons";
 import { getTodayAffirmation } from "@/lib/affirmations";
 import JournalComposer from "@/app/components/JournalComposer";
-import GuestBanner from "@/app/components/GuestBanner";
-import { getGuestState, saveGuestCheckIn, isGuestMode } from "@/lib/guest-service";
 import {
   Sun,
   Moon,
@@ -81,21 +79,6 @@ export default function TodayPage() {
         setLoading(true);
         const meRes = await fetch("/api/auth/me");
         if (!meRes.ok) {
-          // Check for local Guest Mode
-          if (isGuestMode()) {
-            const guest = getGuestState();
-            setUser({ firstName: "Guest", email: "local-guest" } as unknown as User);
-            if (guest?.commitment) {
-              setCommitments([guest.commitment as unknown as Commitment]);
-              setActiveCommitmentId(guest.commitment.id);
-            }
-            const m = guest?.checkIns.find((c) => c.date === todayStr && c.type === "morning") as unknown as CheckIn | undefined;
-            const e = guest?.checkIns.find((c) => c.date === todayStr && c.type === "evening") as unknown as CheckIn | undefined;
-            if (m) setMorningCheckIn(m);
-            if (e) setEveningCheckIn(e);
-            setLoading(false);
-            return;
-          }
           router.push("/login");
           return;
         }
@@ -156,19 +139,6 @@ export default function TodayPage() {
   const handleCheckInSuccess = (savedCheckIn: CheckIn) => {
     if (savedCheckIn.type === "morning") setMorningCheckIn(savedCheckIn);
     if (savedCheckIn.type === "evening") setEveningCheckIn(savedCheckIn);
-    if (isGuestMode()) {
-      saveGuestCheckIn({
-        date: savedCheckIn.date,
-        type: (savedCheckIn.type as "morning" | "evening") || "evening",
-        status: (savedCheckIn.status as "yes" | "partial" | "no") || "yes",
-        plannedActions: savedCheckIn.plannedActions || undefined,
-        intentionNote: savedCheckIn.intentionNote || undefined,
-        reflection: savedCheckIn.reflection || undefined,
-        moodValence: savedCheckIn.moodValence ?? undefined,
-        moodEnergy: savedCheckIn.moodEnergy ?? savedCheckIn.moodArousal ?? undefined,
-        blockerTags: savedCheckIn.blockerTags || undefined,
-      });
-    }
   };
 
   const handleCommitmentCreated = (newComm: Commitment) => {
@@ -191,7 +161,6 @@ export default function TodayPage() {
         userEmail={user?.email}
         userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
       />
-      <GuestBanner />
       <OfflineSyncBadge />
 
       <PageTransition>

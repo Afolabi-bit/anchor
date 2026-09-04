@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
-import { initializeGuestCommitment } from "@/lib/guest-service";
 import { ANCHOR_TEMPLATES } from "@/lib/templates";
 import type { User } from "@/db/schema";
 
@@ -108,15 +107,8 @@ export default function OnboardingPage() {
       playSingingBowlChime(432);
       triggerHaptic([20, 50, 30]);
 
-      // If user is not yet signed up, save state locally and route to signup
+      // If user is not yet signed up, redirect to signup
       if (!user) {
-        initializeGuestCommitment({
-          name: commitmentName.trim(),
-          why: commitmentWhy.trim(),
-          frequency,
-          morningTime,
-          eveningTime,
-        });
         router.push("/signup?from=onboarding");
         return;
       }
@@ -150,20 +142,6 @@ export default function OnboardingPage() {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
-  };
-
-  // Complete onboarding in Guest Mode (No account required!)
-  const handleContinueAsGuest = () => {
-    triggerHaptic(12);
-    playSingingBowlChime(432);
-    initializeGuestCommitment({
-      name: commitmentName.trim(),
-      why: commitmentWhy.trim(),
-      frequency,
-      morningTime,
-      eveningTime,
-    });
-    router.push("/today");
   };
 
   return (
@@ -527,25 +505,16 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {/* Primary Dual Action Choice */}
-                <div className="space-y-2.5 pt-2">
+                {/* Action Button */}
+                <div className="pt-2">
                   <button
                     type="button"
                     disabled={loading}
                     onClick={handleCompleteAccount}
                     className="w-full py-3.5 rounded-full bg-[#C86D51] hover:bg-[#B35D43] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-organic-md cursor-pointer transition-colors"
                   >
-                    <span>{user ? "Save Anchor & Start Today" : "Create Free Account (Encrypted Cloud Sync)"}</span>
+                    <span>{user ? "Save Anchor & Start Today" : "Create Account & Start Today"}</span>
                     <ArrowRight className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={handleContinueAsGuest}
-                    className="w-full py-2.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] hover:bg-[#FAF7F2] dark:hover:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] text-xs font-medium cursor-pointer transition-colors"
-                  >
-                    <span>Explore in Guest Mode first (Local to this device)</span>
                   </button>
                 </div>
               </motion.div>

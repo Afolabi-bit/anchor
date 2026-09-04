@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Anchor,
   Sun,
@@ -19,29 +18,14 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playGentleChime } from "@/lib/sensory";
-import { initializeGuestCommitment } from "@/lib/guest-service";
 
 export default function LandingHero() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"morning" | "circadian" | "evening">("morning");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   // Somatic Breathing Simulator in Feature Bento
   const [isBreathing, setIsBreathing] = useState(false);
   const [breathPhase, setBreathPhase] = useState<"Inhale (4s)" | "Hold (7s)" | "Exhale (8s)">("Inhale (4s)");
-
-  const handleStartGuestMode = () => {
-    triggerHaptic(12);
-    playGentleChime(432);
-    initializeGuestCommitment({
-      name: "Stay sober & grounded",
-      why: "To show up clear-headed and calm for myself and the people I love.",
-      frequency: "daily",
-      morningTime: "08:00",
-      eveningTime: "20:00",
-    });
-    router.push("/today");
-  };
 
   const toggleFaq = (index: number) => {
     triggerHaptic(8);
@@ -78,8 +62,8 @@ export default function LandingHero() {
       a: "Only you. What you write is sealed directly on your device before it is saved. We don't read your words, sell data, or host third-party advertisers. Your personal journey is completely confidential.",
     },
     {
-      q: "Can I try Anchor without creating an account?",
-      a: "Yes! Anchor includes a complete, local Guest Mode. You can set your daily anchor, complete check-ins, and write reflections right now without entering an email or password.",
+      q: "Is creating an account free and private?",
+      a: "Yes. Creating an account takes less than a minute and is completely private. Your reflections are protected with application-layer encryption, and we never sell your data, run ads, or share your activity.",
     },
     {
       q: "Can I share my progress with an accountability partner or sponsor?",
@@ -210,7 +194,7 @@ export default function LandingHero() {
           </div>
           <div className="flex items-center gap-1.5">
             <Check className="w-3.5 h-3.5 text-[#658B70]" />
-            <span>Free to explore in Guest Mode</span>
+            <span>Completely private & confidential</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Check className="w-3.5 h-3.5 text-[#658B70]" />
@@ -695,7 +679,7 @@ export default function LandingHero() {
           </h2>
 
           <p className="text-sm sm:text-base text-[#A8A096] mt-4 max-w-md mx-auto leading-relaxed">
-            It takes less than 45 seconds to anchor your day. Free to explore right now with no account needed.
+            It takes less than 45 seconds to anchor your day. Create your private account in moments and show up for yourself.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3.5 justify-center">
@@ -708,13 +692,13 @@ export default function LandingHero() {
               <ArrowRight className="w-4 h-4" />
             </Link>
 
-            <button
-              type="button"
-              onClick={handleStartGuestMode}
-              className="w-full sm:w-auto text-xs sm:text-sm font-medium px-6 py-3.5 rounded-full border border-[#2E2824] bg-[#161311] hover:bg-[#201C19] text-[#ECE7E0] transition-colors cursor-pointer"
+            <Link
+              href="/login"
+              onClick={() => triggerHaptic(8)}
+              className="w-full sm:w-auto text-xs sm:text-sm font-medium px-6 py-3.5 rounded-full border border-[#2E2824] bg-[#161311] hover:bg-[#201C19] text-[#ECE7E0] transition-colors text-center"
             >
-              <span>Explore in Guest Mode (No Account)</span>
-            </button>
+              <span>Already have an account? Sign in</span>
+            </Link>
           </div>
         </div>
       </section>

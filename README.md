@@ -23,7 +23,7 @@
 5. [Design System & Theme Tokens](#design-system--theme-tokens)
 6. [Key Features Walkthrough](#key-features-walkthrough)
 7. [Database Schema](#database-schema)
-8. [Local-First Guest Mode](#local-first-guest-mode)
+8. [Private Account & Route Protection](#private-account--route-protection)
 9. [Getting Started & Setup](#getting-started--setup)
 10. [Automated Verification & Test Suite](#automated-verification--test-suite)
 11. [Deployment](#deployment)
@@ -68,7 +68,7 @@ Traditional habit trackers fail individuals in recovery and mental wellness jour
 - **Cryptography:** Node.js native `crypto` module (AES-256-GCM, 96-bit IVs)
 - **Audio & Sensory:** HTML5 Web Audio API harmonic chime synthesizer + Web Vibration API
 - **Authentication:** `jose` JWT cookies (`httpOnly`, `SameSite=Lax`, secure) + `bcryptjs`
-- **PWA & Offline:** Progressive Web App with homescreen launch manifest and local-first guest caching
+- **PWA & Offline:** Progressive Web App with homescreen launch manifest and background indexedDB offline sync
 
 ---
 
@@ -197,14 +197,12 @@ The database is defined using Drizzle ORM targeting Neon PostgreSQL (`db/schema.
 
 ---
 
-## 8. Local-First Guest Mode
+## 8. Private Account & Route Protection
 
-Visitors can experience Anchor immediately without creating an account or entering credentials:
-- **3-Screen Onboarding:** Allows selecting an intention, experiencing an interactive evening check-in preview with tactile haptics, and selecting notification cadence.
-- **Local Storage Manager (`lib/guest-service.ts`):** Stores check-ins, commitments, and journal entries locally in browser `localStorage`.
-- **Guest Banner (`app/components/GuestBanner.tsx`):** Displays a non-intrusive reminder on `/today` and `/journal`:
-  > *"Guest Mode: Saved locally on this device. Create an account to back up and sync."*
-- **Route Guard Protection:** Unauthenticated guests can use `/today` and `/journal` without forced redirects to `/login`.
+Anchor requires every user to create a private account to ensure end-to-end data integrity and protection:
+- **Mandatory Authentication:** All core application routes (`/today`, `/journal`, `/progress`, `/settings`, `/community`) and `/onboarding` are strictly guarded by `proxy.ts`. Unauthenticated visits immediately redirect to `/login` or `/signup`.
+- **Encrypted Personal Storage:** Free-text reflections and notes are encrypted with server-managed AES-256-GCM before database insertion.
+- **Aggressive Session Purging on Logout:** Logging out purges all client-side `localStorage`, `sessionStorage`, and IndexedDB state, ensuring no sensitive drafts or notes persist on shared workstations.
 
 ---
 

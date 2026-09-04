@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 
-function runOnboardingAndRecommendationsCheck() {
+function runOnboardingAndAuthCheck() {
   console.log("==================================================");
-  console.log("VERIFYING ONBOARDING, GUEST MODE & AUDIT FIXES");
+  console.log("VERIFYING MANDATORY ACCOUNTS & GUEST MODE REVOCATION");
   console.log("==================================================");
 
   // 1. Audit Recommended Fixes
@@ -65,34 +65,51 @@ function runOnboardingAndRecommendationsCheck() {
   }
   console.log("[✓] PASS: Screen 2 delivers an interactive, tactile check-in preview with haptic/chime feedback before account creation.");
 
-  // Verify Screen 3 Cadence, Privacy & Guest Mode Option
-  if (
-    !onboardingContent.includes("Screen 3 of 3: Cadence & Privacy") ||
-    !onboardingContent.includes("Explore in Guest Mode first") ||
-    !onboardingContent.includes("initializeGuestCommitment")
-  ) {
-    throw new Error("Onboarding Screen 3 or Guest Mode transition missing!");
+  // Verify Screen 3 Cadence & Privacy (Without Guest Mode bypass)
+  if (!onboardingContent.includes("Screen 3 of 3: Cadence & Privacy")) {
+    throw new Error("Onboarding Screen 3 missing!");
   }
-  console.log("[✓] PASS: Screen 3 provides clear notification cadence, transparent privacy guarantee, and guest-mode continuation.");
+  if (onboardingContent.includes("Explore in Guest Mode first") || onboardingContent.includes("initializeGuestCommitment")) {
+    throw new Error("Onboarding still contains Guest Mode bypass!");
+  }
+  console.log("[✓] PASS: Screen 3 requires account creation without guest mode bypass.");
 
-  // 3. Audit Guest Mode Integration
-  console.log("\n3. Auditing Guest Mode Integration across routes...");
+  // 3. Audit Mandatory Account Enforcement across Routes
+  console.log("\n3. Auditing Mandatory Account Enforcement across proxy and routes...");
+  const proxyContent = fs.readFileSync(path.resolve("proxy.ts"), "utf-8");
+  if (proxyContent.includes("GUEST_ELIGIBLE_ROUTES") || proxyContent.includes("anchor_guest")) {
+    throw new Error("proxy.ts still contains guest route exceptions!");
+  }
+  if (!proxyContent.includes('"/today"') || !proxyContent.includes('"/journal"')) {
+    throw new Error("proxy.ts missing /today or /journal from protected routes!");
+  }
+  console.log("[✓] PASS: proxy.ts strictly protects /today, /journal, /progress, /settings, /community.");
+
   const todayContent = fs.readFileSync(path.resolve("app/today/page.tsx"), "utf-8");
+  if (todayContent.includes("<GuestBanner />") || todayContent.includes("isGuestMode")) {
+    throw new Error("app/today/page.tsx still contains Guest Mode!");
+  }
+  console.log("[✓] PASS: /today requires authenticated session (no guest bypass).");
+
   const journalContent = fs.readFileSync(path.resolve("app/journal/page.tsx"), "utf-8");
-
-  if (!todayContent.includes("<GuestBanner />") || !todayContent.includes("isGuestMode()")) {
-    throw new Error("app/today/page.tsx missing Guest Mode integration!");
+  if (journalContent.includes("<GuestBanner />") || journalContent.includes("isGuestMode")) {
+    throw new Error("app/journal/page.tsx still contains Guest Mode!");
   }
-  console.log("[✓] PASS: /today supports local guest state without forced login redirects.");
+  console.log("[✓] PASS: /journal requires authenticated session (no guest bypass).");
 
-  if (!journalContent.includes("<GuestBanner />") || !journalContent.includes("isGuestMode()")) {
-    throw new Error("app/journal/page.tsx missing Guest Mode integration!");
+  // 4. Audit Landing Page Revocation of Guest Mode
+  console.log("\n4. Auditing Landing Page Guest Mode Revocation...");
+  if (landingHeroContent.includes("Guest Mode") || landingHeroContent.includes("initializeGuestCommitment")) {
+    throw new Error("LandingHero.tsx still advertises Guest Mode!");
   }
-  console.log("[✓] PASS: /journal supports local guest reflections and displays GuestBanner.");
+  if (!landingHeroContent.includes("Is creating an account free and private?")) {
+    throw new Error("LandingHero.tsx missing account privacy FAQ question!");
+  }
+  console.log("[✓] PASS: LandingHero has completely revoked Guest Mode copy, buttons, and FAQ.");
 
   console.log("==================================================");
-  console.log("ALL RECOMMENDED ACTIONS & ONBOARDING PASSED (100%)");
+  console.log("ALL MANDATORY ACCOUNT & SECURITY CHECKS PASSED (100%)");
   console.log("==================================================");
 }
 
-runOnboardingAndRecommendationsCheck();
+runOnboardingAndAuthCheck();

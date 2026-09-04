@@ -8,8 +8,6 @@ import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import CheckInStepper from "@/app/components/CheckInStepper";
 import { JournalSkeleton } from "@/app/components/Skeletons";
 import JournalComposer from "@/app/components/JournalComposer";
-import GuestBanner from "@/app/components/GuestBanner";
-import { isGuestMode, getGuestState, saveGuestJournalEntry } from "@/lib/guest-service";
 import {
   Sun,
   Moon,
@@ -78,17 +76,6 @@ export default function JournalPage() {
         setLoading(true);
         const meRes = await fetch("/api/auth/me");
         if (!meRes.ok) {
-          if (isGuestMode()) {
-            const guest = getGuestState();
-            setUser({ firstName: "Guest", email: "local-guest" } as unknown as User);
-            if (guest?.commitment) {
-              setActiveCommitment(guest.commitment as unknown as Commitment);
-            }
-            setCheckIns((guest?.checkIns || []) as unknown as CheckIn[]);
-            setJournalEntries((guest?.journalEntries || []) as unknown as JournalEntry[]);
-            setLoading(false);
-            return;
-          }
           router.push("/login");
           return;
         }
@@ -286,7 +273,6 @@ export default function JournalPage() {
         userEmail={user?.email}
         userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
       />
-      <GuestBanner />
       <OfflineSyncBadge />
 
       <PageTransition>

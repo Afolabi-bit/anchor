@@ -10,7 +10,7 @@ import { clearOfflineDatabase } from "./offline-sync";
  * - Unsubmitted / in-progress journal drafts (`anchor_journal_draft_*`)
  * - Starred journal dates (`anchor_starred_journal_dates`)
  * - Bookmarked daily affirmations (`anchor_bookmarked_quotes`)
- * - Guest mode offline state (`anchor_guest_state`)
+ * - Legacy local state (`anchor_guest_state`)
  * - Dismissed AI pattern cards (`anchor_dismissed_patterns`)
  * - Community resonance IDs (`anchor_resonated_ids`)
  * - PWA prompt flags (`anchor_pwa_*`)
