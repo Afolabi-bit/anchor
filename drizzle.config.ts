@@ -11,7 +11,9 @@ if (!dbUrl) {
       const match = content.match(/DATABASE_URL=["']?([^"'\r\n]+)["']?/);
       if (match) dbUrl = match[1];
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Failed reading .env.local for DATABASE_URL fallback:", err);
+  }
 }
 
 export default defineConfig({

@@ -7,23 +7,15 @@ import {
   Anchor,
   Sun,
   Moon,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
   Lock,
   Compass,
-  HelpCircle,
   Wind,
   Check,
   ChevronDown,
-  Volume2,
-  VolumeX,
-  Share2,
-  HeartHandshake,
   Activity,
-  Menu,
-  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playGentleChime } from "@/lib/sensory";
@@ -32,8 +24,6 @@ import { initializeGuestCommitment } from "@/lib/guest-service";
 export default function LandingHero() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"morning" | "circadian" | "evening">("morning");
-  const [showSealedTooltip, setShowSealedTooltip] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   // Somatic Breathing Simulator in Feature Bento
@@ -80,20 +70,20 @@ export default function LandingHero() {
 
   const faqItems = [
     {
-      q: "How does Anchor prevent shame spirals when I miss a day?",
-      a: "Anchor explicitly eliminates streak counters, punitive reset badges, and flashing red warning banners. If you miss a morning check-in or have a tough day, your evening is treated as a fresh clean slate. Progress is measured by cumulative days of self-honesty, not unbroken perfection.",
+      q: "What happens if I miss a check-in?",
+      a: "Nothing is lost. Anchor never resets your progress or displays stressful streak warnings. If you miss a morning check-in or have a demanding day, your evening is a clean slate. Showing up honestly is what matters.",
     },
     {
       q: "Who can read my reflections and journal entries?",
-      a: "Only you. All personal reflection text and journal notes are encrypted client-side in your browser using AES-256-GCM before ever touching our database. Even if someone intercepts the database, they only see randomized ciphertext. We run zero third-party analytics pixels or data brokers.",
+      a: "Only you. What you write is sealed directly on your device before it is saved. We don't read your words, sell data, or host third-party advertisers. Your personal journey is completely confidential.",
     },
     {
       q: "Can I try Anchor without creating an account?",
-      a: "Yes! Anchor includes a complete, local-first Guest Mode. You can set your daily anchor, complete check-ins, track mood, and write journals directly on your device. When you're ready, you can create a private account in one click to sync across devices.",
+      a: "Yes! Anchor includes a complete, local Guest Mode. You can set your daily anchor, complete check-ins, and write reflections right now without entering an email or password.",
     },
     {
-      q: "How does partner or sponsor sharing work?",
-      a: "Anchor provides an optional accountability partner portal governed by strict, default-zero permissions. All metric sharing flags default to OFF. Your sponsor can see your check-in consistency and cheer you on, while your journal reflections stay strictly private.",
+      q: "Can I share my progress with an accountability partner or sponsor?",
+      a: "Only if you choose to. Anchor includes an optional partner link where you decide exactly what to share (like check-in consistency). Your private written notes always stay strictly locked.",
     },
   ];
 
@@ -104,13 +94,13 @@ export default function LandingHero() {
       <div className="absolute top-[400px] left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(200,109,81,0.08),transparent_65%)] pointer-events-none -z-10" />
 
       {/* ========================================================================= */}
-      {/* 1. FLOATING PILL NAVIGATION BAR (Inspired by Reference Design)             */}
+      {/* 1. TOP NAVIGATION BAR (Unfloated, Clean Header)                            */}
       {/* ========================================================================= */}
-      <nav className="sticky top-4 sm:top-6 z-50 w-full px-4 sm:px-6">
-        <div className="max-w-2xl mx-auto rounded-full bg-[#161311]/85 border border-[#2E2824] backdrop-blur-xl px-4 sm:px-5 py-2.5 flex items-center justify-between shadow-2xl transition-all">
+      <nav className="w-full border-b border-[#201C19] bg-[#0D0B0A]/95 px-4 sm:px-8 py-3.5 sticky top-0 z-50 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Brand Mark */}
           <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
-            <div className="w-8 h-8 rounded-full bg-[#2A1D19] border border-[#482E25] text-[#C86D51] flex items-center justify-center shadow-xs transition-transform group-hover:scale-105">
+            <div className="w-8 h-8 rounded-full bg-[#2A1D19] border border-[#482E25] text-[#C86D51] flex items-center justify-center shadow-xs transition-transform group-hover:scale-102">
               <Anchor className="w-4 h-4" />
             </div>
             <span className="font-serif-title text-base font-normal tracking-tight text-[#ECE7E0]">
@@ -121,13 +111,16 @@ export default function LandingHero() {
           {/* Center Links (Desktop) */}
           <div className="hidden md:flex items-center gap-6 text-xs text-[#A8A096]">
             <a href="#features" className="hover:text-[#ECE7E0] transition-colors">
-              Features
+              How It Works
             </a>
             <a href="#mood" className="hover:text-[#ECE7E0] transition-colors">
-              Mood Canvas
+              Emotional Space
             </a>
             <a href="#privacy" className="hover:text-[#ECE7E0] transition-colors">
-              Zero-Knowledge
+              Privacy
+            </a>
+            <a href="#ethos" className="hover:text-[#ECE7E0] transition-colors">
+              Our Ethos
             </a>
             <a href="#faq" className="hover:text-[#ECE7E0] transition-colors">
               FAQ
@@ -135,7 +128,7 @@ export default function LandingHero() {
           </div>
 
           {/* Right Action CTA */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <Link
               href="/login"
               onClick={() => triggerHaptic(8)}
@@ -146,80 +139,18 @@ export default function LandingHero() {
             <Link
               href="/signup"
               onClick={() => triggerHaptic(12)}
-              className="text-xs font-semibold bg-[#C86D51] hover:bg-[#B35D43] text-white px-4 py-1.5 rounded-full transition-all duration-200 shadow-organic-sm hover:scale-105"
+              className="text-xs font-semibold bg-[#C86D51] hover:bg-[#B35D43] text-white px-4 py-1.5 rounded-full transition-all duration-200 shadow-organic-sm"
             >
               Get started
             </Link>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1 text-[#A8A096] hover:text-[#ECE7E0] cursor-pointer"
-              aria-label="Toggle Navigation"
-            >
-              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </button>
           </div>
         </div>
-
-        {/* Mobile Dropdown Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="md:hidden max-w-sm mx-auto mt-2 rounded-2xl bg-[#161311] border border-[#2E2824] p-4 text-xs space-y-3 shadow-2xl"
-            >
-              <a
-                href="#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-[#A8A096] hover:text-[#ECE7E0] py-1"
-              >
-                Features
-              </a>
-              <a
-                href="#mood"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-[#A8A096] hover:text-[#ECE7E0] py-1"
-              >
-                Mood Canvas
-              </a>
-              <a
-                href="#privacy"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-[#A8A096] hover:text-[#ECE7E0] py-1"
-              >
-                Zero-Knowledge Privacy
-              </a>
-              <a
-                href="#faq"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-[#A8A096] hover:text-[#ECE7E0] py-1"
-              >
-                FAQ & Philosophy
-              </a>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </nav>
 
       {/* ========================================================================= */}
-      {/* 2. HERO SECTION (Directly Inspired by Top Half of Reference Image)        */}
+      {/* 2. HERO SECTION                                                           */}
       {/* ========================================================================= */}
-      <header className="pt-16 sm:pt-24 pb-10 px-4 sm:px-6 max-w-4xl mx-auto flex flex-col items-center text-center">
-        {/* Top Floating Pill Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#2C4032] bg-[#18231B]/80 text-[#82A78C] text-xs font-medium mb-6 shadow-2xs backdrop-blur-md"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#658B70]" />
-          <span>A judgment-free space for daily accountability</span>
-        </motion.div>
-
+      <header className="pt-14 sm:pt-20 pb-10 px-4 sm:px-6 max-w-4xl mx-auto flex flex-col items-center text-center">
         {/* Large Commanding Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -227,18 +158,18 @@ export default function LandingHero() {
           transition={{ duration: 0.5, delay: 0.05 }}
           className="font-serif-title text-4xl sm:text-6xl md:text-7xl font-normal tracking-tight text-[#ECE7E0] leading-[1.12] max-w-3xl"
         >
-          Unlock Your Daily Rhythm <br />
-          <span className="text-[#658B70] italic">With Anchor</span>
+          Show up for yourself, <br />
+          <span className="text-[#658B70] italic">one day at a time.</span>
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Welcoming, Emotionally Resonant Subtitle */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-base sm:text-lg text-[#A8A096] mt-6 max-w-xl leading-relaxed"
+          className="text-base sm:text-lg text-[#A8A096] mt-5 max-w-xl leading-relaxed"
         >
-          We empower you to achieve mindful accountability and emotional steadiness with quiet self-honesty. Built for recovery, habit change, and nervous system regulation without streak anxiety.
+          A calm sanctuary to build trust with yourself. Choose one daily anchor, check in morning and night in under 45 seconds, and leave streak anxiety behind.
         </motion.p>
 
         {/* Hero CTA Buttons */}
@@ -262,50 +193,71 @@ export default function LandingHero() {
             onClick={() => triggerHaptic(8)}
             className="w-full sm:w-auto text-xs sm:text-sm font-medium px-6 py-3.5 rounded-full border border-[#2E2824] bg-[#161311] hover:bg-[#201C19] text-[#ECE7E0] transition-colors duration-200"
           >
-            <span>Explore Features</span>
+            <span>How it works</span>
           </a>
+        </motion.div>
+
+        {/* Trust & Reassurance Indicators */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-[#A8A096]"
+        >
+          <div className="flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5 text-[#658B70]" />
+            <span>Takes under 45 seconds a day</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5 text-[#658B70]" />
+            <span>Free to explore in Guest Mode</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5 text-[#658B70]" />
+            <span>Zero streak resets</span>
+          </div>
         </motion.div>
       </header>
 
       {/* ========================================================================= */}
-      {/* 4. OUR FEATURES / BENTO GRID (Inspired by Lower Half of Reference Image)   */}
+      {/* 4. HOW ANCHOR WORKS / HUMAN-CENTERED BENTO GRID                           */}
       {/* ========================================================================= */}
       <section id="features" className="py-20 px-4 sm:px-6 max-w-5xl mx-auto">
         {/* Section Header */}
         <div className="text-left mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#2C4032] bg-[#18231B] text-[#82A78C] text-[11px] font-semibold uppercase tracking-wider mb-3">
-            <span>Our Features</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#2C4032] bg-[#18231B] text-[#82A78C] text-xs font-semibold uppercase tracking-wider mb-3">
+            <span>How Anchor Works</span>
           </div>
           <h2 className="font-serif-title text-3xl sm:text-5xl font-normal text-[#ECE7E0] tracking-tight">
-            Designed for Calm, Honest Reflection
+            Accountability without the overwhelm
           </h2>
           <p className="text-sm sm:text-base text-[#A8A096] mt-3 max-w-2xl leading-relaxed">
-            Every interaction in Anchor is built to reduce cognitive friction, honor nervous system regulation, and protect your deepest personal thoughts.
+            Most apps treat personal growth like a stressful scorecard. Anchor is built as a peaceful sanctuary — helping you stay honest, steady, and kind to yourself every day.
           </p>
         </div>
 
         {/* Bento Grid Container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* ===================================================================== */}
-          {/* BENTO CARD 1 (Spans 2 cols): Interactive Check-in Mockup              */}
+          {/* BENTO CARD 1 (Spans 2 cols): Daily Rhythm Check-in                    */}
           {/* ===================================================================== */}
-          <div className="md:col-span-2 rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:border-[#3D352F] transition-all">
+          <div className="md:col-span-2 rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-organic-md flex flex-col justify-between hover:border-[#3D352F] transition-all">
             <div>
               {/* Feature Tag */}
               <div className="flex items-center justify-between gap-2 mb-4">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#B88452]">
-                  Daily Core
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#B88452]">
+                  Daily Rhythm
                 </span>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#201C19] border border-[#38302A] text-[#A8A096]">
-                  Interactive Preview
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#201C19] border border-[#38302A] text-[#A8A096]">
+                  Try It Below
                 </span>
               </div>
 
               <h3 className="font-serif-title text-xl sm:text-2xl text-[#ECE7E0] mb-2">
-                Time-Aware Circadian Check-ins
+                Two Minutes to Ground Your Day
               </h3>
               <p className="text-xs sm:text-sm text-[#A8A096] mb-6 leading-relaxed">
-                Set 1–2 micro-actions in the morning. Close your day with compassion in the evening. Automatically switches to whichever phase is relevant.
+                Set one intentional micro-step each morning. Reflect with kindness each evening. That's all — no complicated checklists or overwhelming routines.
               </p>
 
               {/* Interactive Tabs */}
@@ -336,7 +288,7 @@ export default function LandingHero() {
                   }`}
                 >
                   <Compass className="w-3.5 h-3.5 text-[#C86D51]" />
-                  <span>24h Arc</span>
+                  <span>Daily Flow</span>
                 </button>
                 <button
                   onClick={() => {
@@ -365,10 +317,10 @@ export default function LandingHero() {
                     className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2.5"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-[#D4A373]">
+                      <span className="text-xs font-semibold text-[#D4A373]">
                         Focus: Stay Sober & Grounded
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#2A2218] text-[#D4A373] border border-[#483A2A]">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#2A2218] text-[#D4A373] border border-[#483A2A]">
                         Sealed Today
                       </span>
                     </div>
@@ -405,10 +357,10 @@ export default function LandingHero() {
                       <circle cx="200" cy="25" r="6" fill="#C86D51" />
                       <circle cx="200" cy="25" r="14" fill="#C86D51" opacity="0.15" />
                     </svg>
-                    <div className="flex justify-between text-[10px] text-[#A8A096]">
+                    <div className="flex justify-between text-xs text-[#A8A096]">
                       <span>06:00 Morning Rise</span>
-                      <span className="font-semibold text-[#C86D51]">Current Position (Midday)</span>
-                      <span>22:00 Rest</span>
+                      <span className="font-semibold text-[#C86D51]">Midday Steady</span>
+                      <span>22:00 Evening Rest</span>
                     </div>
                   </motion.div>
                 )}
@@ -423,16 +375,16 @@ export default function LandingHero() {
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-[#658B70]">Day Anchored & Closed</span>
-                      <span className="text-[10px] text-[#A8A096]">No shame • Clean slate</span>
+                      <span className="text-xs text-[#A8A096]">No shame • Clean slate</span>
                     </div>
                     <p className="font-serif text-xs italic text-[#ECE7E0]">
                       "Stressful afternoon meeting, but took 5 deep breaths and stayed steady. Proud of showing up."
                     </p>
                     <div className="flex gap-1.5 pt-1">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#161311] border border-[#2E2824] text-[#A8A096]">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#161311] border border-[#2E2824] text-[#A8A096]">
                         #stress
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#161311] border border-[#2E2824] text-[#A8A096]">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#161311] border border-[#2E2824] text-[#A8A096]">
                         #work-fatigue
                       </span>
                     </div>
@@ -448,98 +400,101 @@ export default function LandingHero() {
           </div>
 
           {/* ===================================================================== */}
-          {/* BENTO CARD 2: 2D Circumplex Mood Tracking                             */}
+          {/* BENTO CARD 2: Emotional Space / Nuanced Feelings                     */}
           {/* ===================================================================== */}
-          <div id="mood" className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:border-[#3D352F] transition-all">
+          <div id="mood" className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-organic-md flex flex-col justify-between hover:border-[#3D352F] transition-all">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#658B70] block mb-4">
-                Emotional Canvas
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#658B70] block mb-4">
+                Emotional Space
               </span>
               <h3 className="font-serif-title text-xl sm:text-2xl text-[#ECE7E0] mb-2">
-                2D Mood Tracking
+                Check In With How You Truly Feel
               </h3>
               <p className="text-xs sm:text-sm text-[#A8A096] mb-6 leading-relaxed">
-                Decouples how pleasant you feel (-5 to +5) from somatic energy (1 to 5) so low energy is never misclassified as depression.
+                Low energy isn't failure, and feeling quiet isn't sadness. Anchor gives you room for real nuance, without the pressure of a harsh 1-to-10 score or forcing a cheerful face.
               </p>
 
-              {/* 2D Mood SVG Visualizer */}
-              <div className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] relative overflow-hidden">
-                <div className="flex justify-between text-[10px] text-[#A8A096] mb-2 font-mono">
-                  <span>Valence: +3 (Calm)</span>
-                  <span className="text-[#658B70]">Energy: 2</span>
+              {/* Emotional State Showcase */}
+              <div className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#A8A096] font-medium">Daily Reflection</span>
+                  <span className="text-xs text-[#658B70] font-semibold">Honest Space</span>
                 </div>
-                <svg viewBox="0 0 240 70" className="w-full h-16">
-                  {/* Grid Lines */}
-                  <line x1="0" y1="35" x2="240" y2="35" stroke="#2E2824" strokeWidth="1" />
-                  <line x1="120" y1="0" x2="120" y2="70" stroke="#2E2824" strokeWidth="1" />
-
-                  {/* Dual Curve */}
-                  <path
-                    d="M 10 50 Q 70 20, 120 30 T 230 20"
-                    fill="none"
-                    stroke="#658B70"
-                    strokeWidth="2.5"
-                  />
-                  <circle cx="160" cy="24" r="5" fill="#658B70" />
-                  <circle cx="160" cy="24" r="10" fill="#658B70" opacity="0.2" />
-                </svg>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-[#18231B] border border-[#2C4032] text-[#82A78C] font-medium flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#658B70]" />
+                    Peaceful & Calm
+                  </span>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-[#201C19] border border-[#38302A] text-[#A8A096]">
+                    Low Energy · Resting
+                  </span>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-[#2A1D19] border border-[#482E25] text-[#DB8165]">
+                    Grateful
+                  </span>
+                </div>
               </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#2E2824] flex items-center justify-between text-xs text-[#A8A096]">
-              <span>Russell's Circumplex Model</span>
-              <span className="text-[#82A78C] font-medium">Non-diagnostic</span>
+              <span>No forced ratings</span>
+              <span className="text-[#82A78C] font-medium">Honor your pace</span>
             </div>
           </div>
 
           {/* ===================================================================== */}
-          {/* BENTO CARD 3: Cryptographic Zero-Knowledge Privacy                   */}
+          {/* BENTO CARD 3: Private Sanctuary                                       */}
           {/* ===================================================================== */}
-          <div id="privacy" className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:border-[#3D352F] transition-all">
+          <div id="privacy" className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-organic-md flex flex-col justify-between hover:border-[#3D352F] transition-all">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#C86D51] block mb-4">
-                Zero-Knowledge
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#C86D51] block mb-4">
+                Private Sanctuary
               </span>
               <h3 className="font-serif-title text-xl sm:text-2xl text-[#ECE7E0] mb-2">
-                AES-256-GCM Encryption
+                Completely Private to You
               </h3>
               <p className="text-xs sm:text-sm text-[#A8A096] mb-6 leading-relaxed">
-                Reflections, notes, and journal entries are encrypted client-side. Complete storage purge on logout ensures nothing lingers on shared computers.
+                Your reflections, struggles, and personal triumphs belong only to you. No ads, no data selling, and no snooping. What you write is sealed with medical-grade privacy before it ever leaves your device.
               </p>
 
-              <div className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2 text-xs font-mono text-[#A8A096]">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-[#C86D51] flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Protected Payload</span>
-                  </span>
-                  <span className="text-[10px] text-[#658B70]">256-Bit</span>
+              <div className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#2A1D19] border border-[#482E25] text-[#C86D51] flex items-center justify-center shrink-0">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-[#ECE7E0] block">
+                      Protected with quiet device privacy
+                    </span>
+                    <span className="text-xs text-[#A8A096]">
+                      Only you hold the key to your words
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[10px] break-all opacity-70">
-                  iv: 07bab9e1... | tag: a493a8e2... | data: 9f8a3c...
+                <p className="text-xs text-[#A8A096] leading-relaxed pt-1">
+                  Write with complete honesty. Download your personal history anytime with structured data export.
                 </p>
               </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#2E2824] flex items-center justify-between text-xs text-[#A8A096]">
-              <span>Zero third-party trackers</span>
-              <span className="text-[#C86D51] font-medium">100% Private</span>
+              <span>Zero ads or trackers</span>
+              <span className="text-[#C86D51] font-medium">100% Confidential</span>
             </div>
           </div>
 
           {/* ===================================================================== */}
           {/* BENTO CARD 4: Somatic Breathing & Grounding Drawer                   */}
           {/* ===================================================================== */}
-          <div className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:border-[#3D352F] transition-all">
+          <div className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-organic-md flex flex-col justify-between hover:border-[#3D352F] transition-all">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#B88452] block mb-4">
-                Somatic Regulation
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#B88452] block mb-4">
+                Calm in the Moment
               </span>
               <h3 className="font-serif-title text-xl sm:text-2xl text-[#ECE7E0] mb-2">
-                "Pause & Breathe" Drawer
+                A Breath When Things Feel Heavy
               </h3>
               <p className="text-xs sm:text-sm text-[#A8A096] mb-6 leading-relaxed">
-                Instant grounding whenever stress or urge windows strike. Interactive 4-7-8 breathing simulator with gentle audio chime feedback.
+                When stress, cravings, or anxiety strike, open the grounding drawer for a gentle 60-second breathing exercise and calming chimes to help your body settle.
               </p>
 
               {/* Breathing Visualizer Card */}
@@ -565,41 +520,41 @@ export default function LandingHero() {
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#2E2824] flex items-center justify-between text-xs text-[#A8A096]">
-              <span>Web Audio Chimes</span>
-              <span className="text-[#B88452] font-medium">Vagus nerve calm</span>
+              <span>Guided 4-7-8 rhythm</span>
+              <span className="text-[#B88452] font-medium">Soothing chimes</span>
             </div>
           </div>
 
           {/* ===================================================================== */}
-          {/* BENTO CARD 5: Explainable Statistical Pattern Engine                 */}
+          {/* BENTO CARD 5: Gentle Pattern Clarity                                 */}
           {/* ===================================================================== */}
-          <div className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:border-[#3D352F] transition-all">
+          <div className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-8 shadow-organic-md flex flex-col justify-between hover:border-[#3D352F] transition-all">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#658B70] block mb-4">
-                Pattern Recognition
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#658B70] block mb-4">
+                Gentle Awareness
               </span>
               <h3 className="font-serif-title text-xl sm:text-2xl text-[#ECE7E0] mb-2">
-                Explainable Insights
+                Spot What Gets in the Way
               </h3>
               <p className="text-xs sm:text-sm text-[#A8A096] mb-6 leading-relaxed">
-                Self-reported obstacle tags (stress, time strain, fatigue) surface patterns only after 3+ occurrences. Transparent and non-diagnostic.
+                Notice your natural obstacles with curiosity rather than guilt. Anchor quietly highlights when certain days carry extra weight, so you can care for yourself in advance.
               </p>
 
               {/* Sample Insight Pill */}
               <div className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2">
                 <div className="flex items-center gap-2 text-xs text-[#82A78C] font-medium">
                   <Activity className="w-3.5 h-3.5 text-[#658B70]" />
-                  <span>Pattern Insight (3 Tuesdays)</span>
+                  <span>Compassionate Observation</span>
                 </div>
                 <p className="text-xs text-[#ECE7E0] leading-relaxed">
-                  "You've logged stress as an obstacle on 3 Tuesday evenings."
+                  "Tuesdays tend to bring fatigue — consider planning an earlier evening wind-down."
                 </p>
               </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#2E2824] flex items-center justify-between text-xs text-[#A8A096]">
-              <span>Threshold: 3+ events</span>
-              <span className="text-[#82A78C] font-medium">No black-box AI</span>
+              <span>Helpful observations</span>
+              <span className="text-[#82A78C] font-medium">Zero shame</span>
             </div>
           </div>
         </div>
@@ -609,55 +564,55 @@ export default function LandingHero() {
       {/* 5. ETHOS COMPARISON (Why Anchor Is Different)                             */}
       {/* ========================================================================= */}
       <section id="ethos" className="py-16 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-10 shadow-2xl">
+        <div className="rounded-3xl bg-[#161311] border border-[#2A2420] p-6 sm:p-10 shadow-organic-lg">
           <div className="text-center mb-8">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#C86D51] block mb-2">
-              Our Core Ethos
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#C86D51] block mb-2">
+              Why Anchor Is Different
             </span>
             <h2 className="font-serif-title text-2xl sm:text-4xl text-[#ECE7E0]">
-              Built for Humans, Not Algorithms
+              Built for Real Humans, Not Streaks
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             {/* Traditional Trackers */}
-            <div className="p-5 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-3 opacity-80">
-              <span className="font-semibold text-[#C86D51] block uppercase tracking-wider text-[10px]">
-                Typical Habit Trackers
+            <div className="p-5 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-3 opacity-85">
+              <span className="font-semibold text-[#C86D51] block uppercase tracking-wider text-xs">
+                Typical Habit Apps
               </span>
-              <ul className="space-y-2 text-[#A8A096]">
+              <ul className="space-y-2.5 text-[#A8A096]">
                 <li className="flex items-start gap-2">
                   <span className="text-[#C86D51]">✕</span>
-                  <span>Harsh streak resets triggering shame and relapse spirals.</span>
+                  <span>Broken streaks that erase weeks of hard work overnight.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C86D51]">✕</span>
-                  <span>Plaintext database storage vulnerable to leaks and snooping.</span>
+                  <span>Pushy notifications that trigger anxiety and guilt.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C86D51]">✕</span>
-                  <span>Guilt-inducing push notifications and pushy checklists.</span>
+                  <span>Endless checklists that set you up for burnout.</span>
                 </li>
               </ul>
             </div>
 
             {/* Anchor's Approach */}
             <div className="p-5 rounded-2xl bg-[#18231B] border border-[#2C4032] space-y-3">
-              <span className="font-semibold text-[#658B70] block uppercase tracking-wider text-[10px]">
+              <span className="font-semibold text-[#658B70] block uppercase tracking-wider text-xs">
                 The Anchor Way
               </span>
-              <ul className="space-y-2 text-[#ECE7E0]">
+              <ul className="space-y-2.5 text-[#ECE7E0]">
                 <li className="flex items-start gap-2">
                   <span className="text-[#658B70]">✓</span>
-                  <span>Soft landings guaranteed. Cumulative experience, never resets.</span>
+                  <span>Every day counts. Your progress is never erased or reset.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#658B70]">✓</span>
-                  <span>Client-side AES-256-GCM encryption with complete logout purge.</span>
+                  <span>One primary anchor habit: clarity and calm over clutter.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#658B70]">✓</span>
-                  <span>Quiet cadence with 1 primary anchor habit per circadian cycle.</span>
+                  <span>Total personal privacy: your words stay completely confidential.</span>
                 </li>
               </ul>
             </div>
@@ -670,7 +625,7 @@ export default function LandingHero() {
       {/* ========================================================================= */}
       <section id="faq" className="py-16 px-4 sm:px-6 max-w-3xl mx-auto">
         <div className="text-center mb-10">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#B88452] block mb-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#B88452] block mb-2">
             Questions & Answers
           </span>
           <h2 className="font-serif-title text-2xl sm:text-4xl text-[#ECE7E0]">
@@ -726,7 +681,7 @@ export default function LandingHero() {
       {/* 7. FINAL CALL TO ACTION (Bottom Card)                                     */}
       {/* ========================================================================= */}
       <section className="py-16 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="relative rounded-3xl bg-gradient-to-b from-[#1E1815] to-[#141210] border border-[#3D2E26] p-8 sm:p-12 text-center overflow-hidden shadow-2xl">
+        <div className="relative rounded-3xl bg-gradient-to-b from-[#1E1815] to-[#141210] border border-[#3D2E26] p-8 sm:p-12 text-center overflow-hidden shadow-organic-lg">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#C86D51]/10 rounded-full blur-3xl pointer-events-none -z-10" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#658B70]/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
@@ -736,11 +691,11 @@ export default function LandingHero() {
           </div>
 
           <h2 className="font-serif-title text-3xl sm:text-5xl text-[#ECE7E0] max-w-xl mx-auto leading-tight">
-            Ready to show up for yourself today?
+            Take a deep breath. Start today.
           </h2>
 
           <p className="text-sm sm:text-base text-[#A8A096] mt-4 max-w-md mx-auto leading-relaxed">
-            Takes under 45 seconds. Try in local guest mode right now without creating an account, or sign up to sync.
+            It takes less than 45 seconds to anchor your day. Free to explore right now with no account needed.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3.5 justify-center">
@@ -774,7 +729,7 @@ export default function LandingHero() {
               <Anchor className="w-3 h-3" />
             </div>
             <span className="font-serif-title text-sm text-[#ECE7E0]">Anchor</span>
-            <span className="opacity-60">• Private & Encrypted Accountability</span>
+            <span className="opacity-60">• A quiet space for daily self-trust</span>
           </div>
 
           <div className="flex items-center gap-6">

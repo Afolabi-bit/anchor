@@ -31,7 +31,9 @@ export async function clearAnchorClientStorage(): Promise<void> {
     localKeysToRemove.forEach((key) => {
       try {
         localStorage.removeItem(key);
-      } catch {}
+      } catch (e) {
+        console.warn(`Failed to remove localStorage key "${key}":`, e);
+      }
     });
 
     // 2. Purge all sessionStorage keys belonging to Anchor
@@ -45,7 +47,9 @@ export async function clearAnchorClientStorage(): Promise<void> {
     sessionKeysToRemove.forEach((key) => {
       try {
         sessionStorage.removeItem(key);
-      } catch {}
+      } catch (e) {
+        console.warn(`Failed to remove sessionStorage key "${key}":`, e);
+      }
     });
 
     // 3. Purge offline IndexedDB database

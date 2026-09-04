@@ -6,17 +6,13 @@ const JWT_SECRET_STR = process.env.JWT_SECRET || "anchor-secret-recovery-compani
 const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STR);
 const COOKIE_NAME = "anchor_session";
 
-// Fully protected routes (require an authenticated account — no guest access)
-const PROTECTED_ROUTES = ["/progress", "/settings", "/community"];
-
-// Guest-eligible routes (allow guest mode OR authenticated account)
-const GUEST_ELIGIBLE_ROUTES = ["/today", "/journal"];
+// Protected application routes (require an authenticated account)
+const PROTECTED_ROUTES = ["/today", "/journal", "/progress", "/settings", "/community"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const sessionToken = request.cookies.get(COOKIE_NAME)?.value;
-  const isGuest = request.cookies.get("anchor_guest")?.value === "true";
 
   let isValidSession = false;
   let isOnboarded = false;
@@ -37,9 +33,6 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute = PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
-  const isGuestEligibleRoute = GUEST_ELIGIBLE_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
   const isOnboardingRoute = pathname === "/onboarding" || pathname.startsWith("/onboarding/");
 
   // 1. Authenticated user visiting /login or /signup → redirect to active destination
@@ -48,7 +41,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(destination, request.url));
   }
 
-  // 2. Strict protected routes (/progress, /settings, /community) — no guest access
+  // 2. Protected app routes (/today, /journal, /progress, /settings, /community) — requires active account
   if (isProtectedRoute) {
     if (!isValidSession) {
       const loginUrl = new URL("/login", request.url);
@@ -60,27 +53,13 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Guest-eligible routes (/today, /journal)
-  if (isGuestEligibleRoute) {
-    if (!isValidSession && !isGuest) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("from", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (isValidSession && !isOnboarded) {
-      return NextResponse.redirect(new URL("/onboarding", request.url));
-    }
-  }
-
-  // 4. Onboarding route
+  // 3. Onboarding route — requires active account
   if (isOnboardingRoute) {
-    // Already onboarded authenticated users don't need to re-onboard
-    if (isValidSession && isOnboarded) {
-      return NextResponse.redirect(new URL("/today", request.url));
+    if (!isValidSession) {
+      return NextResponse.redirect(new URL("/signup", request.url));
     }
-    // Unauthenticated non-guest visitors shouldn't land on /onboarding directly
-    if (!isValidSession && !isGuest) {
-      return NextResponse.redirect(new URL("/", request.url));
+    if (isOnboarded) {
+      return NextResponse.redirect(new URL("/today", request.url));
     }
   }
 

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navigation from "@/app/components/Navigation";
-import ExportReportModal from "@/app/components/ExportReportModal";
 import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
 import PageTransition from "@/app/components/PageTransition";
@@ -19,30 +18,25 @@ import {
   CheckCircle2,
   PauseCircle,
   PlayCircle,
-  Share2,
   Copy,
   Check,
   ShieldCheck,
   FileText,
   Download,
-  Sparkles,
-  Lock,
   Plus,
   Trash2,
   Edit2,
-  Bell,
   BellOff,
   BellRing,
   Users,
   UserX,
-  ShieldAlert,
-  ExternalLink,
   ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { registerServiceWorker, subscribeToPush, unsubscribeFromPush } from "@/lib/push-client";
 import { performClientLogout } from "@/lib/client-storage";
+import type { User, Commitment, PartnerPermission } from "@/db/schema";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
@@ -53,8 +47,8 @@ export default function SettingsPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [error, setError] = useState("");
 
-  const [user, setUser] = useState<any>(null);
-  const [allCommitments, setAllCommitments] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [allCommitments, setAllCommitments] = useState<Commitment[]>([]);
 
   // Cadence state
   const [morningTime, setMorningTime] = useState("08:00");
@@ -67,7 +61,7 @@ export default function SettingsPage() {
   const [testingPush, setTestingPush] = useState(false);
 
   // Sponsor / Partner Granular Sharing State
-  const [partnerShares, setPartnerShares] = useState<any[]>([]);
+  const [partnerShares, setPartnerShares] = useState<PartnerPermission[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [creatingShare, setCreatingShare] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
@@ -82,7 +76,6 @@ export default function SettingsPage() {
   });
 
   // Modals
-  const [exportOpen, setExportOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [summaryReport, setSummaryReport] = useState<ProgressSummaryData | null>(null);
   const [includeJournalInSummary, setIncludeJournalInSummary] = useState(false);
@@ -449,7 +442,7 @@ export default function SettingsPage() {
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+              <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Preferences & Settings
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
@@ -600,7 +593,7 @@ export default function SettingsPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleCommitmentActive(comm)}
-                                  className={`text-[11px] px-2.5 py-0.5 rounded-full border flex items-center gap-1 cursor-pointer ${
+                                  className={`text-xs px-2.5 py-0.5 rounded-full border flex items-center gap-1 cursor-pointer ${
                                     comm.active
                                       ? "bg-[#EEF4F0] dark:bg-[#202D24] border-[#D9E6DD] text-[#658B70]"
                                       : "bg-[#F3EFE7] dark:bg-[#2B2824] border-[#EAE3D7] text-[#786F66]"
@@ -659,7 +652,7 @@ export default function SettingsPage() {
                         Daily Browser Push Reminders
                       </h3>
                       <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                        {pushEnabled ? "Active � Sending quiet notifications at your check-in times" : "Disabled � Enable to receive gentle reminders"}
+                        {pushEnabled ? "Active · Sending quiet notifications at your check-in times" : "Disabled · Enable to receive gentle reminders"}
                       </p>
                     </div>
                   </div>
@@ -738,14 +731,14 @@ export default function SettingsPage() {
                         <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
                           Configure Partner Invite
                         </span>
-                        <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">
+                        <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                           Defaults to zero sharing
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="text-[11px] font-medium text-[#786F66] dark:text-[#A8A096] block mb-1">
+                          <label className="text-xs font-medium text-[#786F66] dark:text-[#A8A096] block mb-1">
                             Partner Email or Name (Optional)
                           </label>
                           <input
@@ -758,7 +751,7 @@ export default function SettingsPage() {
                         </div>
 
                         <div>
-                          <label className="text-[11px] font-medium text-[#786F66] dark:text-[#A8A096] block mb-1">
+                          <label className="text-xs font-medium text-[#786F66] dark:text-[#A8A096] block mb-1">
                             Link Expiration
                           </label>
                           <select
@@ -774,7 +767,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div className="space-y-2 pt-2 border-t border-[#EAE3D7] dark:border-[#38332E]">
-                        <span className="text-[11px] font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
+                        <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
                           Initial Sharing Permissions (All Off by Default):
                         </span>
 
@@ -827,12 +820,12 @@ export default function SettingsPage() {
                                   {item.label}
                                 </span>
                                 {item.badge && (
-                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]">
+                                  <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]">
                                     {item.badge}
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+                              <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                                 {item.desc}
                               </span>
                             </div>
@@ -868,7 +861,7 @@ export default function SettingsPage() {
                       <p className="text-xs font-medium text-[#2C2520] dark:text-[#ECE7E0]">
                         No active partner connections
                       </p>
-                      <p className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+                      <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
                         Your journal entries, check-ins, and mood logs are 100% private to you.
                       </p>
                     </div>
@@ -890,11 +883,11 @@ export default function SettingsPage() {
                                   {share.partnerEmail || "Companion Access Link"}
                                 </span>
                                 {isExpired ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] text-[10px] font-semibold">
+                                  <span className="px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] text-xs font-semibold">
                                     Expired
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] text-[10px] font-semibold">
+                                  <span className="px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] text-xs font-semibold">
                                     Active • Expires{" "}
                                     {share.expiresAt
                                       ? new Date(share.expiresAt).toLocaleDateString()
@@ -902,7 +895,7 @@ export default function SettingsPage() {
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">
+                              <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                                 Created {new Date(share.createdAt).toLocaleDateString()}
                               </span>
                             </div>
@@ -925,7 +918,7 @@ export default function SettingsPage() {
 
                           {/* Granular Permission Toggles */}
                           <div className="space-y-2">
-                            <span className="text-[11px] font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
+                            <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
                               Active Permissions for this Partner:
                             </span>
 
@@ -957,7 +950,7 @@ export default function SettingsPage() {
                                 badge: "Confidential",
                               },
                             ].map((perm) => {
-                              const active = Boolean(share[perm.key]);
+                              const active = Boolean(share[perm.key as keyof typeof share]);
 
                               return (
                                 <div
@@ -970,12 +963,12 @@ export default function SettingsPage() {
                                         {perm.label}
                                       </span>
                                       {perm.badge && (
-                                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]">
+                                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]">
                                           {perm.badge}
                                         </span>
                                       )}
                                     </div>
-                                    <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">
+                                    <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                                       {perm.desc}
                                     </span>
                                   </div>
@@ -1003,7 +996,7 @@ export default function SettingsPage() {
 
                           {/* Revoke Partner Action */}
                           <div className="pt-2 flex items-center justify-between border-t border-[#EAE3D7] dark:border-[#38332E]">
-                            <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+                            <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                               Revoking terminates link immediately server-side.
                             </span>
                             <button
@@ -1071,7 +1064,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => {
                       triggerHaptic(12);
-                      setExportOpen(true);
+                      window.location.href = "/api/export";
                     }}
                     className="p-3.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] text-xs font-medium flex items-center justify-center gap-2 cursor-pointer shadow-2xs transition-colors"
                   >
@@ -1095,7 +1088,7 @@ export default function SettingsPage() {
                         <Sun className="w-4 h-4 text-[#B88452]" />
                         <div>
                           <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">Morning</span>
-                          <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">Planning time</span>
+                          <span className="text-xs text-[#786F66] dark:text-[#A8A096]">Planning time</span>
                         </div>
                       </div>
                       <input
@@ -1111,7 +1104,7 @@ export default function SettingsPage() {
                         <Moon className="w-4 h-4 text-[#C86D51]" />
                         <div>
                           <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">Evening</span>
-                          <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">Reflection time</span>
+                          <span className="text-xs text-[#786F66] dark:text-[#A8A096]">Reflection time</span>
                         </div>
                       </div>
                       <input
@@ -1156,7 +1149,7 @@ export default function SettingsPage() {
                       {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : user?.email}
                     </strong>
                     {user?.firstName && (
-                      <span className="text-[#9E948A] text-[11px] ml-1">({user.email})</span>
+                      <span className="text-[#9E948A] text-xs ml-1">({user.email})</span>
                     )}
                   </span>
                   <button
@@ -1173,16 +1166,6 @@ export default function SettingsPage() {
           )}
         </main>
       </PageTransition>
-
-      {/* Export Report Modal */}
-      {exportOpen && (
-        <ExportReportModal
-          isOpen={exportOpen}
-          onClose={() => setExportOpen(false)}
-          userEmail={user?.email}
-          commitment={allCommitments[0]}
-        />
-      )}
 
       {/* Progress Summary Export Modal */}
       {summaryModalOpen && summaryReport && (

@@ -1,9 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download, X, Anchor, Sparkles } from "lucide-react";
+import { Download, X, Anchor } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
+
+function safeGet(storage: Storage | undefined, key: string): string | null {
+  try {
+    return storage?.getItem(key) ?? null;
+  } catch (e) {
+    console.warn(`SafeStorage get failed for ${key}:`, e);
+    return null;
+  }
+}
+
+function safeSet(storage: Storage | undefined, key: string, value: string): void {
+  try {
+    storage?.setItem(key, value);
+  } catch (e) {
+    console.warn(`SafeStorage set failed for ${key}:`, e);
+  }
+}
 
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -12,38 +29,30 @@ export default function PWAInstallPrompt() {
 
   useEffect(() => {
     // Check if already in standalone mode or marked as installed
-    try {
-      if (
-        window.matchMedia("(display-mode: standalone)").matches ||
+    if (
+      typeof window !== "undefined" &&
+      (window.matchMedia("(display-mode: standalone)").matches ||
         (window.navigator as any).standalone === true ||
-        localStorage.getItem("anchor_pwa_installed") === "true"
-      ) {
-        setIsInstalled(true);
-        return;
-      }
-    } catch {}
+        safeGet(window.localStorage, "anchor_pwa_installed") === "true")
+    ) {
+      setIsInstalled(true);
+      return;
+    }
 
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
 
       // Check if already prompted in this session
-      try {
-        const alreadyPrompted = sessionStorage.getItem(
-          "anchor_pwa_prompt_shown",
-        );
-        if (alreadyPrompted === "true") {
-          return;
-        }
-      } catch {}
+      const alreadyPrompted = safeGet(window.sessionStorage, "anchor_pwa_prompt_shown");
+      if (alreadyPrompted === "true") {
+        return;
+      }
 
       // Wait 10 seconds after initial page interaction before showing gentle prompt once per session
       setTimeout(() => {
-        try {
-          if (sessionStorage.getItem("anchor_pwa_prompt_shown") === "true")
-            return;
-          sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
-        } catch {}
+        if (safeGet(window.sessionStorage, "anchor_pwa_prompt_shown") === "true") return;
+        safeSet(window.sessionStorage, "anchor_pwa_prompt_shown", "true");
         setShowPrompt(true);
       }, 10000);
     };
@@ -51,10 +60,8 @@ export default function PWAInstallPrompt() {
     window.addEventListener("beforeinstallprompt", handler);
 
     window.addEventListener("appinstalled", () => {
-      try {
-        localStorage.setItem("anchor_pwa_installed", "true");
-        sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
-      } catch {}
+      safeSet(window.localStorage, "anchor_pwa_installed", "true");
+      safeSet(window.sessionStorage, "anchor_pwa_prompt_shown", "true");
       setIsInstalled(true);
       setShowPrompt(false);
     });
@@ -67,15 +74,11 @@ export default function PWAInstallPrompt() {
   const handleInstall = async () => {
     if (!deferredPrompt) return;
     triggerHaptic(12);
-    try {
-      sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
-    } catch {}
+    safeSet(window.sessionStorage, "anchor_pwa_prompt_shown", "true");
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
-      try {
-        localStorage.setItem("anchor_pwa_installed", "true");
-      } catch {}
+      safeSet(window.localStorage, "anchor_pwa_installed", "true");
       setShowPrompt(false);
     }
     setDeferredPrompt(null);
@@ -83,9 +86,7 @@ export default function PWAInstallPrompt() {
 
   const handleDismiss = () => {
     triggerHaptic(8);
-    try {
-      sessionStorage.setItem("anchor_pwa_prompt_shown", "true");
-    } catch {}
+    safeSet(window.sessionStorage, "anchor_pwa_prompt_shown", "true");
     setShowPrompt(false);
   };
 

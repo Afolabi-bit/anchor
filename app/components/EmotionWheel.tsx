@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,10 +44,10 @@ export const EMOTIONS_CATALOG: EmotionState[] = [
 ];
 
 const QUADRANTS = [
-  { id: "pleasant-low", label: "Calm & Grounded", desc: "Low energy � Pleasant", icon: Wind, color: "#658B70", bg: "bg-[#EEF4F0] dark:bg-[#202D24]" },
-  { id: "pleasant-high", label: "Energized & Joyful", desc: "High energy � Pleasant", icon: Sun, color: "#B88452", bg: "bg-[#FAF2EA] dark:bg-[#352A1E]" },
-  { id: "unpleasant-high", label: "Restless & Anxious", desc: "High energy � Challenging", icon: Flame, color: "#C86D51", bg: "bg-[#F9EBE7] dark:bg-[#38251F]" },
-  { id: "unpleasant-low", label: "Heavy & Depleted", desc: "Low energy � Challenging", icon: Moon, color: "#786F66", bg: "bg-[#F3EFE7] dark:bg-[#25221F]" },
+  { id: "pleasant-low", label: "Calm & Grounded", desc: "Low energy · Pleasant", icon: Wind, color: "#658B70", bg: "bg-[#EEF4F0] dark:bg-[#202D24]" },
+  { id: "pleasant-high", label: "Energized & Joyful", desc: "High energy · Pleasant", icon: Sun, color: "#B88452", bg: "bg-[#FAF2EA] dark:bg-[#352A1E]" },
+  { id: "unpleasant-high", label: "Restless & Anxious", desc: "High energy · Challenging", icon: Flame, color: "#C86D51", bg: "bg-[#F9EBE7] dark:bg-[#38251F]" },
+  { id: "unpleasant-low", label: "Heavy & Depleted", desc: "Low energy · Challenging", icon: Moon, color: "#786F66", bg: "bg-[#F3EFE7] dark:bg-[#25221F]" },
 ];
 
 interface EmotionWheelProps {
@@ -123,8 +123,8 @@ export default function EmotionWheel({
             return (
               <motion.button
                 key={item.name}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => handleSelect(item)}
                 className={`text-xs px-4 py-2 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -151,8 +151,8 @@ export default function EmotionWheel({
             <span>
               Selected State: <strong className="text-[#2C2520] dark:text-[#ECE7E0]">{currentSelection.name}</strong>
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E]">
-              Valence: {currentSelection.valence > 0 ? `+${currentSelection.valence}` : currentSelection.valence} � Energy: {currentSelection.arousal}/5
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E]">
+              Valence: {currentSelection.valence > 0 ? `+${currentSelection.valence}` : currentSelection.valence} · Energy: {currentSelection.arousal}/5
             </span>
           </motion.div>
         )}

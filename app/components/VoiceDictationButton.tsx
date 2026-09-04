@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, MicOff, Sparkles, Loader2 } from "lucide-react";
+import { Mic, MicOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { isSpeechRecognitionSupported, createSpeechRecognizer } from "@/lib/voice-dictation";
@@ -31,7 +31,9 @@ export default function VoiceDictationButton({
       if (recognizerRef.current) {
         try {
           recognizerRef.current.stop();
-        } catch {}
+        } catch (e) {
+          console.warn("Failed to stop speech recognizer:", e);
+        }
       }
       setStatus("idle");
       return;
@@ -63,6 +65,7 @@ export default function VoiceDictationButton({
       try {
         recognizer.start();
       } catch (e) {
+        console.warn("Could not activate microphone for voice dictation:", e);
         setStatus("idle");
         setFeedbackMsg("Could not activate microphone. You can type freely.");
       }
@@ -76,8 +79,8 @@ export default function VoiceDictationButton({
   return (
     <div className={`relative inline-flex items-center ${className}`}>
       <motion.button
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         type="button"
         onClick={toggleListening}
         title={
@@ -98,17 +101,17 @@ export default function VoiceDictationButton({
         {status === "connecting" ? (
           <>
             <Loader2 className="w-3.5 h-3.5 animate-spin text-[#B88452]" />
-            <span className="text-[10px] text-[#B88452] font-semibold">Connecting...</span>
+            <span className="text-xs text-[#B88452] font-semibold">Connecting...</span>
           </>
         ) : status === "listening" ? (
           <>
             <MicOff className="w-3.5 h-3.5" />
-            <span className="text-[10px]">Listening...</span>
+            <span className="text-xs">Listening...</span>
           </>
         ) : (
           <>
             <Mic className="w-3.5 h-3.5" />
-            <span className="text-[10px] hidden sm:inline">Voice</span>
+            <span className="text-xs hidden sm:inline">Voice</span>
           </>
         )}
       </motion.button>
@@ -120,7 +123,7 @@ export default function VoiceDictationButton({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-[#C86D51] text-white text-[9px] font-semibold flex items-center gap-1 whitespace-nowrap shadow-organic-sm pointer-events-none"
+            className="absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-[#C86D51] text-white text-xs font-semibold flex items-center gap-1 whitespace-nowrap shadow-organic-sm pointer-events-none"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
             <span>Speaking...</span>
@@ -131,7 +134,7 @@ export default function VoiceDictationButton({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] border border-[#EAE3D7] dark:border-[#38332E] text-[9px] font-semibold flex items-center gap-1.5 whitespace-nowrap shadow-organic-sm pointer-events-none"
+            className="absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] border border-[#EAE3D7] dark:border-[#38332E] text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap shadow-organic-sm pointer-events-none"
           >
             <Loader2 className="w-2.5 h-2.5 animate-spin text-[#B88452]" />
             <span>Connecting mic...</span>
@@ -146,14 +149,14 @@ export default function VoiceDictationButton({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
-            className="absolute bottom-full mb-2 right-0 w-60 p-2.5 rounded-2xl bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] text-[11px] leading-snug shadow-organic-md z-50 pointer-events-auto border border-[#443E38] dark:border-[#D5CFC7]"
+            className="absolute bottom-full mb-2 right-0 w-60 p-2.5 rounded-2xl bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] text-xs leading-snug shadow-organic-md z-50 pointer-events-auto border border-[#443E38] dark:border-[#D5CFC7]"
           >
             <div className="flex items-start justify-between gap-2">
               <span>{feedbackMsg}</span>
               <button
                 type="button"
                 onClick={() => setFeedbackMsg(null)}
-                className="opacity-70 hover:opacity-100 text-[10px] cursor-pointer"
+                className="opacity-70 hover:opacity-100 text-xs cursor-pointer"
               >
                 ✕
               </button>

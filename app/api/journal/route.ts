@@ -37,13 +37,18 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { date, title, content, moodValence, moodEnergy, tags, isStarred } = body;
+    const { date, title, content, moodValence, moodEnergy, moodArousal, tags, isStarred } = body;
 
     if (!content || typeof content !== "string" || !content.trim()) {
       return NextResponse.json({ error: "Reflection content is required" }, { status: 400 });
     }
 
     const targetDate = date || new Date().toISOString().slice(0, 10);
+    const effectiveEnergy = typeof moodEnergy === "number"
+      ? moodEnergy
+      : typeof moodArousal === "number"
+      ? moodArousal
+      : undefined;
 
     const entry = await createJournalEntry({
       userId: session.id,
@@ -51,7 +56,7 @@ export async function POST(request: Request) {
       title: title?.trim() || undefined,
       content: content.trim(),
       moodValence: typeof moodValence === "number" ? moodValence : undefined,
-      moodEnergy: typeof moodEnergy === "number" ? moodEnergy : undefined,
+      moodEnergy: effectiveEnergy,
       tags: Array.isArray(tags) ? tags : undefined,
       isStarred: Boolean(isStarred),
     });

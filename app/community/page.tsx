@@ -52,7 +52,9 @@ export default function CommunityPage() {
     try {
       const saved = JSON.parse(localStorage.getItem("anchor_resonated_ids") || "{}");
       setResonatedIds(saved);
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to load resonated reflections from localStorage:", e);
+    }
   }, []);
 
   useEffect(() => {
@@ -125,7 +127,9 @@ export default function CommunityPage() {
     setResonatedIds(next);
     try {
       localStorage.setItem("anchor_resonated_ids", JSON.stringify(next));
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to persist resonated ID:", e);
+    }
 
     try {
       await fetch("/api/community/resonate", {
@@ -133,7 +137,9 @@ export default function CommunityPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to sync resonance to server:", e);
+    }
   };
 
   const formatRelativeTime = (dateStr: string) => {
@@ -363,7 +369,7 @@ export default function CommunityPage() {
 
                     {/* Footer Actions */}
                     <div className="flex items-center justify-between pt-2 border-t border-[#EAE3D7]/60 dark:border-[#38332E]/60 text-xs">
-                      <div className="flex items-center gap-1.5 text-[11px] text-[#786F66] dark:text-[#A8A096]">
+                      <div className="flex items-center gap-1.5 text-xs text-[#786F66] dark:text-[#A8A096]">
                         <Anchor className="w-3.5 h-3.5 text-[#C86D51]" />
                         <span>Day {ref.anchoredDays || 1}</span>
                       </div>
@@ -371,8 +377,8 @@ export default function CommunityPage() {
                       <div className="flex items-center gap-2">
                         {/* Send Silent Strength */}
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           type="button"
                           onClick={() => handleResonate(ref.id, true)}
                           className={`px-3 py-1.5 rounded-full border text-xs flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs ${
@@ -387,8 +393,8 @@ export default function CommunityPage() {
 
                         {/* Gently Resonate */}
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           type="button"
                           onClick={() => handleResonate(ref.id, false)}
                           className={`px-3 py-1.5 rounded-full border text-xs flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs ${

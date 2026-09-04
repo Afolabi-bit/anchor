@@ -5,25 +5,21 @@ import { useParams } from "next/navigation";
 import {
   Anchor,
   ShieldCheck,
-  HeartHandshake,
   Calendar,
   Send,
   CheckCircle2,
-  Sparkles,
-  Heart,
   MessageSquareHeart,
-  ArrowRight
 } from "lucide-react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 
 const CHEER_PRESETS = [
-  "Proud of your courage and consistency! 🌟",
-  "One day at a time. Sending love and strength. ❤️",
-  "You've got this! Honoring your daily anchor. ⚓",
-  "Inspiring to see your dedication to healing. ✨",
+  "Proud of your courage and consistency.",
+  "One day at a time. Sending love and strength.",
+  "Standing with you. Honoring your daily anchor.",
+  "Inspiring to see your dedication to healing.",
 ];
 
 export default function SponsorSharePage() {
@@ -157,21 +153,21 @@ export default function SponsorSharePage() {
             {/* High-level metrics */}
             <div className="grid grid-cols-3 gap-3">
               <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-center clay-card shadow-organic-sm">
-                <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">Follow-Through</span>
+                <span className="text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">Follow-Through</span>
                 <span className="font-serif-title text-2xl sm:text-3xl font-medium text-[#2C2520] dark:text-[#ECE7E0]">
                   {data?.stats?.completionRate ?? 100}%
                 </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-center clay-card shadow-organic-sm">
-                <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">Reflections</span>
+                <span className="text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">Reflections</span>
                 <span className="font-serif-title text-2xl sm:text-3xl font-medium text-[#2C2520] dark:text-[#ECE7E0]">
                   {data?.stats?.totalReflections ?? 0}
                 </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-center clay-card shadow-organic-sm">
-                <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">Anchored Days</span>
+                <span className="text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">Anchored Days</span>
                 <span className="font-serif-title text-2xl sm:text-3xl font-medium text-[#2C2520] dark:text-[#ECE7E0]">
                   {data?.stats?.streakDays ?? 0}d
                 </span>
@@ -189,9 +185,9 @@ export default function SponsorSharePage() {
                 <div className="grid grid-cols-7 gap-2 pt-1">
                   {data.recentCadence.map((c: any, idx: number) => (
                     <div key={idx} className="flex flex-col items-center gap-2 p-2 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E]">
-                      <span className="text-[10px] text-[#786F66] dark:text-[#A8A096] font-medium">{c.day}</span>
+                      <span className="text-xs text-[#786F66] dark:text-[#A8A096] font-medium">{c.day}</span>
                       <span
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
                           c.status === "yes"
                             ? "bg-[#658B70]"
                             : c.status === "partial"
@@ -220,7 +216,7 @@ export default function SponsorSharePage() {
                     Send a Gentle Word of Support
                   </h3>
                   <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                    Your cheer will appear directly on their daily dashboard.
+                    Your cheer will appear directly in their daily check-in.
                   </p>
                 </div>
               </div>
@@ -237,7 +233,7 @@ export default function SponsorSharePage() {
                   <h4 className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
                     Encouragement Delivered
                   </h4>
-                  <p className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+                  <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
                     Thank you for showing up as a compassionate partner in their recovery journey.
                   </p>
                   <button
@@ -252,7 +248,7 @@ export default function SponsorSharePage() {
                 <form onSubmit={handleSendEncouragement} className="space-y-3">
                   {/* Preset Cheer Pills */}
                   <div className="space-y-1.5">
-                    <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
+                    <span className="text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
                       Quick Words of Encouragement:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
@@ -264,7 +260,7 @@ export default function SponsorSharePage() {
                             triggerHaptic(8);
                             setCustomNote(preset);
                           }}
-                          className="text-[11px] px-3 py-1.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] hover:border-[#C86D51] cursor-pointer text-left transition-colors shadow-2xs"
+                          className="text-xs px-3 py-1.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] hover:border-[#C86D51] cursor-pointer text-left transition-colors shadow-2xs"
                         >
                           {preset}
                         </button>

@@ -14,7 +14,9 @@ if (!connectionString) {
       const match = content.match(/DATABASE_URL=["']?([^"'\r\n]+)["']?/);
       if (match) connectionString = match[1];
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Failed reading .env.local for DATABASE_URL fallback:", err);
+  }
 }
 
 // If DATABASE_URL is provided, initialize Neon serverless drizzle instance

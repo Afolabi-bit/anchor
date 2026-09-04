@@ -54,7 +54,8 @@ export function isGuestMode(): boolean {
     if (!raw) return false;
     const parsed = JSON.parse(raw);
     return Boolean(parsed?.isGuest);
-  } catch {
+  } catch (e) {
+    console.warn("Failed to check guest mode status:", e);
     return false;
   }
 }
@@ -65,7 +66,8 @@ export function getGuestState(): GuestState | null {
     const raw = localStorage.getItem(GUEST_STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as GuestState;
-  } catch {
+  } catch (e) {
+    console.warn("Failed to parse guest state:", e);
     return null;
   }
 }
@@ -138,6 +140,8 @@ export function clearGuestState(): void {
     if (typeof document !== "undefined") {
       document.cookie = "anchor_guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
-  } catch {}
+  } catch (e) {
+    console.warn("Failed to clear guest state:", e);
+  }
 }
 

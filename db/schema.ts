@@ -122,15 +122,25 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Commitment = typeof commitments.$inferSelect;
 export type NewCommitment = typeof commitments.$inferInsert;
-export type CheckIn = typeof checkIns.$inferSelect;
-export type NewCheckIn = typeof checkIns.$inferInsert;
+export type CheckIn = typeof checkIns.$inferSelect & {
+  /** Circumplex arousal dimension alias (1 to 5) for consistent cross-module consumption */
+  moodEnergy?: number | null;
+};
+export type NewCheckIn = typeof checkIns.$inferInsert & {
+  moodEnergy?: number | null;
+};
 export type WeeklyRecap = typeof weeklyRecaps.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type CommunityReflection = typeof communityReflections.$inferSelect;
 export type NewCommunityReflection = typeof communityReflections.$inferInsert;
-export type JournalEntry = typeof journalEntries.$inferSelect;
-export type NewJournalEntry = typeof journalEntries.$inferInsert;
+export type JournalEntry = typeof journalEntries.$inferSelect & {
+  /** Circumplex arousal dimension alias (1 to 5) for consistent cross-module consumption */
+  moodArousal?: number | null;
+};
+export type NewJournalEntry = typeof journalEntries.$inferInsert & {
+  moodArousal?: number | null;
+};
 export type PartnerPermission = typeof partnerPermissions.$inferSelect;
 export type NewPartnerPermission = typeof partnerPermissions.$inferInsert;
 

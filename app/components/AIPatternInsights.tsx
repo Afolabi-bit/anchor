@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Compass, ThumbsUp, ThumbsDown, Check, X, ArrowRight, ShieldCheck } from "lucide-react";
+import { Compass, ThumbsUp, ThumbsDown, X, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { LoggedPattern, InsightsSynthesis } from "@/lib/insights-service";
@@ -26,7 +26,9 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
       if (saved) {
         setDismissedIds(JSON.parse(saved));
       }
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to read dismissed patterns:", e);
+    }
 
     async function loadInsights() {
       try {
@@ -54,7 +56,9 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
     setDismissedIds(next);
     try {
       localStorage.setItem(DISMISSED_PATTERNS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to store dismissed patterns:", e);
+    }
   };
 
   const handleReaction = async (insightId: string, helpful: boolean) => {
@@ -70,7 +74,9 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ insightId, helpful }),
       });
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to send insight reaction:", e);
+    }
   };
 
   if (loading) {
@@ -100,10 +106,10 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shrink-0">
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shrink-0">
             Statistical Observations
           </span>
-          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold border border-[#D9E6DD] dark:border-[#2C4032] shrink-0">
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold border border-[#D9E6DD] dark:border-[#2C4032] shrink-0">
             {data.analyzedDaysCount} Days Evaluated
           </span>
         </div>
@@ -144,7 +150,7 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
                       {insight.title}
                     </span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] font-medium shrink-0">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] font-medium shrink-0">
                     {insight.tag}
                   </span>
                 </div>
@@ -153,14 +159,14 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
                   {insight.observation}
                 </p>
 
-                <div className="pt-2 border-t border-[#EAE3D7]/60 dark:border-[#38332E]/60 flex items-center justify-between text-[11px] text-[#9E948A] flex-wrap gap-2">
+                <div className="pt-2 border-t border-[#EAE3D7]/60 dark:border-[#38332E]/60 flex items-center justify-between text-xs text-[#9E948A] flex-wrap gap-2">
                   <span className="italic">{insight.evidence}</span>
 
                   <div className="flex items-center gap-3">
                     {isBlocker && (
                       <Link
                         href="/settings"
-                        className="text-[10px] text-[#C86D51] hover:underline font-semibold flex items-center gap-1"
+                        className="text-xs text-[#C86D51] hover:underline font-semibold flex items-center gap-1"
                       >
                         <span>Adjust reminder</span>
                         <ArrowRight className="w-2.5 h-2.5" />

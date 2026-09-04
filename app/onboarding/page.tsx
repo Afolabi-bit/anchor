@@ -9,39 +9,36 @@ import {
   Sun,
   Moon,
   Check,
-  Sparkles,
-  HeartHandshake,
-  Shield,
-  Clock,
-  Compass,
-  Sliders,
   CheckCircle2,
-  Lock,
-  Volume2
+  Sparkles,
+  Shield,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 import { initializeGuestCommitment } from "@/lib/guest-service";
+import { ANCHOR_TEMPLATES } from "@/lib/templates";
+import type { User } from "@/db/schema";
 
+// Derive onboarding presets from canonical, vetted ANCHOR_TEMPLATES
 const INTENTION_PRESETS = [
   {
-    name: "Stay clean & sober",
-    why: "To stay clear-headed and present for the people I love.",
+    name: ANCHOR_TEMPLATES.find((t) => t.id === "sobriety-alcohol")?.name || "Alcohol Freedom & Clarity",
+    why: ANCHOR_TEMPLATES.find((t) => t.id === "sobriety-alcohol")?.why || "To stay clear-headed and present for the people I love.",
     tag: "Recovery",
   },
   {
-    name: "Nervous system calm & grounding",
-    why: "To breathe through midday stress and respond with patience.",
+    name: ANCHOR_TEMPLATES.find((t) => t.id === "mental-anxiety")?.name || "Nervous System Calm & Grounding",
+    why: ANCHOR_TEMPLATES.find((t) => t.id === "mental-anxiety")?.why || "To breathe through midday stress and respond with patience.",
     tag: "Calm",
   },
   {
-    name: "Mindful evening wind-down",
-    why: "To protect my sleep quality and decompress peacefully.",
+    name: ANCHOR_TEMPLATES.find((t) => t.id === "mindful-evening")?.name || "Mindful Evening Wind-Down",
+    why: ANCHOR_TEMPLATES.find((t) => t.id === "mindful-evening")?.why || "To protect my sleep quality and decompress peacefully.",
     tag: "Rest",
   },
   {
-    name: "1 hour of focused craft",
-    why: "To make steady creative progress without distraction.",
+    name: ANCHOR_TEMPLATES.find((t) => t.id === "mindful-deep-work")?.name || "Deep Focus & Mindful Craft",
+    why: ANCHOR_TEMPLATES.find((t) => t.id === "mindful-deep-work")?.why || "To make steady creative progress without distraction.",
     tag: "Focus",
   },
 ];
@@ -56,7 +53,7 @@ const PREVIEW_BLOCKER_TAGS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   useEffect(() => {
@@ -67,14 +64,16 @@ export default function OnboardingPage() {
           const data = await res.json();
           setUser(data.user);
         }
-      } catch {}
+      } catch (e) {
+        console.warn("Could not load user in onboarding:", e);
+      }
     }
     loadUser();
   }, []);
 
   // Form State
-  const [commitmentName, setCommitmentName] = useState("Stay clean & sober");
-  const [commitmentWhy, setCommitmentWhy] = useState("To stay clear-headed and present for the people I love.");
+  const [commitmentName, setCommitmentName] = useState(INTENTION_PRESETS[0].name);
+  const [commitmentWhy, setCommitmentWhy] = useState(INTENTION_PRESETS[0].why);
   const [frequency, setFrequency] = useState<"daily" | "custom_days">("daily");
   const [morningTime, setMorningTime] = useState("08:00");
   const [eveningTime, setEveningTime] = useState("20:00");
@@ -82,7 +81,6 @@ export default function OnboardingPage() {
   // Screen 2 Interactive Preview State
   const [previewStatus, setPreviewStatus] = useState<"yes" | "partial" | "no">("yes");
   const [previewValence, setPreviewValence] = useState<number>(2);
-  const [previewEnergy, setPreviewEnergy] = useState<number>(3);
   const [previewBlockers, setPreviewBlockers] = useState<string[]>([]);
   const [previewSealed, setPreviewSealed] = useState(false);
 
@@ -187,7 +185,7 @@ export default function OnboardingPage() {
             <div className={`h-1.5 w-10 sm:w-12 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-[#C86D51]" : "bg-[#EAE3D7] dark:bg-[#38332E]"}`} />
           </div>
 
-          <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
+          <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
             {step === 1
               ? "Screen 1 of 3: Primary Intention"
               : step === 2
@@ -220,7 +218,7 @@ export default function OnboardingPage() {
 
                 {/* Presets Grid */}
                 <div className="space-y-2.5">
-                  <label className="text-[11px] uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096] block">
+                  <label className="text-xs uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096] block">
                     Suggested Focuses
                   </label>
                   <div className="grid grid-cols-1 gap-2">
@@ -245,7 +243,7 @@ export default function OnboardingPage() {
                             <span className="font-semibold text-xs sm:text-sm block text-[#2C2520] dark:text-[#ECE7E0] truncate">
                               {preset.name}
                             </span>
-                            <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] line-clamp-1">
+                            <span className="text-xs text-[#786F66] dark:text-[#A8A096] line-clamp-1">
                               {preset.why}
                             </span>
                           </div>
@@ -317,7 +315,7 @@ export default function OnboardingPage() {
                 className="space-y-5"
               >
                 <div className="space-y-1.5">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] text-[10px] font-semibold">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] text-xs font-semibold">
                     <Sparkles className="w-3 h-3" />
                     <span>Interactive Preview • Try It Now</span>
                   </div>
@@ -333,7 +331,7 @@ export default function OnboardingPage() {
                 <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-4">
                   {/* Focus Header */}
                   <div className="border-b border-[#EAE3D7] dark:border-[#38332E] pb-3">
-                    <span className="text-[10px] uppercase tracking-wider text-[#C86D51] font-semibold block">
+                    <span className="text-xs uppercase tracking-wider text-[#C86D51] font-semibold block">
                       Focus: {commitmentName}
                     </span>
                     <p className="text-xs font-serif italic text-[#786F66] dark:text-[#A8A096] mt-0.5">
@@ -407,7 +405,7 @@ export default function OnboardingPage() {
                             key={tag.id}
                             type="button"
                             onClick={() => togglePreviewBlocker(tag.id)}
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
                               isSelected
                                 ? "bg-[#C86D51] border-[#C86D51] text-white shadow-2xs"
                                 : "bg-white dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
@@ -516,7 +514,7 @@ export default function OnboardingPage() {
                     <Shield className="w-4 h-4" />
                     <span>How Your Reflections Are Protected</span>
                   </div>
-                  <ul className="space-y-1 text-[11px] leading-relaxed">
+                  <ul className="space-y-1 text-xs leading-relaxed">
                     <li>• Sensitive free-text is encrypted with server-managed <strong>AES-256-GCM</strong>.</li>
                     <li>• <strong>Zero third-party trackers</strong>, zero advertising pixels, no data brokers.</li>
                     <li>• Partner sharing is strictly <strong>opt-in and defaults to zero</strong>.</li>
@@ -537,7 +535,7 @@ export default function OnboardingPage() {
                     onClick={handleCompleteAccount}
                     className="w-full py-3.5 rounded-full bg-[#C86D51] hover:bg-[#B35D43] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-organic-md cursor-pointer transition-colors"
                   >
-                    <span>{user ? "Save Anchor & Go to Dashboard" : "Create Free Account (Encrypted Cloud Sync)"}</span>
+                    <span>{user ? "Save Anchor & Start Today" : "Create Free Account (Encrypted Cloud Sync)"}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
 

@@ -23,6 +23,7 @@ import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 import EmotionWheel, { EmotionState } from "@/app/components/EmotionWheel";
 import VoiceDictationButton from "@/app/components/VoiceDictationButton";
 import { enqueuePendingCheckIn } from "@/lib/offline-sync";
+import type { Commitment, CheckIn } from "@/db/schema";
 
 const SMART_INTENTION_PRESETS = [
   "15-min gentle walk",
@@ -44,14 +45,14 @@ const BLOCKER_TAGS = [
 interface CheckInStepperProps {
   type?: "morning" | "evening";
   initialStage?: "morning" | "evening";
-  commitment?: any;
+  commitment?: Commitment | null;
   commitmentName?: string;
   commitmentWhy?: string;
   commitmentId?: string;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (checkIn: any) => void;
-  initialCheckIn?: any;
+  onSuccess: (checkIn: CheckIn) => void;
+  initialCheckIn?: CheckIn | null;
   targetDate?: string;
   isLate?: boolean;
 }
@@ -89,7 +90,7 @@ export default function CheckInStepper({
 
   // Evening State
   const [eveningStatus, setEveningStatus] = useState<"yes" | "partial" | "no" | null>(
-    initialCheckIn?.status || "yes"
+    (initialCheckIn?.status as "yes" | "partial" | "no" | null) || "yes"
   );
   const [reflection, setReflection] = useState(initialCheckIn?.reflection || "");
   const [selectedBlockers, setSelectedBlockers] = useState<string[]>(initialCheckIn?.blockerTags || []);
@@ -189,7 +190,8 @@ export default function CheckInStepper({
           onClose();
           return;
         }
-      } catch {
+      } catch (err) {
+        console.warn("Offline check-in fallback:", err);
         // Enqueue offline if network fails
         enqueuePendingCheckIn({
           commitmentId: activeCommId,
@@ -203,7 +205,7 @@ export default function CheckInStepper({
           origin: { y: 0.6 },
           colors: ["#658B70", "#B88452"],
         });
-        onSuccess(payload);
+        onSuccess(payload as unknown as CheckIn);
         onClose();
         return;
       }
@@ -248,7 +250,7 @@ export default function CheckInStepper({
                 {activeType === "morning" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </div>
               <div>
-                <span className="text-[10px] uppercase tracking-wider font-bold text-[#786F66] dark:text-[#A8A096]">
+                <span className="text-xs uppercase tracking-wider font-bold text-[#786F66] dark:text-[#A8A096]">
                   {activeType === "morning" ? "Morning Intention" : "Evening Reflection"}
                 </span>
                 <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0] leading-none">
@@ -355,7 +357,7 @@ export default function CheckInStepper({
                     {/* Optional Note with Voice Dictation */}
                     <div className="space-y-1.5 pt-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-[10px] uppercase tracking-wider font-semibold text-[#786F66]">
+                        <label className="text-xs uppercase tracking-wider font-semibold text-[#786F66]">
                           Optional Thought / Intention Note
                         </label>
                         <VoiceDictationButton
@@ -391,7 +393,7 @@ export default function CheckInStepper({
                     </div>
 
                     <div className="p-4 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] border border-[#B88452]/30 max-w-xs mx-auto text-left space-y-1.5 text-xs">
-                      <span className="text-[10px] uppercase tracking-wider font-bold text-[#B88452] block">
+                      <span className="text-xs uppercase tracking-wider font-bold text-[#B88452] block">
                         Today's Focus:
                       </span>
                       <p className="font-semibold text-[#2C2520] dark:text-[#ECE7E0]">{activeName}</p>
@@ -401,8 +403,8 @@ export default function CheckInStepper({
                     </div>
 
                     <motion.button
-                      whileHover={{ scale: 1.04 }}
-                      whileTap={{ scale: 0.96 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={handleSaveCheckIn}
                       disabled={saving}
                       className="w-28 h-28 mx-auto rounded-full bg-[#B88452] hover:bg-[#A37445] text-white shadow-organic-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-all disabled:opacity-50"
@@ -532,7 +534,7 @@ export default function CheckInStepper({
                     {/* Blocker Chips if not full yes */}
                     {eveningStatus !== "yes" && (
                       <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase tracking-wider font-semibold text-[#786F66]">
+                        <label className="text-xs uppercase tracking-wider font-semibold text-[#786F66]">
                           Obstacle Triggers (Optional)
                         </label>
                         <div className="flex flex-wrap gap-1.5">
@@ -560,7 +562,7 @@ export default function CheckInStepper({
                     {/* Reflection Box with Voice Dictation */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-[10px] uppercase tracking-wider font-semibold text-[#786F66]">
+                        <label className="text-xs uppercase tracking-wider font-semibold text-[#786F66]">
                           Evening Note / Takeaway
                         </label>
                         <VoiceDictationButton

@@ -14,7 +14,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, content, moodValence, moodEnergy, tags, isStarred } = body;
+    const { title, content, moodValence, moodEnergy, moodArousal, tags, isStarred } = body;
 
     const updates: any = {};
     if (title !== undefined) updates.title = title ? title.trim() : null;
@@ -25,7 +25,12 @@ export async function PATCH(
       updates.content = content.trim();
     }
     if (moodValence !== undefined) updates.moodValence = moodValence;
-    if (moodEnergy !== undefined) updates.moodEnergy = moodEnergy;
+    const effectiveEnergy = typeof moodEnergy === "number"
+      ? moodEnergy
+      : typeof moodArousal === "number"
+      ? moodArousal
+      : undefined;
+    if (effectiveEnergy !== undefined) updates.moodEnergy = effectiveEnergy;
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags : [];
     if (isStarred !== undefined) updates.isStarred = Boolean(isStarred);
 

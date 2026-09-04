@@ -8,6 +8,7 @@ import { encryptField, decryptField } from "@/lib/encryption";
 function decryptCheckIn(c: schema.CheckIn): schema.CheckIn {
   return {
     ...c,
+    moodEnergy: c.moodEnergy ?? c.moodArousal ?? null,
     intentionNote: c.intentionNote
       ? decryptField(c.intentionNote, c.intentionNoteIv, c.intentionNoteKeyVersion) ?? c.intentionNote
       : c.intentionNote,
@@ -20,6 +21,7 @@ function decryptCheckIn(c: schema.CheckIn): schema.CheckIn {
 function decryptJournalEntry(j: schema.JournalEntry): schema.JournalEntry {
   return {
     ...j,
+    moodArousal: j.moodArousal ?? j.moodEnergy ?? null,
     content: j.content
       ? decryptField(j.content, j.encryptionIv, j.encryptionKeyVersion) ?? j.content
       : j.content,
@@ -296,10 +298,20 @@ export async function upsertCheckIn(data: {
   emotionName?: string;
   moodValence?: number;
   moodArousal?: number;
+  moodEnergy?: number;
   isLate?: boolean;
 }): Promise<schema.CheckIn> {
+  const effectiveArousal = typeof data.moodArousal === "number"
+    ? data.moodArousal
+    : typeof data.moodEnergy === "number"
+    ? data.moodEnergy
+    : null;
+
   // Transparently encrypt sensitive free-text fields before writing
-  const writeData: any = { ...data };
+  const writeData: any = {
+    ...data,
+    moodArousal: effectiveArousal,
+  };
 
   if (data.intentionNote !== undefined) {
     if (data.intentionNote && data.intentionNote.trim()) {
@@ -620,6 +632,7 @@ export async function createJournalEntry(data: {
   content: string;
   moodValence?: number;
   moodEnergy?: number;
+  moodArousal?: number;
   tags?: string[];
   isStarred?: boolean;
 }): Promise<schema.JournalEntry> {
@@ -635,6 +648,12 @@ export async function createJournalEntry(data: {
     keyVerPayload = enc.keyVersion;
   }
 
+  const effectiveEnergy = typeof data.moodEnergy === "number"
+    ? data.moodEnergy
+    : typeof data.moodArousal === "number"
+    ? data.moodArousal
+    : null;
+
   if (db) {
     const result = await db
       .insert(schema.journalEntries)
@@ -646,7 +665,7 @@ export async function createJournalEntry(data: {
         encryptionIv: ivPayload,
         encryptionKeyVersion: keyVerPayload,
         moodValence: typeof data.moodValence === "number" ? data.moodValence : null,
-        moodEnergy: typeof data.moodEnergy === "number" ? data.moodEnergy : null,
+        moodEnergy: effectiveEnergy,
         tags: data.tags || [],
         isStarred: data.isStarred || false,
         createdAt: now,
@@ -666,7 +685,7 @@ export async function createJournalEntry(data: {
     encryptionIv: ivPayload,
     encryptionKeyVersion: keyVerPayload,
     moodValence: typeof data.moodValence === "number" ? data.moodValence : null,
-    moodEnergy: typeof data.moodEnergy === "number" ? data.moodEnergy : null,
+    moodEnergy: effectiveEnergy,
     tags: data.tags || [],
     isStarred: data.isStarred || false,
     createdAt: now,
@@ -685,6 +704,10 @@ export async function updateJournalEntry(
 ): Promise<schema.JournalEntry | null> {
   const now = new Date();
   const writeUpdates: any = { ...updates, updatedAt: now };
+
+  if (updates.moodArousal !== undefined && updates.moodEnergy === undefined) {
+    writeUpdates.moodEnergy = updates.moodArousal;
+  }
 
   if (updates.content !== undefined) {
     if (updates.content && updates.content.trim()) {

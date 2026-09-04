@@ -145,7 +145,7 @@ export async function generateAIPatternInsights(
 
   if (!checkIns || checkIns.length === 0) {
     return {
-      headline: "Welcome to your reflection space",
+      headline: "Your daily reflection space",
       analyzedDaysCount: 0,
       overallHealthScore: 100,
       insights: [

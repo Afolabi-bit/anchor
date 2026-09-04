@@ -71,7 +71,9 @@ export default function JournalComposer({
           if (match) setSelectedEmotion(match);
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn("Could not parse saved journal draft:", e);
+    }
   }, [storageKey]);
 
   // Debounced auto-save draft
@@ -95,7 +97,9 @@ export default function JournalComposer({
         setDraftSaved(true);
         const hideTimer = setTimeout(() => setDraftSaved(false), 2500);
         return () => clearTimeout(hideTimer);
-      } catch {}
+      } catch (e) {
+        console.warn("Could not auto-save journal draft:", e);
+      }
     }, 1200);
 
     return () => clearTimeout(timer);
@@ -148,9 +152,11 @@ export default function JournalComposer({
       // Clear draft
       try {
         localStorage.removeItem(storageKey);
-      } catch {}
+      } catch (e) {
+        console.warn("Could not remove saved draft from storage:", e);
+      }
 
-      playSingingBowlChime(432);
+      playSingingBowlChime();
       setContent("");
       setTitle("");
       setTags([]);

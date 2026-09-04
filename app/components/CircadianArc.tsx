@@ -175,9 +175,9 @@ export default function CircadianArc({
       <div className="grid grid-cols-3 gap-3">
         {/* Node 1: Morning Dawn */}
         <motion.button
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
           type="button"
           onClick={() => {
             triggerHaptic(12);
@@ -196,12 +196,12 @@ export default function CircadianArc({
               <Sun className="w-4 h-4" />
             </div>
             {isMorningDone ? (
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold">
                 <Check className="w-2.5 h-2.5" />
                 Sealed
               </span>
             ) : isMorningWindow ? (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C86D51] text-white font-semibold animate-pulse">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#C86D51] text-white font-semibold animate-pulse">
                 Active
               </span>
             ) : null}
@@ -210,7 +210,7 @@ export default function CircadianArc({
             <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
               Morning Plan
             </span>
-            <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+            <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
               {isMorningDone ? "Intention set" : "Tap to anchor"}
             </span>
           </div>
@@ -218,9 +218,9 @@ export default function CircadianArc({
 
         {/* Node 2: Midday Grounding */}
         <motion.button
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
           type="button"
           onClick={() => {
             triggerHaptic(12);
@@ -237,7 +237,7 @@ export default function CircadianArc({
               <Compass className="w-4 h-4" />
             </div>
             {isMiddayWindow && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#658B70] text-white font-semibold animate-pulse">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#658B70] text-white font-semibold animate-pulse">
                 Zenith
               </span>
             )}
@@ -246,7 +246,7 @@ export default function CircadianArc({
             <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
               Midday Pause
             </span>
-            <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+            <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
               Check in with breath
             </span>
           </div>
@@ -254,9 +254,9 @@ export default function CircadianArc({
 
         {/* Node 3: Evening Reflection */}
         <motion.button
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
           type="button"
           onClick={() => {
             triggerHaptic(12);
@@ -275,12 +275,12 @@ export default function CircadianArc({
               <Moon className="w-4 h-4" />
             </div>
             {isEveningDone ? (
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] font-semibold">
                 <Check className="w-2.5 h-2.5" />
                 Reflected
               </span>
             ) : isEveningWindow ? (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C86D51] text-white font-semibold animate-pulse">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#C86D51] text-white font-semibold animate-pulse">
                 Active
               </span>
             ) : null}
@@ -289,7 +289,7 @@ export default function CircadianArc({
             <span className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
               Evening Review
             </span>
-            <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+            <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
               {isEveningDone ? "Review complete" : "Tap to reflect"}
             </span>
           </div>

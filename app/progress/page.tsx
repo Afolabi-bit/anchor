@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navigation from "@/app/components/Navigation";
 import StoryRecapModal from "@/app/components/StoryRecapModal";
-import ExportReportModal from "@/app/components/ExportReportModal";
 import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
 import MoodTimelineChart from "@/app/components/MoodTimelineChart";
 import AIPatternInsights from "@/app/components/AIPatternInsights";
@@ -15,40 +14,29 @@ import { ProgressSkeleton } from "@/app/components/Skeletons";
 import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-summary-service";
 import {
   Calendar,
-  Sun,
-  Moon,
-  Tag,
   Lightbulb,
   HeartHandshake,
-  Sparkles,
-  Printer,
   FileText,
-  Compass,
   Play,
-  TrendingUp,
-  Activity,
-  Flame,
   Award,
-  Anchor
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
+import type { User, Commitment, CheckIn, JournalEntry } from "@/db/schema";
 
 export default function ProgressPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [commitment, setCommitment] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [commitment, setCommitment] = useState<Commitment | null>(null);
   const [recapData, setRecapData] = useState<any>(null);
 
   const [range, setRange] = useState<"7" | "30" | "90" | "all">("30");
-  const [rangeLoading, setRangeLoading] = useState(false);
-  const [allCheckIns, setAllCheckIns] = useState<any[]>([]);
-  const [allJournals, setAllJournals] = useState<any[]>([]);
+  const [allCheckIns, setAllCheckIns] = useState<CheckIn[]>([]);
+  const [allJournals, setAllJournals] = useState<JournalEntry[]>([]);
 
   // Modal states
   const [storyOpen, setStoryOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [summaryReport, setSummaryReport] = useState<ProgressSummaryData | null>(null);
   const [includeJournalInSummary, setIncludeJournalInSummary] = useState(false);
@@ -142,7 +130,7 @@ export default function ProgressPage() {
           {/* Header */}
           <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
             <div>
-              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
+              <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
                 Progress & Insights
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
@@ -179,39 +167,39 @@ export default function ProgressPage() {
           <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
             {/* Follow-Through % */}
             <div className="p-3 sm:p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+              <span className="text-xs sm:text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Consistency
               </span>
               <span className="font-serif-title text-xl sm:text-2xl font-semibold text-[#658B70] block">
                 {completionRate}%
               </span>
-              <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
+              <span className="text-xs sm:text-xs text-[#786F66] dark:text-[#A8A096] block truncate">
                 {recapData?.windowLabel || `${recapData?.totalDays || 1}d on path`}
               </span>
             </div>
 
             {/* Cumulative Anchored Days */}
             <div className="p-3 sm:p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+              <span className="text-xs sm:text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Anchored
               </span>
               <span className="font-serif-title text-xl sm:text-2xl font-semibold text-[#B88452] block">
                 {totalAnchored}
               </span>
-              <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
+              <span className="text-xs sm:text-xs text-[#786F66] dark:text-[#A8A096] block truncate">
                 {recapData?.accountAgeInDays ? `Day ${recapData.accountAgeInDays} total` : "Cumulative"}
               </span>
             </div>
 
             {/* Current Active Cadence */}
             <div className="p-3 sm:p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs text-center space-y-0.5">
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+              <span className="text-xs sm:text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Cadence
               </span>
               <span className="font-serif-title text-xl sm:text-2xl font-semibold text-[#C86D51] block">
                 {streakCurrent}d
               </span>
-              <span className="text-[9px] sm:text-[10px] text-[#786F66] dark:text-[#A8A096] block truncate">
+              <span className="text-xs sm:text-xs text-[#786F66] dark:text-[#A8A096] block truncate">
                 Active Streak
               </span>
             </div>
@@ -277,7 +265,7 @@ export default function ProgressPage() {
                   Recovery Milestones
                 </h3>
               </div>
-              <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">Cumulative days shown up</span>
+              <span className="text-xs text-[#786F66] dark:text-[#A8A096]">Cumulative days shown up</span>
             </div>
 
             <MilestoneGallery totalAnchoredDays={totalAnchored} />
@@ -318,17 +306,6 @@ export default function ProgressPage() {
         <StoryRecapModal
           isOpen={storyOpen}
           onClose={() => setStoryOpen(false)}
-          recapData={recapData}
-        />
-      )}
-
-      {/* Progress Report Export Modal */}
-      {exportOpen && (
-        <ExportReportModal
-          isOpen={exportOpen}
-          onClose={() => setExportOpen(false)}
-          userEmail={user?.email}
-          commitment={commitment}
           recapData={recapData}
         />
       )}

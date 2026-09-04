@@ -87,7 +87,7 @@ export default function CalendarHeatmap({ data, totalAnchoredDays }: CalendarHea
                 return (
                   <motion.div
                     key={day.date}
-                    whileHover={{ scale: 1.35 }}
+                    whileHover={{ scale: 1.1 }}
                     onMouseEnter={() => {
                       triggerHaptic(5);
                       setHoveredDay(day);

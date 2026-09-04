@@ -11,19 +11,14 @@ import JournalComposer from "@/app/components/JournalComposer";
 import GuestBanner from "@/app/components/GuestBanner";
 import { isGuestMode, getGuestState, saveGuestJournalEntry } from "@/lib/guest-service";
 import {
-  BookOpen,
-  Calendar,
   Sun,
   Moon,
   ChevronDown,
   ChevronUp,
   Search,
   X,
-  Sparkles,
   CheckCircle2,
-  Tag,
   HeartHandshake,
-  Plus,
   Star,
   Quote,
   Trash2,
@@ -31,14 +26,15 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
+import type { User, Commitment, CheckIn, JournalEntry } from "@/db/schema";
 
 export default function JournalPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [checkIns, setCheckIns] = useState<any[]>([]);
-  const [journalEntries, setJournalEntries] = useState<any[]>([]);
-  const [activeCommitment, setActiveCommitment] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [activeCommitment, setActiveCommitment] = useState<Commitment | null>(null);
   const [filterStatus, setFilterStatus] = useState<"all" | "yes" | "partial" | "no">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
@@ -55,7 +51,9 @@ export default function JournalPage() {
     try {
       const saved = JSON.parse(localStorage.getItem("anchor_starred_journal_dates") || "[]");
       setStarredDates(saved);
-    } catch {}
+    } catch (e) {
+      console.warn("Could not load starred journal dates:", e);
+    }
   }, []);
 
   const toggleStarDate = (dateStr: string, e?: React.MouseEvent) => {
@@ -67,7 +65,9 @@ export default function JournalPage() {
         : [...prev, dateStr];
       try {
         localStorage.setItem("anchor_starred_journal_dates", JSON.stringify(next));
-      } catch {}
+      } catch (e) {
+        console.warn("Could not persist starred journal dates:", e);
+      }
       return next;
     });
   };
@@ -80,12 +80,12 @@ export default function JournalPage() {
         if (!meRes.ok) {
           if (isGuestMode()) {
             const guest = getGuestState();
-            setUser({ firstName: "Guest", email: "local-guest" });
+            setUser({ firstName: "Guest", email: "local-guest" } as unknown as User);
             if (guest?.commitment) {
-              setActiveCommitment(guest.commitment);
+              setActiveCommitment(guest.commitment as unknown as Commitment);
             }
-            setCheckIns(guest?.checkIns || []);
-            setJournalEntries(guest?.journalEntries || []);
+            setCheckIns((guest?.checkIns || []) as unknown as CheckIn[]);
+            setJournalEntries((guest?.journalEntries || []) as unknown as JournalEntry[]);
             setLoading(false);
             return;
           }
@@ -119,7 +119,7 @@ export default function JournalPage() {
     loadData();
   }, [router]);
 
-  const handleNewJournalEntry = (newEntry: any) => {
+  const handleNewJournalEntry = (newEntry: JournalEntry) => {
     setJournalEntries((prev) => [newEntry, ...prev.filter((j) => j.id !== newEntry.id)]);
     setExpandedDates((prev) => ({ ...prev, [newEntry.date]: true }));
   };
@@ -140,9 +140,9 @@ export default function JournalPage() {
 
   // Group check-ins and journal entries by Date
   interface DayGroup {
-    morning?: any;
-    evening?: any;
-    journals: any[];
+    morning?: CheckIn;
+    evening?: CheckIn;
+    journals: JournalEntry[];
   }
 
   const groupedByDate: Record<string, DayGroup> = {};
@@ -294,7 +294,7 @@ export default function JournalPage() {
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+              <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 Reflective Archive
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
@@ -311,9 +311,9 @@ export default function JournalPage() {
 
           {/* Compact 7-Day Timeline Pebble Strip */}
           <div className="p-3.5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-2">
-            <div className="flex items-center justify-between px-1 text-[11px] text-[#786F66] dark:text-[#A8A096]">
+            <div className="flex items-center justify-between px-1 text-xs text-[#786F66] dark:text-[#A8A096]">
               <span className="uppercase tracking-wider font-semibold">This Week</span>
-              <span className="text-[10px]">Tap pebble to focus</span>
+              <span className="text-xs">Tap pebble to focus</span>
             </div>
 
             <div className="grid grid-cols-7 gap-1.5">
@@ -335,7 +335,7 @@ export default function JournalPage() {
                     }`}
                     title={isPreAccount ? "Prior to joining Anchor" : undefined}
                   >
-                    <span className="text-[9px] text-[#786F66] dark:text-[#A8A096] font-medium">
+                    <span className="text-xs text-[#786F66] dark:text-[#A8A096] font-medium">
                       {formatWeekday(dStr)}
                     </span>
                     <div
@@ -353,7 +353,7 @@ export default function JournalPage() {
                           : "bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-[#9E948A]"
                       } ${isToday ? "ring-2 ring-[#C86D51]" : ""}`}
                     >
-                      <span className="text-[11px]">{formatDayNumber(dStr)}</span>
+                      <span className="text-xs">{formatDayNumber(dStr)}</span>
                     </div>
                   </button>
                 );
@@ -510,7 +510,7 @@ export default function JournalPage() {
                         </span>
 
                         {evening?.emotionName && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
                             {evening.emotionName}
                           </span>
                         )}
@@ -562,7 +562,7 @@ export default function JournalPage() {
                           {/* Morning Section */}
                           {morning && (
                             <div className="p-3.5 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] space-y-2">
-                              <span className="text-[10px] uppercase tracking-wider font-bold text-[#B88452] flex items-center gap-1">
+                              <span className="text-xs uppercase tracking-wider font-bold text-[#B88452] flex items-center gap-1">
                                 <Sun className="w-3.5 h-3.5" />
                                 Morning Intention
                               </span>
@@ -588,11 +588,11 @@ export default function JournalPage() {
                           {evening && (
                             <div className="p-3.5 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-[#C86D51] flex items-center gap-1">
+                                <span className="text-xs uppercase tracking-wider font-bold text-[#C86D51] flex items-center gap-1">
                                   <Moon className="w-3.5 h-3.5" />
                                   Evening Reflection
                                 </span>
-                                <span className="capitalize px-2 py-0.5 rounded-full bg-[#FFFFFF]/70 dark:bg-[#1E1B18]/70 text-[#C86D51] font-semibold text-[10px]">
+                                <span className="capitalize px-2 py-0.5 rounded-full bg-[#FFFFFF]/70 dark:bg-[#1E1B18]/70 text-[#C86D51] font-semibold text-xs">
                                   {evening.status === "yes" ? "Followed Through" : evening.status === "partial" ? "Adjusted" : "Learned"}
                                 </span>
                               </div>
@@ -605,7 +605,7 @@ export default function JournalPage() {
 
                               {evening.lessonsLearned && (
                                 <div className="pt-1.5 border-t border-[#C86D51]/20">
-                                  <span className="text-[10px] font-semibold text-[#C86D51] block mb-0.5">Lesson Learned:</span>
+                                  <span className="text-xs font-semibold text-[#C86D51] block mb-0.5">Lesson Learned:</span>
                                   <p className="text-[#2C2520] dark:text-[#ECE7E0] italic">{evening.lessonsLearned}</p>
                                 </div>
                               )}
@@ -615,7 +615,7 @@ export default function JournalPage() {
                           {/* Freeform Journal Reflections Section */}
                           {entry.journals && entry.journals.length > 0 && (
                             <div className="space-y-2.5">
-                              <span className="text-[10px] uppercase tracking-wider font-bold text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
+                              <span className="text-xs uppercase tracking-wider font-bold text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
                                 <PenLine className="w-3 h-3 text-[#C86D51]" />
                                 Written Reflections ({entry.journals.length})
                               </span>
@@ -630,7 +630,7 @@ export default function JournalPage() {
                                         {journal.title || "Daily Reflection"}
                                       </span>
                                       {journal.moodValence !== null && journal.moodValence !== undefined && (
-                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold">
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold">
                                           Mood {journal.moodValence > 0 ? `+${journal.moodValence}` : journal.moodValence}
                                         </span>
                                       )}
@@ -654,7 +654,7 @@ export default function JournalPage() {
                                       {journal.tags.map((tg: string) => (
                                         <span
                                           key={tg}
-                                          className="text-[10px] px-2 py-0.5 rounded-md bg-[#F3EFE7] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096]"
+                                          className="text-xs px-2 py-0.5 rounded-md bg-[#F3EFE7] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096]"
                                         >
                                           #{tg}
                                         </span>
@@ -684,7 +684,7 @@ export default function JournalPage() {
           targetDate={backfillDate || undefined}
           isLate={true}
           commitmentName={activeCommitment?.name || "Daily Anchor"}
-          commitmentWhy={activeCommitment?.why}
+          commitmentWhy={activeCommitment?.why || undefined}
           commitmentId={activeCommitment?.id}
           onClose={() => setStepperOpen(false)}
           onSuccess={(saved) => {

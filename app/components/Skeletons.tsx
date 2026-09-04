@@ -1,5 +1,3 @@
-"use client";
-
 export function TodaySkeleton() {
   return (
     <div className="space-y-6 max-w-xl mx-auto w-full px-5 py-8 animate-pulse">

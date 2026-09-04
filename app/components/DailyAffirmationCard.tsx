@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Bookmark, Copy, Check, Shuffle, Quote } from "lucide-react";
+import { Bookmark, Copy, Check, Shuffle, Quote } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { Affirmation, DAILY_AFFIRMATIONS, getTodayAffirmation } from "@/lib/affirmations";
@@ -22,7 +22,9 @@ export default function DailyAffirmationCard() {
     try {
       const saved = JSON.parse(localStorage.getItem("anchor_bookmarked_quotes") || "[]");
       setBookmarked(saved.includes(today.id));
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to load bookmarked quote status:", e);
+    }
   }, []);
 
   const handleShuffle = () => {
@@ -35,7 +37,9 @@ export default function DailyAffirmationCard() {
     try {
       const saved = JSON.parse(localStorage.getItem("anchor_bookmarked_quotes") || "[]");
       setBookmarked(saved.includes(nextAffirmation.id));
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to update bookmarked quote status on shuffle:", e);
+    }
   };
 
   const handleToggleBookmark = () => {
@@ -51,7 +55,9 @@ export default function DailyAffirmationCard() {
         setBookmarked(true);
       }
       localStorage.setItem("anchor_bookmarked_quotes", JSON.stringify(nextSaved));
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to toggle quote bookmark:", e);
+    }
   };
 
   const handleCopy = () => {
@@ -76,7 +82,7 @@ export default function DailyAffirmationCard() {
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: affirmation.themeColor }}
           />
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096]">
+          <span className="text-xs uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096]">
             Daily Grounding Wisdom • {affirmation.category}
           </span>
         </div>

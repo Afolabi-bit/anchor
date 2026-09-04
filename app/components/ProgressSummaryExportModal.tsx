@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Printer, Copy, Check, ShieldCheck, HeartHandshake, FileText, CheckCircle2, Lock } from "lucide-react";
+import { X, Printer, Copy, Check, ShieldCheck, HeartHandshake, FileText, CheckCircle2, Lock, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { ProgressSummaryData, FIXED_PROGRESS_DISCLAIMER } from "@/lib/progress-summary-service";
@@ -113,6 +113,19 @@ ${report.reflections && report.reflections.length > 0 ? `6. INCLUDED WRITTEN REF
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-[#658B70]" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? "Copied" : "Copy Text"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(10);
+                  window.location.href = "/api/export";
+                }}
+                className="px-3 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#25221F] text-xs text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                title="Download complete personal accountability archive as CSV"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>CSV Archive</span>
               </button>
 
               <button

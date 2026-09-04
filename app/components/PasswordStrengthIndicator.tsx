@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Shield, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Check } from "lucide-react";
 
 export interface PasswordStrength {
   score: number; // 0 to 4
@@ -149,7 +149,7 @@ export default function PasswordStrengthIndicator({
 
       {/* Responsive Micro-Checklist Pills */}
       {showCriteria && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px]">
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs">
           <span
             className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors ${
               strength.hasMinLength

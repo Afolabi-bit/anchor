@@ -19,25 +19,22 @@ import {
   CheckCircle2,
   Check,
   Anchor,
-  Compass,
   ArrowRight,
-  Sparkles,
   Plus,
   MessageSquareHeart,
   Quote,
-  Clock,
-  Wind
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
+import type { User, Commitment, CheckIn } from "@/db/schema";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
 export default function TodayPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [commitments, setCommitments] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [activeCommitmentId, setActiveCommitmentId] = useState<string>("");
   const [newModalOpen, setNewModalOpen] = useState(false);
 
@@ -50,8 +47,8 @@ export default function TodayPage() {
   const greeting = isEvening ? "Good Evening" : "Good Morning";
 
   // Check-in data
-  const [morningCheckIn, setMorningCheckIn] = useState<any>(null);
-  const [eveningCheckIn, setEveningCheckIn] = useState<any>(null);
+  const [morningCheckIn, setMorningCheckIn] = useState<CheckIn | null>(null);
+  const [eveningCheckIn, setEveningCheckIn] = useState<CheckIn | null>(null);
   const [partnerMessages, setPartnerMessages] = useState<any[]>([]);
 
   // Stepper Modal State
@@ -73,7 +70,9 @@ export default function TodayPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId: msgId }),
       });
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to dismiss sponsor message:", e);
+    }
   };
 
   useEffect(() => {
@@ -85,13 +84,13 @@ export default function TodayPage() {
           // Check for local Guest Mode
           if (isGuestMode()) {
             const guest = getGuestState();
-            setUser({ firstName: "Guest", email: "local-guest" });
+            setUser({ firstName: "Guest", email: "local-guest" } as unknown as User);
             if (guest?.commitment) {
-              setCommitments([guest.commitment]);
+              setCommitments([guest.commitment as unknown as Commitment]);
               setActiveCommitmentId(guest.commitment.id);
             }
-            const m = guest?.checkIns.find((c) => c.date === todayStr && c.type === "morning");
-            const e = guest?.checkIns.find((c) => c.date === todayStr && c.type === "evening");
+            const m = guest?.checkIns.find((c) => c.date === todayStr && c.type === "morning") as unknown as CheckIn | undefined;
+            const e = guest?.checkIns.find((c) => c.date === todayStr && c.type === "evening") as unknown as CheckIn | undefined;
             if (m) setMorningCheckIn(m);
             if (e) setEveningCheckIn(e);
             setLoading(false);
@@ -106,22 +105,10 @@ export default function TodayPage() {
           return;
         }
         setUser(meData.user);
-        const comms = meData.commitments || (meData.commitment ? [meData.commitment] : []);
+        const comms: Commitment[] = meData.commitments || (meData.commitment ? [meData.commitment] : []);
         setCommitments(comms);
         if (comms.length > 0) {
           setActiveCommitmentId((prev) => prev || comms[0].id);
-        }
-
-        // Fetch check-ins for today
-        const checkInsRes = await fetch(`/api/checkins?date=${todayStr}`);
-        if (checkInsRes.ok) {
-          const data = await checkInsRes.json();
-          const targetCommId = comms[0]?.id;
-          const m = data.checkIns.find((c: any) => c.type === "morning" && (!c.commitmentId || c.commitmentId === targetCommId));
-          const e = data.checkIns.find((c: any) => c.type === "evening" && (!c.commitmentId || c.commitmentId === targetCommId));
-
-          if (m) setMorningCheckIn(m);
-          if (e) setEveningCheckIn(e);
         }
 
         // Fetch sponsor encouragement messages
@@ -131,7 +118,9 @@ export default function TodayPage() {
             const sponsorData = await sponsorRes.json();
             setPartnerMessages(sponsorData.messages?.filter((m: any) => !m.read) || []);
           }
-        } catch {}
+        } catch (e) {
+          console.warn("Failed to fetch sponsor encouragement messages:", e);
+        }
       } catch (err) {
         console.error("Error loading today state:", err);
       } finally {
@@ -141,7 +130,7 @@ export default function TodayPage() {
     loadData();
   }, [router, todayStr]);
 
-  // Refetch check-ins when active commitment changes
+  // Unified single-loader for commitment check-ins when active commitment changes
   useEffect(() => {
     if (!activeCommitmentId) return;
     async function reloadCommitmentCheckIns() {
@@ -149,8 +138,8 @@ export default function TodayPage() {
         const checkInsRes = await fetch(`/api/checkins?date=${todayStr}`);
         if (checkInsRes.ok) {
           const data = await checkInsRes.json();
-          const m = data.checkIns.find((c: any) => c.type === "morning" && (!c.commitmentId || c.commitmentId === activeCommitmentId));
-          const e = data.checkIns.find((c: any) => c.type === "evening" && (!c.commitmentId || c.commitmentId === activeCommitmentId));
+          const m = data.checkIns.find((c: CheckIn) => c.type === "morning" && (!c.commitmentId || c.commitmentId === activeCommitmentId));
+          const e = data.checkIns.find((c: CheckIn) => c.type === "evening" && (!c.commitmentId || c.commitmentId === activeCommitmentId));
           setMorningCheckIn(m || null);
           setEveningCheckIn(e || null);
         }
@@ -164,15 +153,25 @@ export default function TodayPage() {
   const activeCommitment = commitments.find((c) => c.id === activeCommitmentId) || commitments[0];
   const activeColorHex = PALETTE_HEX[activeCommitment?.colorIndex ?? 0] || "#C86D51";
 
-  const handleCheckInSuccess = (savedCheckIn: any) => {
+  const handleCheckInSuccess = (savedCheckIn: CheckIn) => {
     if (savedCheckIn.type === "morning") setMorningCheckIn(savedCheckIn);
     if (savedCheckIn.type === "evening") setEveningCheckIn(savedCheckIn);
     if (isGuestMode()) {
-      saveGuestCheckIn(savedCheckIn);
+      saveGuestCheckIn({
+        date: savedCheckIn.date,
+        type: (savedCheckIn.type as "morning" | "evening") || "evening",
+        status: (savedCheckIn.status as "yes" | "partial" | "no") || "yes",
+        plannedActions: savedCheckIn.plannedActions || undefined,
+        intentionNote: savedCheckIn.intentionNote || undefined,
+        reflection: savedCheckIn.reflection || undefined,
+        moodValence: savedCheckIn.moodValence ?? undefined,
+        moodEnergy: savedCheckIn.moodEnergy ?? savedCheckIn.moodArousal ?? undefined,
+        blockerTags: savedCheckIn.blockerTags || undefined,
+      });
     }
   };
 
-  const handleCommitmentCreated = (newComm: any) => {
+  const handleCommitmentCreated = (newComm: Commitment) => {
     setCommitments((prev) => [...prev, newComm]);
     setActiveCommitmentId(newComm.id);
   };
@@ -202,7 +201,7 @@ export default function TodayPage() {
           {/* ========================================================================= */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
-              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+              <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
               </span>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight truncate">
@@ -245,12 +244,12 @@ export default function TodayPage() {
                 {currentView === "evening" ? (
                   <>
                     <Sun className="w-3.5 h-3.5 text-[#B88452]" />
-                    <span className="text-[11px] font-medium">{morningCheckIn ? "Morning Sealed" : "Morning"}</span>
+                    <span className="text-xs font-medium">{morningCheckIn ? "Morning Sealed" : "Morning"}</span>
                   </>
                 ) : (
                   <>
                     <Moon className="w-3.5 h-3.5 text-[#C86D51]" />
-                    <span className="text-[11px] font-medium">{eveningCheckIn ? "Evening Done" : "Evening"}</span>
+                    <span className="text-xs font-medium">{eveningCheckIn ? "Evening Done" : "Evening"}</span>
                   </>
                 )}
               </button>
@@ -272,7 +271,7 @@ export default function TodayPage() {
                       <MessageSquareHeart className="w-4 h-4" />
                     </div>
                     <div className="space-y-0.5">
-                      <span className="text-[10px] uppercase tracking-wider font-semibold text-[#658B70] dark:text-[#82A78C]">
+                      <span className="text-xs uppercase tracking-wider font-semibold text-[#658B70] dark:text-[#82A78C]">
                         Word from {msg.senderName}
                       </span>
                       <p className="text-xs sm:text-sm font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
@@ -284,7 +283,7 @@ export default function TodayPage() {
                   <button
                     type="button"
                     onClick={() => dismissPartnerMessage(msg.id)}
-                    className="text-[11px] font-medium text-[#658B70] hover:text-[#2C2520] bg-white/80 dark:bg-[#1E1B18]/80 px-2.5 py-1 rounded-full border border-[#D9E6DD] dark:border-[#2C4032] shrink-0 cursor-pointer"
+                    className="text-xs font-medium text-[#658B70] hover:text-[#2C2520] bg-white/80 dark:bg-[#1E1B18]/80 px-2.5 py-1 rounded-full border border-[#D9E6DD] dark:border-[#2C4032] shrink-0 cursor-pointer"
                   >
                     Thank you
                   </button>
@@ -313,7 +312,7 @@ export default function TodayPage() {
                       <Sun className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider font-bold text-[#B88452]">
+                      <span className="text-xs uppercase tracking-wider font-bold text-[#B88452]">
                         Morning Check-in
                       </span>
                       <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
@@ -332,7 +331,7 @@ export default function TodayPage() {
 
                 {morningCheckIn ? (
                   <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 text-xs">
-                    <span className="text-[10px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
+                    <span className="text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
                       Intention Sealed for Today:
                     </span>
                     {morningCheckIn.plannedActions && morningCheckIn.plannedActions.length > 0 && (
@@ -354,7 +353,7 @@ export default function TodayPage() {
                       <button
                         type="button"
                         onClick={() => setActiveStepper("morning")}
-                        className="text-[11px] text-[#B88452] hover:underline cursor-pointer font-medium"
+                        className="text-xs text-[#B88452] hover:underline cursor-pointer font-medium"
                       >
                         Edit morning intention
                       </button>
@@ -395,7 +394,7 @@ export default function TodayPage() {
                       <Moon className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider font-bold text-[#C86D51]">
+                      <span className="text-xs uppercase tracking-wider font-bold text-[#C86D51]">
                         Evening Check-in
                       </span>
                       <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
@@ -426,7 +425,7 @@ export default function TodayPage() {
                     </div>
                   )}
                   {morningCheckIn && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold shrink-0">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold shrink-0">
                       Sealed ✓
                     </span>
                   )}
@@ -435,7 +434,7 @@ export default function TodayPage() {
                 {eveningCheckIn ? (
                   <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wider text-[#786F66] font-semibold">
+                      <span className="text-xs uppercase tracking-wider text-[#786F66] font-semibold">
                         Day Recorded & Anchored
                       </span>
                       <span className="capitalize px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
@@ -449,12 +448,12 @@ export default function TodayPage() {
                       </p>
                     )}
 
-                    <div className="pt-2 text-[#786F66] dark:text-[#A8A096] italic text-[11px] flex items-center justify-between">
+                    <div className="pt-2 text-[#786F66] dark:text-[#A8A096] italic text-xs flex items-center justify-between">
                       <span>Your day is honored without judgment. Rest peacefully tonight.</span>
                       <button
                         type="button"
                         onClick={() => setActiveStepper("evening")}
-                        className="text-[11px] text-[#C86D51] hover:underline cursor-pointer font-medium ml-2"
+                        className="text-xs text-[#C86D51] hover:underline cursor-pointer font-medium ml-2"
                       >
                         Edit reflection
                       </button>
@@ -493,7 +492,7 @@ export default function TodayPage() {
                   <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
                     "{affirmation.quote}"
                   </p>
-                  <span className="text-[11px] text-[#B88452] font-semibold block">
+                  <span className="text-xs text-[#B88452] font-semibold block">
                     — {affirmation.author}
                   </span>
                 </div>
@@ -519,7 +518,7 @@ export default function TodayPage() {
           isOpen={Boolean(activeStepper)}
           initialStage={activeStepper}
           commitmentName={activeCommitment?.name || "Daily Anchor"}
-          commitmentWhy={activeCommitment?.why}
+          commitmentWhy={activeCommitment?.why || undefined}
           commitmentId={activeCommitment?.id}
           onClose={() => setActiveStepper(null)}
           onSuccess={handleCheckInSuccess}

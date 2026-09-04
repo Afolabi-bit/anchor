@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, Activity, Sparkles, CheckCircle2, Calendar } from "lucide-react";
+import { TrendingUp, Activity } from "lucide-react";
 import { triggerHaptic } from "@/lib/sensory";
+import type { CheckIn, JournalEntry } from "@/db/schema";
 
 interface MoodTimelineChartProps {
-  checkIns: any[];
-  journalEntries?: any[];
+  checkIns: CheckIn[];
+  journalEntries?: JournalEntry[];
 }
 
 interface DayPoint {
@@ -155,7 +156,7 @@ export default function MoodTimelineChart({
             <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0]">
               Mood & Energy Timeline
             </h3>
-            <span className="text-[10px] text-[#786F66] dark:text-[#A8A096]">
+            <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
               Correlated with daily check-in follow-through
             </span>
           </div>
@@ -187,7 +188,7 @@ export default function MoodTimelineChart({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-[11px] text-[#786F66] dark:text-[#A8A096] pt-1">
+      <div className="flex flex-wrap items-center gap-4 text-xs text-[#786F66] dark:text-[#A8A096] pt-1">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-1 rounded-full bg-[#658B70]" />
           <span>Valence (Mood -5 to +5)</span>
@@ -308,7 +309,7 @@ export default function MoodTimelineChart({
         </svg>
 
         {/* Date Labels along the bottom */}
-        <div className="flex justify-between text-[9px] text-[#9E948A] pt-2 px-1">
+        <div className="flex justify-between text-xs text-[#9E948A] pt-2 px-1">
           <span>{timelineData[0]?.dayLabel}</span>
           {pointsCount >= 14 && (
             <span>{timelineData[Math.floor(pointsCount / 2)]?.dayLabel}</span>
@@ -332,15 +333,15 @@ export default function MoodTimelineChart({
                 <button
                   type="button"
                   onClick={() => setHoveredPoint(null)}
-                  className="text-[10px] text-[#9E948A] hover:text-[#2C2520]"
+                  className="text-xs text-[#9E948A] hover:text-[#2C2520]"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
+              <div className="grid grid-cols-3 gap-2 pt-1 text-xs">
                 <div>
-                  <span className="text-[#786F66] dark:text-[#A8A096] block text-[10px]">Valence:</span>
+                  <span className="text-[#786F66] dark:text-[#A8A096] block text-xs">Valence:</span>
                   <span className="font-medium text-[#658B70]">
                     {hoveredPoint.valence !== null
                       ? hoveredPoint.valence > 0
@@ -351,14 +352,14 @@ export default function MoodTimelineChart({
                 </div>
 
                 <div>
-                  <span className="text-[#786F66] dark:text-[#A8A096] block text-[10px]">Energy:</span>
+                  <span className="text-[#786F66] dark:text-[#A8A096] block text-xs">Energy:</span>
                   <span className="font-medium text-[#B88452]">
                     {hoveredPoint.energy !== null ? `${hoveredPoint.energy} / 5` : "Not logged"}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[#786F66] dark:text-[#A8A096] block text-[10px]">Follow-through:</span>
+                  <span className="text-[#786F66] dark:text-[#A8A096] block text-xs">Follow-through:</span>
                   <span className="font-medium text-[#2C2520] dark:text-[#ECE7E0] capitalize">
                     {hoveredPoint.status === "yes"
                       ? "Anchored ✓"

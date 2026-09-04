@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       emotionName,
       moodValence,
       moodArousal,
+      moodEnergy,
       commitmentId: customCommitmentId,
     } = body;
 
@@ -62,6 +63,12 @@ export async function POST(request: Request) {
     const now = new Date();
     const isLate = (now.getTime() - checkInDate.getTime()) > (24 * 60 * 60 * 1000);
 
+    const effectiveArousal = typeof moodArousal === "number"
+      ? moodArousal
+      : typeof moodEnergy === "number"
+      ? moodEnergy
+      : undefined;
+
     const checkIn = await upsertCheckIn({
       userId: session.id,
       commitmentId,
@@ -76,7 +83,7 @@ export async function POST(request: Request) {
       moodOrCraving: typeof moodOrCraving === "number" ? moodOrCraving : undefined,
       emotionName: emotionName?.trim() || undefined,
       moodValence: typeof moodValence === "number" ? moodValence : undefined,
-      moodArousal: typeof moodArousal === "number" ? moodArousal : undefined,
+      moodArousal: effectiveArousal,
       isLate,
     });
 

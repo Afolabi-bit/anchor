@@ -58,7 +58,7 @@ export default function LoginPage() {
             <Anchor className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <h1 className="font-serif-title text-2xl sm:text-3xl font-medium tracking-tight text-[#2C2520] dark:text-[#ECE7E0]">
-            Welcome Back
+            Return to your daily rhythm
           </h1>
           <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] mt-1">
             Sign in to check in with yourself today.

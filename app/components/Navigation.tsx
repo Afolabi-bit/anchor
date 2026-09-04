@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Anchor, CalendarDays, BookOpen, BarChart3, Settings, LogOut, Eye, EyeOff } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { performClientLogout } from "@/lib/client-storage";
 
@@ -19,6 +19,7 @@ export default function Navigation({ userEmail, userName }: { userEmail?: string
   const pathname = usePathname();
   const router = useRouter();
   const [privacyMode, setPrivacyMode] = useState(false);
+  const [partnerCount, setPartnerCount] = useState<number>(0);
 
   useEffect(() => {
     // Sync privacy blur class on document body
@@ -37,8 +38,30 @@ export default function Navigation({ userEmail, userName }: { userEmail?: string
     setPrivacyMode(!privacyMode);
   };
 
+  useEffect(() => {
+    // Check active partner links for badge count
+    async function checkPartnerCount() {
+      try {
+        const res = await fetch("/api/sponsor");
+        if (res.ok) {
+          const data = await res.json();
+          setPartnerCount(data.shares?.length || 0);
+        }
+      } catch (err) {
+        // Silently skip if user is in guest mode or offline
+      }
+    }
+    checkPartnerCount();
+  }, []);
+
   const handleLogout = async () => {
-    await performClientLogout();
+    triggerHaptic(10);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    performClientLogout();
     router.push("/login");
     router.refresh();
   };
@@ -53,9 +76,9 @@ export default function Navigation({ userEmail, userName }: { userEmail?: string
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between">
           <Link href="/today" className="flex items-center gap-2.5 sm:gap-3 group">
             <motion.div
-              whileHover={{ scale: 1.06, rotate: -4 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] flex items-center justify-center shadow-organic-sm shrink-0"
             >
               <Anchor className="w-4.5 h-4.5 sm:w-5 sm:h-5" />

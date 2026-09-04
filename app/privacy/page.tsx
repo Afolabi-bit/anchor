@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
   Anchor,
@@ -14,7 +12,6 @@ import {
   CheckCircle2,
   FileText
 } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -52,7 +49,7 @@ export default function PrivacyPolicyPage() {
       <main className="max-w-3xl mx-auto px-5 py-10 space-y-10">
         {/* Title Hero */}
         <section className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-[11px] font-semibold text-[#658B70] dark:text-[#82A78C]">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-xs font-semibold text-[#658B70] dark:text-[#82A78C]">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Transparent Data Protection Policy • Last Updated September 2026</span>
           </div>
@@ -92,19 +89,19 @@ export default function PrivacyPolicyPage() {
           <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
             <li className="p-3 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs">
               <strong className="block text-[#2C2520] dark:text-[#ECE7E0] mb-0.5">Journal Entries</strong>
-              <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+              <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                 The complete body of your daily freeform journal writings
               </span>
             </li>
             <li className="p-3 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs">
               <strong className="block text-[#2C2520] dark:text-[#ECE7E0] mb-0.5">Evening Reflections</strong>
-              <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+              <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                 Your personal notes on setbacks, gratitude, and evening check-ins
               </span>
             </li>
             <li className="p-3 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs">
               <strong className="block text-[#2C2520] dark:text-[#ECE7E0] mb-0.5">Morning Intentions</strong>
-              <span className="text-[11px] text-[#786F66] dark:text-[#A8A096]">
+              <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
                 Sensitive intention notes written during your morning grounding
               </span>
             </li>
@@ -151,7 +148,7 @@ export default function PrivacyPolicyPage() {
               <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0] block">
                 Mood Scores & Energy Levels
               </span>
-              <p className="text-[11px] text-[#786F66] dark:text-[#A8A096] leading-snug">
+              <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-snug">
                 Valence (-5 to +5) and energy arousal ratings (1 to 5), used to render your weekly emotional
                 rhythm charts.
               </p>
@@ -161,7 +158,7 @@ export default function PrivacyPolicyPage() {
               <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0] block">
                 Obstacle & Blocker Tags
               </span>
-              <p className="text-[11px] text-[#786F66] dark:text-[#A8A096] leading-snug">
+              <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-snug">
                 Predefined tags like <em>stress</em>, <em>time</em>, <em>urges</em>, or <em>fatigue</em>,
                 used to calculate which obstacles drive setbacks.
               </p>
@@ -171,7 +168,7 @@ export default function PrivacyPolicyPage() {
               <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0] block">
                 Check-in Completion Status
               </span>
-              <p className="text-[11px] text-[#786F66] dark:text-[#A8A096] leading-snug">
+              <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-snug">
                 Whether you checked in (yes, partial, no) and whether the check-in was on time, used to
                 support your consistency tracking.
               </p>
@@ -181,7 +178,7 @@ export default function PrivacyPolicyPage() {
               <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0] block">
                 Journal Tags & Starred Status
               </span>
-              <p className="text-[11px] text-[#786F66] dark:text-[#A8A096] leading-snug">
+              <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-snug">
                 Organizational tags you assign to your reflections to filter and search your entries.
               </p>
             </div>
@@ -321,7 +318,7 @@ export default function PrivacyPolicyPage() {
                 <FileText className="w-3.5 h-3.5 text-[#658B70]" />
                 Complete Data Portability
               </span>
-              <p className="text-[11px] text-[#786F66] dark:text-[#A8A096] leading-snug">
+              <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-snug">
                 You can export your complete raw dataset (CSV) or formatted therapy intake summary (PDF)
                 at any time directly from the settings menu.
               </p>
@@ -332,7 +329,7 @@ export default function PrivacyPolicyPage() {
                 <Trash2 className="w-3.5 h-3.5 text-[#C86D51]" />
                 Permanent Cascade Deletion
               </span>
-              <p className="text-[11px] text-[#786F66] dark:text-[#A8A096] leading-snug">
+              <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-snug">
                 Deleting your account immediately cascades and permanently destroys your user profile,
                 commitments, check-ins, journal entries, and partner tokens. No lingering backups retained.
               </p>

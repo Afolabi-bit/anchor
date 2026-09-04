@@ -128,7 +128,7 @@ export default function SignupPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label
-                  className="block text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
+                  className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
                   htmlFor="firstName"
                 >
                   First Name <span className="text-[#C86D51]">*</span>
@@ -149,7 +149,7 @@ export default function SignupPage() {
 
               <div>
                 <label
-                  className="block text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
+                  className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
                   htmlFor="lastName"
                 >
                   Last Name <span className="text-[#C86D51]">*</span>
@@ -172,7 +172,7 @@ export default function SignupPage() {
             {/* Email Address */}
             <div>
               <label
-                className="block text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
+                className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
                 htmlFor="email"
               >
                 Email address <span className="text-[#C86D51]">*</span>
@@ -194,7 +194,7 @@ export default function SignupPage() {
             {/* Password */}
             <div>
               <label
-                className="block text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
+                className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1.5"
                 htmlFor="password"
               >
                 Password <span className="text-[#C86D51]">*</span>
@@ -249,7 +249,7 @@ export default function SignupPage() {
           </form>
 
           {/* Privacy Note */}
-          <div className="mt-6 pt-4.5 border-t border-[#EAE3D7] dark:border-[#38332E] flex items-start gap-2.5 text-[11px] text-[#786F66] dark:text-[#A8A096]">
+          <div className="mt-6 pt-4 border-t border-[#EAE3D7] dark:border-[#38332E] flex items-start gap-2.5 text-xs text-[#786F66] dark:text-[#A8A096]">
             <ShieldCheck className="w-4 h-4 shrink-0 text-[#658B70] mt-0.5" />
             <span className="leading-relaxed">
               Your name and reflections are strictly private to your personal space.
