@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Anchor,
@@ -267,47 +266,6 @@ export default function LandingHero() {
           </a>
         </motion.div>
       </header>
-
-      {/* ========================================================================= */}
-      {/* 3. ORGANIC FLOWING SILK WAVE (Visual Centerpiece from Reference Image)    */}
-      {/* ========================================================================= */}
-      <section className="relative w-full max-w-5xl mx-auto px-4 my-4 sm:my-8 overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="relative w-full aspect-16/9 rounded-3xl overflow-hidden border border-[#2A2420] shadow-[0_24px_60px_-15px_rgba(0,0,0,0.7)]"
-        >
-          {/* Photorealistic 3D flowing emerald silk ribbon graphic */}
-          <Image
-            src="/hero-wave.jpg"
-            alt="Flowing organic silk wave representing calm rhythm and nervous system regulation"
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="(max-width: 1024px) 100vw, 1024px"
-          />
-
-          {/* Vertical fade masks on top and bottom for seamless blend */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0D0B0A] via-transparent to-[#0D0B0A]/40 pointer-events-none" />
-
-          {/* Floating Live Badges over the Silk Ribbon */}
-          <div className="absolute bottom-6 sm:bottom-8 inset-x-4 sm:inset-x-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 pointer-events-none">
-            <div className="px-3.5 py-1.5 rounded-full bg-[#0D0B0A]/80 border border-[#2E2824] backdrop-blur-md text-[11px] font-medium text-[#ECE7E0] flex items-center gap-1.5 shadow-lg">
-              <Lock className="w-3.5 h-3.5 text-[#658B70]" />
-              <span>AES-256-GCM Client Encrypted</span>
-            </div>
-            <div className="px-3.5 py-1.5 rounded-full bg-[#0D0B0A]/80 border border-[#2E2824] backdrop-blur-md text-[11px] font-medium text-[#ECE7E0] flex items-center gap-1.5 shadow-lg">
-              <Sun className="w-3.5 h-3.5 text-[#B88452]" />
-              <span>Circadian-Aligned Rhythm</span>
-            </div>
-            <div className="px-3.5 py-1.5 rounded-full bg-[#0D0B0A]/80 border border-[#2E2824] backdrop-blur-md text-[11px] font-medium text-[#ECE7E0] flex items-center gap-1.5 shadow-lg">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70]" />
-              <span>Zero Streak Penalties</span>
-            </div>
-          </div>
-        </motion.div>
-      </section>
 
       {/* ========================================================================= */}
       {/* 4. OUR FEATURES / BENTO GRID (Inspired by Lower Half of Reference Image)   */}
