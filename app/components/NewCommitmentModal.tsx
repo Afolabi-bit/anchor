@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, Anchor, ArrowRight, Sparkles, BookOpen } from "lucide-react";
+import { X, Anchor, ArrowRight, BookOpen } from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 import { motion } from "framer-motion";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 import CommitmentLibraryModal from "@/app/components/CommitmentLibraryModal";
@@ -229,8 +230,17 @@ export default function NewCommitmentModal({
               disabled={submitting}
               className="w-full py-3.5 px-5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-organic-sm hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
             >
-              <span>{submitting ? "Anchoring..." : "Create Anchor Goal"}</span>
-              <ArrowRight className="w-4 h-4" />
+              {submitting ? (
+                <>
+                  <Spinner />
+                  <span>Anchoring...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Anchor Goal</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         </form>

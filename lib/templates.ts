@@ -94,7 +94,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
       "Notice physical tension release in shoulders",
     ],
     suggestedColorIndex: 2, // Sage
-    icon: "Sparkles",
+    icon: "Wind",
     description: "Use somatic vagus nerve regulation to prevent midday anxiety spikes.",
   },
   {
@@ -152,7 +152,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
       "Refill bottle before afternoon slump",
     ],
     suggestedColorIndex: 3, // Stone
-    icon: "Sparkles",
+    icon: "Sun",
     description: "A steady hydration habit that prevents headaches and mental sluggishness.",
   },
 
@@ -182,7 +182,7 @@ export const ANCHOR_TEMPLATES: AnchorTemplate[] = [
       "Focus for 30 uninterrupted minutes",
     ],
     suggestedColorIndex: 0, // Terracotta
-    icon: "Sparkles",
+    icon: "Flame",
     description: "Protect uninterrupted creative flow for writing, art, music, or building.",
   },
 ];

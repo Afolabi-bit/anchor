@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  PenLine,
-  Sparkles,
+  PencilSimple as PenLine,
   Check,
   X,
   Plus,
   Tag,
-  Smile,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle
-} from "lucide-react";
+  Smiley as Smile,
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
+  WarningCircle as AlertCircle,
+} from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import EmotionWheel, { EmotionState, EMOTIONS_CATALOG } from "@/app/components/EmotionWheel";
 import VoiceDictationButton from "@/app/components/VoiceDictationButton";
@@ -444,8 +444,17 @@ export default function JournalComposer({
                   disabled={saving || !content.trim()}
                   className="px-4 py-2 rounded-xl bg-[#C86D51] hover:bg-[#B35D43] text-white text-xs font-semibold shadow-organic-sm transition-all cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{saving ? "Saving reflection..." : "Save reflection"}</span>
+                  {saving ? (
+                    <>
+                      <Spinner size="xs" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save reflection</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

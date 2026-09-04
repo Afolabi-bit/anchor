@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Anchor, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Anchor, ArrowRight, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -120,7 +121,10 @@ export default function LoginPage() {
               className="w-full mt-2 py-4 px-5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-sm hover:shadow-md"
             >
               {loading ? (
-                <span>Signing in...</span>
+                <>
+                  <Spinner />
+                  <span>Signing in...</span>
+                </>
               ) : (
                 <>
                   <span>Sign In</span>

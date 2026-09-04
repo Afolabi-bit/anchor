@@ -15,11 +15,11 @@ import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-sum
 import {
   Calendar,
   Lightbulb,
-  HeartHandshake,
+  HandHeart as HeartHandshake,
   FileText,
   Play,
-  Award,
-} from "lucide-react";
+  Trophy,
+} from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import type { User, Commitment, CheckIn, JournalEntry } from "@/db/schema";
@@ -123,10 +123,12 @@ export default function ProgressPage() {
       <Navigation
         userEmail={user?.email}
         userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+        firstName={user?.firstName}
+        lastName={user?.lastName}
       />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
+        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
           <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
             <div>
@@ -260,7 +262,7 @@ export default function ProgressPage() {
           <div className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm space-y-3.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-[#C86D51]" />
+                <Trophy className="w-4 h-4 text-[#C86D51]" />
                 <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0]">
                   Recovery Milestones
                 </h3>

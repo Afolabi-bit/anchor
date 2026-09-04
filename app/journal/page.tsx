@@ -11,17 +11,17 @@ import JournalComposer from "@/app/components/JournalComposer";
 import {
   Sun,
   Moon,
-  ChevronDown,
-  ChevronUp,
-  Search,
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
+  MagnifyingGlass as Search,
   X,
-  CheckCircle2,
-  HeartHandshake,
+  CheckCircle as CheckCircle2,
+  HandHeart as HeartHandshake,
   Star,
-  Quote,
-  Trash2,
-  PenLine
-} from "lucide-react";
+  Quotes as Quote,
+  Trash as Trash2,
+  PencilSimple as PenLine,
+} from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import type { User, Commitment, CheckIn, JournalEntry } from "@/db/schema";
@@ -272,11 +272,13 @@ export default function JournalPage() {
       <Navigation
         userEmail={user?.email}
         userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+        firstName={user?.firstName}
+        lastName={user?.lastName}
       />
       <OfflineSyncBadge />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
+        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">

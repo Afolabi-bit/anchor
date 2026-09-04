@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Printer, Download, FileText, CheckCircle2, Shield } from "lucide-react";
+import { X, Printer, DownloadSimple as Download, FileText, CheckCircle as CheckCircle2, Shield } from "@phosphor-icons/react";
 import { triggerHaptic } from "@/lib/sensory";
 
 interface ExportReportModalProps {

@@ -1,70 +1,96 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Anchor, CalendarDays, BookOpen, BarChart3, Settings, LogOut, Eye, EyeOff } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  Anchor,
+  CalendarBlank,
+  BookOpen,
+  ChartBar,
+  UsersThree,
+} from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
-import { performClientLogout } from "@/lib/client-storage";
 
 const NAV_ITEMS = [
-  { href: "/today", label: "Today", icon: CalendarDays },
+  { href: "/today", label: "Today", icon: CalendarBlank },
   { href: "/journal", label: "Journal", icon: BookOpen },
-  { href: "/progress", label: "Progress", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/progress", label: "Progress", icon: ChartBar },
+  { href: "/community", label: "Community", icon: UsersThree },
 ];
 
-export default function Navigation({ userEmail, userName }: { userEmail?: string; userName?: string }) {
+/**
+ * Derives user initials from first and last name, full name, or email.
+ * E.g., "John" + "Doe" -> "JD", "Zerox" -> "Z", "zerox@example.com" -> "Z"
+ */
+export function getInitials(
+  firstName?: string,
+  lastName?: string,
+  userName?: string,
+  userEmail?: string
+): string {
+  const f = firstName?.trim();
+  const l = lastName?.trim();
+
+  if (f && l) {
+    return `${f.charAt(0)}${l.charAt(0)}`.toUpperCase();
+  }
+
+  if (f) {
+    const parts = f.split(/\s+/);
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return f.charAt(0).toUpperCase();
+  }
+
+  const u = userName?.trim();
+  if (u) {
+    const parts = u.split(/\s+/);
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return u.charAt(0).toUpperCase();
+  }
+
+  const e = userEmail?.trim();
+  if (e) {
+    return e.charAt(0).toUpperCase();
+  }
+
+  return "A";
+}
+
+export default function Navigation({
+  userEmail,
+  userName,
+  firstName,
+  lastName,
+}: {
+  userEmail?: string;
+  userName?: string;
+  firstName?: string;
+  lastName?: string;
+}) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [privacyMode, setPrivacyMode] = useState(false);
-  const [partnerCount, setPartnerCount] = useState<number>(0);
+  const isSettings = pathname === "/settings";
 
   useEffect(() => {
-    // Sync privacy blur class on document body
-    if (privacyMode) {
-      document.body.classList.add("privacy-active");
-    } else {
-      document.body.classList.remove("privacy-active");
-    }
-    return () => {
-      document.body.classList.remove("privacy-active");
-    };
-  }, [privacyMode]);
-
-  const togglePrivacyMode = () => {
-    triggerHaptic(15);
-    setPrivacyMode(!privacyMode);
-  };
-
-  useEffect(() => {
-    // Check active partner links for badge count
-    async function checkPartnerCount() {
-      try {
-        const res = await fetch("/api/sponsor");
-        if (res.ok) {
-          const data = await res.json();
-          setPartnerCount(data.shares?.length || 0);
-        }
-      } catch (err) {
-        // Silently skip if user is in guest mode or offline
+    // Sync privacy blur class on document body from localStorage
+    try {
+      const isPrivacyActive = localStorage.getItem("anchor_privacy_mode") === "true";
+      if (isPrivacyActive) {
+        document.body.classList.add("privacy-active");
+      } else {
+        document.body.classList.remove("privacy-active");
       }
+    } catch {
+      // Ignore if localStorage unavailable
     }
-    checkPartnerCount();
   }, []);
 
-  const handleLogout = async () => {
-    triggerHaptic(10);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
-    performClientLogout();
-    router.push("/login");
-    router.refresh();
-  };
+  const initials = getInitials(firstName, lastName, userName, userEmail);
 
   return (
     <>
@@ -128,36 +154,27 @@ export default function Navigation({ userEmail, userName }: { userEmail?: string
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
-            {/* Discreet Privacy Shield Button */}
-            <motion.button
+          {/* Persistent User Profile Avatar -> Links to Settings */}
+          <Link
+            href="/settings"
+            onClick={() => triggerHaptic(10)}
+            title="Account & Settings"
+            aria-label="Account and Settings"
+            className="flex items-center gap-2.5 group cursor-pointer"
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.92 }}
-              onClick={togglePrivacyMode}
-              title={privacyMode ? "Disable Privacy Blur" : "Enable Discreet Privacy Blur in Public"}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-                privacyMode
-                  ? "bg-[#C86D51] text-white shadow-organic-sm"
-                  : "text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] hover:bg-[#F3EFE7] dark:hover:bg-[#25221F]"
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm tracking-wider transition-all shadow-organic-sm ${
+                isSettings
+                  ? "bg-[#C86D51] text-white ring-2 ring-[#C86D51]/50 ring-offset-2 ring-offset-[#FAF7F2] dark:ring-offset-[#1C1917]"
+                  : "bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] border border-[#EAE3D7] dark:border-[#38332E] group-hover:border-[#C86D51]/50"
               }`}
             >
-              {privacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </motion.button>
-
-            {(userName || userEmail) && (
-              <span className="text-xs text-[#786F66] dark:text-[#A8A096] hidden md:inline-block truncate max-w-[130px] font-normal pl-1">
-                {userName || userEmail}
-              </span>
-            )}
-
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={handleLogout}
-              title="Sign out"
-              className="w-9 h-9 rounded-full flex items-center justify-center text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] hover:bg-[#F3EFE7] dark:hover:bg-[#25221F] transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-            </motion.button>
-          </div>
+              {initials}
+            </motion.div>
+          </Link>
         </div>
       </header>
 

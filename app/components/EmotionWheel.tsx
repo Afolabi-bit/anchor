@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Sun, Moon, Wind, Flame, Check } from "lucide-react";
+import { Sun, Moon, Wind, Flame, Check } from "@phosphor-icons/react";
 import { triggerHaptic } from "@/lib/sensory";
 
 export interface EmotionState {

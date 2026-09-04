@@ -6,18 +6,18 @@ import PageTransition from "@/app/components/PageTransition";
 import {
   Heart,
   Anchor,
-  Sparkles,
-  Send,
+  PaperPlaneRight as Send,
   Plus,
   Compass,
   Sun,
   Moon,
   ShieldCheck,
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   Users,
-  MessageSquareHeart,
-  Quote
-} from "lucide-react";
+  HandHeart as MessageSquareHeart,
+  Quotes as Quote,
+} from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
@@ -33,6 +33,7 @@ const CATEGORIES = [
 const EMOTION_PRESETS = ["Peaceful", "Grounded", "Grateful", "Courageous", "Serene", "Reflective"];
 
 export default function CommunityPage() {
+  const [user, setUser] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [reflections, setReflections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,21 @@ export default function CommunityPage() {
 
   // Local resonance tracker to prevent spam
   const [resonatedIds, setResonatedIds] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch (e) {
+        // guest mode
+      }
+    }
+    loadUser();
+  }, []);
 
   useEffect(() => {
     try {
@@ -157,10 +173,15 @@ export default function CommunityPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation />
+      <Navigation
+        userEmail={user?.email}
+        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+        firstName={user?.firstName}
+        lastName={user?.lastName}
+      />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
+        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -274,8 +295,17 @@ export default function CommunityPage() {
                       disabled={submitting || !newContent.trim()}
                       className="px-5 py-2.5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-organic-sm transition-all disabled:opacity-50"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>{submitting ? "Sharing..." : "Post Anonymously"}</span>
+                      {submitting ? (
+                        <>
+                          <Spinner size="xs" />
+                          <span>Sharing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Post Anonymously</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>

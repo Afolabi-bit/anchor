@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Award, Sun, Anchor, Shield, Flame, Crown, Compass, Sparkles, Lock } from "lucide-react";
+import { Trophy, Sun, Anchor, Shield, Flame, Crown, Compass, Lock } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { Milestone, calculateMilestones } from "@/lib/milestones-service";
@@ -26,10 +26,10 @@ export default function MilestoneGallery({ totalAnchoredDays }: MilestoneGallery
       case "Sun": return <Sun {...props} />;
       case "Anchor": return <Anchor {...props} />;
       case "Shield": return <Shield {...props} />;
-      case "Award": return <Award {...props} />;
+      case "Award": return <Trophy {...props} />;
       case "Flame": return <Flame {...props} />;
       case "Crown": return <Crown {...props} />;
-      default: return <Sparkles {...props} />;
+      default: return <Trophy {...props} />;
     }
   };
 
@@ -46,7 +46,7 @@ export default function MilestoneGallery({ totalAnchoredDays }: MilestoneGallery
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#2C2520] dark:text-[#ECE7E0]">
-          <Award className="w-4 h-4 text-[#C86D51] shrink-0" />
+          <Trophy className="w-4 h-4 text-[#C86D51] shrink-0" />
           <span className="truncate">Progress Milestones</span>
         </div>
 

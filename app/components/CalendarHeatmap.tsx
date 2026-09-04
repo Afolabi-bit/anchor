@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Sparkles, Check, Heart, Shield } from "lucide-react";
+import { Calendar } from "@phosphor-icons/react";
 import { triggerHaptic } from "@/lib/sensory";
 
 interface HeatmapDay {

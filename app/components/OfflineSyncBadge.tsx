@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { WifiOff, CloudUpload, CheckCircle2, Sparkles } from "lucide-react";
+import { WifiSlash as WifiOff, CloudArrowUp as CloudUpload, CheckCircle as CheckCircle2, ShieldCheck } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { flushPendingCheckIns, getPendingCheckIns } from "@/lib/offline-sync";
 import { triggerHaptic } from "@/lib/sensory";
@@ -90,7 +90,7 @@ export default function OfflineSyncBadge() {
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span className="font-medium">All offline reflections synced securely</span>
             </div>
-            <Sparkles className="w-3.5 h-3.5" />
+            <ShieldCheck className="w-3.5 h-3.5" />
           </motion.div>
         ) : syncing ? (
           <motion.div

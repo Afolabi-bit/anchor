@@ -1,30 +1,41 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Anchor,
-  ShieldCheck,
   Lock,
   Database,
   Users,
-  Scale,
-  Trash2,
-  ArrowLeft,
-  EyeOff,
-  CheckCircle2,
-  FileText
-} from "lucide-react";
+  Scales as Scale,
+  Trash as Trash2,
+  CaretLeft as ChevronLeft,
+  EyeSlash as EyeOff,
+  CheckCircle as CheckCircle2,
+  FileText,
+} from "@phosphor-icons/react";
 
 export default function PrivacyPolicyPage() {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] text-[#2C2520] dark:text-[#ECE7E0] transition-colors duration-200">
       {/* Header Bar */}
       <header className="border-b border-[#EAE3D7] dark:border-[#38332E] bg-white/70 dark:bg-[#25221F]/70 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-3xl mx-auto px-5 py-4 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-5 py-3.5 flex items-center justify-between">
           <Link
-            href="/today"
-            className="flex items-center gap-2 text-xs font-medium text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-colors"
+            href="/"
+            onClick={(e) => {
+              if (typeof window !== "undefined" && window.history.length > 1) {
+                e.preventDefault();
+                router.back();
+              }
+            }}
+            aria-label="Back"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] hover:bg-[#EAE3D7]/60 dark:hover:bg-[#38332E]/60 transition-colors cursor-pointer -ml-1.5"
+            title="Back"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Anchor</span>
+            <ChevronLeft className="w-5 h-5" />
           </Link>
 
           <div className="flex items-center gap-2">
@@ -36,12 +47,7 @@ export default function PrivacyPolicyPage() {
             </span>
           </div>
 
-          <Link
-            href="/settings"
-            className="text-xs text-[#C86D51] hover:underline font-medium"
-          >
-            Manage Settings
-          </Link>
+          <div className="w-8" aria-hidden="true" />
         </div>
       </header>
 
@@ -49,10 +55,6 @@ export default function PrivacyPolicyPage() {
       <main className="max-w-3xl mx-auto px-5 py-10 space-y-10">
         {/* Title Hero */}
         <section className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-xs font-semibold text-[#658B70] dark:text-[#82A78C]">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Transparent Data Protection Policy • Last Updated September 2026</span>
-          </div>
           <h1 className="font-serif-title text-3xl sm:text-4xl text-[#2C2520] dark:text-[#ECE7E0] tracking-tight">
             How Anchor Protects Your Sensitive Health & Recovery Data
           </h1>
@@ -338,19 +340,24 @@ export default function PrivacyPolicyPage() {
         </section>
 
         {/* Footer Navigation */}
-        <footer className="pt-6 border-t border-[#EAE3D7] dark:border-[#38332E] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#786F66] dark:text-[#A8A096]">
-          <span>© 2026 Anchor • Compassionate Accountability & Recovery</span>
-          <div className="flex items-center gap-4">
-            <Link href="/today" className="hover:text-[#2C2520] dark:hover:text-[#ECE7E0] font-medium">
-              Today
-            </Link>
-            <Link href="/journal" className="hover:text-[#2C2520] dark:hover:text-[#ECE7E0] font-medium">
-              Journal
-            </Link>
-            <Link href="/settings" className="hover:text-[#2C2520] dark:hover:text-[#ECE7E0] font-medium">
-              Settings & Partners
-            </Link>
+        <footer className="pt-6 border-t border-[#EAE3D7] dark:border-[#38332E] space-y-3 text-xs text-[#786F66] dark:text-[#A8A096]">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span>© 2026 Anchor • Compassionate Accountability & Recovery</span>
+            <div className="flex items-center gap-4">
+              <Link href="/today" className="hover:text-[#2C2520] dark:hover:text-[#ECE7E0] font-medium">
+                Today
+              </Link>
+              <Link href="/journal" className="hover:text-[#2C2520] dark:hover:text-[#ECE7E0] font-medium">
+                Journal
+              </Link>
+              <Link href="/settings" className="hover:text-[#2C2520] dark:hover:text-[#ECE7E0] font-medium">
+                Settings & Partners
+              </Link>
+            </div>
           </div>
+          <p className="text-[11px] text-[#A8A096]/70 dark:text-[#786F66]/70 text-center sm:text-left">
+            Last updated September 2026
+          </p>
         </footer>
       </main>
     </div>

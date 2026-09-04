@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Wind, Phone, X, Volume2, VolumeX, Sparkles, CheckCircle2, Circle } from "lucide-react";
+import { Wind, Phone, X, SpeakerHigh as Volume2, SpeakerSlash as VolumeX, CheckCircle as CheckCircle2, Circle } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 

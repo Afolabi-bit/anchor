@@ -6,10 +6,10 @@ import {
   Anchor,
   ShieldCheck,
   Calendar,
-  Send,
-  CheckCircle2,
-  MessageSquareHeart,
-} from "lucide-react";
+  PaperPlaneRight as Send,
+  CheckCircle as CheckCircle2,
+  HandHeart as MessageSquareHeart,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";

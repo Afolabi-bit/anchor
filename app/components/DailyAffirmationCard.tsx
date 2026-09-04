@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bookmark, Copy, Check, Shuffle, Quote } from "lucide-react";
+import { Bookmark, Copy, Check, Shuffle, Quotes as Quote } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { Affirmation, DAILY_AFFIRMATIONS, getTodayAffirmation } from "@/lib/affirmations";
@@ -83,7 +83,7 @@ export default function DailyAffirmationCard() {
             style={{ backgroundColor: affirmation.themeColor }}
           />
           <span className="text-xs uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096]">
-            Daily Grounding Wisdom • {affirmation.category}
+            Daily Quote • {affirmation.category}
           </span>
         </div>
 
@@ -106,7 +106,7 @@ export default function DailyAffirmationCard() {
                 : "text-[#9E948A] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] hover:bg-[#FAF7F2] dark:hover:bg-[#1E1B18]"
             }`}
           >
-            <Bookmark className="w-3.5 h-3.5 fill-current" />
+            <Bookmark className="w-3.5 h-3.5" weight={bookmarked ? "fill" : "regular"} />
           </button>
           <button
             type="button"

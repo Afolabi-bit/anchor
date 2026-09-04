@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sun, Moon, Compass, Check, Sparkles } from "lucide-react";
+import { Sun, Moon, Compass, Check } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 
@@ -71,7 +71,7 @@ export default function CircadianArc({
           </span>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F3EFE7] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] text-[11px] text-[#786F66] dark:text-[#A8A096] font-medium shadow-2xs">
-          <Sparkles className="w-3 h-3 text-[#C86D51] dark:text-[#DB8165]" />
+          <Compass className="w-3 h-3 text-[#C86D51] dark:text-[#DB8165]" />
           <span>
             {isMorningWindow
               ? "Morning Intention Window"

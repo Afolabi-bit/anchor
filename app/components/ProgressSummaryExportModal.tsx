@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Printer, Copy, Check, ShieldCheck, HeartHandshake, FileText, CheckCircle2, Lock, Download } from "lucide-react";
+import { X, Printer, Copy, Check, ShieldCheck, HandHeart as HeartHandshake, FileText, CheckCircle as CheckCircle2, Lock, DownloadSimple as Download } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { ProgressSummaryData, FIXED_PROGRESS_DISCLAIMER } from "@/lib/progress-summary-service";

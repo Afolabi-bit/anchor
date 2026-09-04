@@ -9,10 +9,10 @@ import {
   Sun,
   Moon,
   Check,
-  CheckCircle2,
-  Sparkles,
+  CheckCircle as CheckCircle2,
   Shield,
-} from "lucide-react";
+} from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 import { ANCHOR_TEMPLATES } from "@/lib/templates";
@@ -253,7 +253,7 @@ export default function OnboardingPage() {
 
                   <div>
                     <label className="text-xs font-semibold text-[#2C2520] dark:text-[#ECE7E0] block mb-1">
-                      Your Grounding Why
+                      Your Why
                     </label>
                     <input
                       type="text"
@@ -294,7 +294,7 @@ export default function OnboardingPage() {
               >
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] text-xs font-semibold">
-                    <Sparkles className="w-3 h-3" />
+                    <CheckCircle2 className="w-3 h-3" />
                     <span>Interactive Preview • Try It Now</span>
                   </div>
                   <h2 className="font-serif-title text-xl sm:text-2xl text-[#2C2520] dark:text-[#ECE7E0]">
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
                   ) : (
                     <div className="p-3 rounded-xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] text-xs text-center font-medium flex items-center justify-center gap-2">
                       <Check className="w-4 h-4" />
-                      <span>Reflection sealed with gentle chime. That's your daily check-in!</span>
+                      <span>Check-in recorded. That's your daily anchor.</span>
                     </div>
                   )}
                 </div>
@@ -513,8 +513,17 @@ export default function OnboardingPage() {
                     onClick={handleCompleteAccount}
                     className="w-full py-3.5 rounded-full bg-[#C86D51] hover:bg-[#B35D43] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-organic-md cursor-pointer transition-colors"
                   >
-                    <span>{user ? "Save Anchor & Start Today" : "Create Account & Start Today"}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    {loading ? (
+                      <>
+                        <Spinner />
+                        <span>{user ? "Saving..." : "Creating account..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{user ? "Save Anchor & Start Today" : "Create Account & Start Today"}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
               </motion.div>

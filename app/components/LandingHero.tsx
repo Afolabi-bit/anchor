@@ -8,14 +8,13 @@ import {
   Moon,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   Lock,
   Compass,
   Wind,
   Check,
-  ChevronDown,
-  Activity,
-} from "lucide-react";
+  CaretDown as ChevronDown,
+} from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playGentleChime } from "@/lib/sensory";
 
@@ -241,7 +240,7 @@ export default function LandingHero() {
                 Two Minutes to Ground Your Day
               </h3>
               <p className="text-xs sm:text-sm text-[#A8A096] mb-6 leading-relaxed">
-                Set one intentional micro-step each morning. Reflect with kindness each evening. That's all — no complicated checklists or overwhelming routines.
+                Set one clear micro-step each morning. Check in each evening. No complicated routines or checklists.
               </p>
 
               {/* Interactive Tabs */}
@@ -421,7 +420,7 @@ export default function LandingHero() {
 
             <div className="mt-6 pt-4 border-t border-[#2E2824] flex items-center justify-between text-xs text-[#A8A096]">
               <span>No forced ratings</span>
-              <span className="text-[#82A78C] font-medium">Honor your pace</span>
+              <span className="text-[#82A78C] font-medium">Your pace is your own</span>
             </div>
           </div>
 
@@ -528,7 +527,7 @@ export default function LandingHero() {
               <div className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2">
                 <div className="flex items-center gap-2 text-xs text-[#82A78C] font-medium">
                   <Activity className="w-3.5 h-3.5 text-[#658B70]" />
-                  <span>Compassionate Observation</span>
+                  <span>Pattern Observation</span>
                 </div>
                 <p className="text-xs text-[#ECE7E0] leading-relaxed">
                   "Tuesdays tend to bring fatigue — consider planning an earlier evening wind-down."
@@ -671,7 +670,7 @@ export default function LandingHero() {
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#482E25] bg-[#2A1D19] text-[#DB8165] text-xs font-semibold mb-6">
             <Anchor className="w-3.5 h-3.5 text-[#C86D51]" />
-            <span>Begin Your Quiet Practice</span>
+            <span>Start Your Daily Anchor</span>
           </div>
 
           <h2 className="font-serif-title text-3xl sm:text-5xl text-[#ECE7E0] max-w-xl mx-auto leading-tight">
@@ -713,7 +712,7 @@ export default function LandingHero() {
               <Anchor className="w-3 h-3" />
             </div>
             <span className="font-serif-title text-sm text-[#ECE7E0]">Anchor</span>
-            <span className="opacity-60">• A quiet space for daily self-trust</span>
+            <span className="opacity-60">• A focused space for daily accountability</span>
           </div>
 
           <div className="flex items-center gap-6">

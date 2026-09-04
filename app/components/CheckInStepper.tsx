@@ -8,15 +8,15 @@ import {
   Sun,
   Moon,
   Plus,
-  Trash2,
+  Trash as Trash2,
   Check,
-  Sparkles,
   Anchor,
-  CheckCircle2,
-  HeartHandshake,
-  Mic,
-  MessageSquare
-} from "lucide-react";
+  CheckCircle as CheckCircle2,
+  HandHeart as HeartHandshake,
+  Microphone as Mic,
+  ChatCircle as MessageSquare,
+} from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
@@ -305,7 +305,7 @@ export default function CheckInStepper({
                   >
                     <div className="space-y-1">
                       <h4 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-                        Plan 1–2 Gentle Micro-Actions
+                        Plan 1–2 Actions for Today
                       </h4>
                       <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
                         Small steps protect your energy. Tap a suggestion or add your own.
@@ -370,7 +370,7 @@ export default function CheckInStepper({
                         rows={2}
                         value={intentionNote}
                         onChange={(e) => setIntentionNote(e.target.value)}
-                        placeholder="e.g. Keep my heart calm and stay present."
+                        placeholder="e.g. Keep my head clear and stay focused."
                         className="w-full px-3.5 py-2.5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-xs text-[#2C2520] dark:text-[#ECE7E0] resize-none focus:outline-none focus:border-[#B88452]"
                       />
                     </div>
@@ -385,10 +385,10 @@ export default function CheckInStepper({
                   >
                     <div className="space-y-1.5">
                       <h4 className="font-serif-title text-2xl text-[#2C2520] dark:text-[#ECE7E0]">
-                        Seal Today's Promise
+                        Lock In Today's Intention
                       </h4>
                       <p className="text-xs text-[#786F66] dark:text-[#A8A096] max-w-xs mx-auto">
-                        Take one deep breath. Anchor your day with calm clarity.
+                        Take a breath, then confirm your focus for the day.
                       </p>
                     </div>
 
@@ -410,7 +410,7 @@ export default function CheckInStepper({
                       className="w-28 h-28 mx-auto rounded-full bg-[#B88452] hover:bg-[#A37445] text-white shadow-organic-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-all disabled:opacity-50"
                     >
                       <Anchor className="w-8 h-8" />
-                      <span className="text-xs font-semibold">{saving ? "Sealing..." : "Seal Anchor"}</span>
+                      <span className="text-xs font-semibold">{saving ? <Spinner size="xs" /> : "Seal Anchor"}</span>
                     </motion.button>
                   </motion.div>
                 )}
@@ -434,7 +434,7 @@ export default function CheckInStepper({
                         How Did Today Go?
                       </h4>
                       <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                        Honest reflection without evaluation or shame.
+                        Be honest. No judgment here.
                       </p>
                     </div>
 
@@ -443,19 +443,19 @@ export default function CheckInStepper({
                         {
                           id: "yes",
                           title: "Yes, Followed Through",
-                          desc: "I honored my anchor today with steady presence.",
+                          desc: "Showed up and did the work.",
                           color: "border-[#658B70] bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70]",
                         },
                         {
                           id: "partial",
                           title: "Partially / Adjusted",
-                          desc: "I made gentle adjustments to care for myself.",
+                          desc: "Did part of it, or adapted to the day.",
                           color: "border-[#B88452] bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]",
                         },
                         {
                           id: "no",
-                          title: "Rested / Learned",
-                          desc: "Obstacles arose; I am learning and resetting.",
+                          title: "Didn't Get There",
+                          desc: "Today was hard. Tomorrow is a fresh start.",
                           color: "border-[#C86D51] bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]",
                         },
                       ].map((opt) => {
@@ -500,7 +500,7 @@ export default function CheckInStepper({
                         Emotional Climate
                       </h4>
                       <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                        Identify where your nervous system landed today.
+                        How did you feel today?
                       </p>
                     </div>
 
@@ -527,7 +527,7 @@ export default function CheckInStepper({
                         What Did Today Teach You?
                       </h4>
                       <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                        Record a brief reflection or takeaway before resting.
+                        Brief note or key takeaway from today.
                       </p>
                     </div>
 
@@ -575,7 +575,7 @@ export default function CheckInStepper({
                         rows={3}
                         value={reflection}
                         onChange={(e) => setReflection(e.target.value)}
-                        placeholder="e.g. Acknowledge what went well and release what didn't."
+                        placeholder="e.g. Stayed steady despite a rough afternoon."
                         className="w-full px-3.5 py-2.5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-xs text-[#2C2520] dark:text-[#ECE7E0] resize-none focus:outline-none focus:border-[#C86D51] leading-relaxed"
                       />
                     </div>
@@ -620,8 +620,17 @@ export default function CheckInStepper({
                   activeType === "morning" ? "bg-[#B88452] hover:bg-[#A37445]" : "bg-[#C86D51] hover:bg-[#B35D43]"
                 }`}
               >
-                <Check className="w-3.5 h-3.5" />
-                <span>{saving ? "Recording..." : activeType === "morning" ? "Seal Anchor" : "Complete Reflection"}</span>
+                {saving ? (
+                  <>
+                    <Spinner size="xs" />
+                    <span>{activeType === "morning" ? "Sealing..." : "Recording..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{activeType === "morning" ? "Seal Anchor" : "Complete Reflection"}</span>
+                  </>
+                )}
               </button>
             )}
           </div>

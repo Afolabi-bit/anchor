@@ -13,25 +13,26 @@ import {
   Sun,
   Moon,
   Clock,
-  LogOut,
-  Save,
-  CheckCircle2,
+  SignOut as LogOut,
+  FloppyDisk as Save,
+  CheckCircle as CheckCircle2,
   PauseCircle,
   PlayCircle,
   Copy,
   Check,
   ShieldCheck,
   FileText,
-  Download,
+  DownloadSimple as Download,
   Plus,
-  Trash2,
-  Edit2,
-  BellOff,
-  BellRing,
+  Trash as Trash2,
+  PencilSimple as Edit2,
+  BellSlash as BellOff,
+  BellRinging as BellRing,
   Users,
-  UserX,
-  ArrowRight
-} from "lucide-react";
+  UserMinus as UserX,
+  ArrowRight,
+} from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { registerServiceWorker, subscribeToPush, unsubscribeFromPush } from "@/lib/push-client";
@@ -59,6 +60,30 @@ export default function SettingsPage() {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [testingPush, setTestingPush] = useState(false);
+
+  // Discretion & Privacy State
+  const [privacyMode, setPrivacyMode] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("anchor_privacy_mode") === "true";
+      setPrivacyMode(saved);
+    } catch {}
+  }, []);
+
+  const togglePrivacyMode = () => {
+    triggerHaptic(12);
+    const next = !privacyMode;
+    setPrivacyMode(next);
+    try {
+      localStorage.setItem("anchor_privacy_mode", String(next));
+    } catch {}
+    if (next) {
+      document.body.classList.add("privacy-active");
+    } else {
+      document.body.classList.remove("privacy-active");
+    }
+  };
 
   // Sponsor / Partner Granular Sharing State
   const [partnerShares, setPartnerShares] = useState<PartnerPermission[]>([]);
@@ -416,6 +441,12 @@ export default function SettingsPage() {
 
 
   const handleLogout = async () => {
+    triggerHaptic(10);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
     await performClientLogout();
     router.push("/login");
     router.refresh();
@@ -435,10 +466,12 @@ export default function SettingsPage() {
       <Navigation
         userEmail={user?.email}
         userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+        firstName={user?.firstName}
+        lastName={user?.lastName}
       />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-5 sm:space-y-6">
+        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -474,31 +507,50 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Featured Community Card */}
-              <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 clay-card shadow-organic-md flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] flex items-center justify-center shadow-2xs">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif-title text-base sm:text-lg text-[#2C2520] dark:text-[#ECE7E0]">
-                      Community Moments Wall
-                    </h3>
-                    <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                      Anonymous, gentle reflections from travelers on the path
-                    </p>
+              {/* Discretion & Privacy Card */}
+              <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-6 clay-card shadow-organic-md space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#F3EFE7] dark:bg-[#2A2622] text-[#786F66] dark:text-[#A8A096] flex items-center justify-center shadow-2xs">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif-title text-base sm:text-lg text-[#2C2520] dark:text-[#ECE7E0]">
+                        Discretion & Privacy
+                      </h3>
+                      <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
+                        Visual privacy controls for sensitive reflections
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <motion.button
-                  whileTap={{ scale: 0.94 }}
-                  type="button"
-                  onClick={() => router.push("/community")}
-                  className="px-4 py-2 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-[#658B70] dark:text-[#82A78C] hover:border-[#658B70] text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors shrink-0"
-                >
-                  <span>Open</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </motion.button>
+                <div className="pt-2 border-t border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <span className="text-sm font-medium text-[#2C2520] dark:text-[#ECE7E0] block">
+                      Discreet Blur Mode
+                    </span>
+                    <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
+                      Blurs personal reflection notes and intentions on screen in public transit or shared spaces.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={togglePrivacyMode}
+                    role="switch"
+                    aria-checked={privacyMode}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      privacyMode ? "bg-[#C86D51]" : "bg-[#DCD5CB] dark:bg-[#3D3730]"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                        privacyMode ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* Multi-Commitment Manager Card */}
@@ -1137,8 +1189,17 @@ export default function SettingsPage() {
                   disabled={saving}
                   className="w-full py-4 px-5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all duration-200 cursor-pointer shadow-organic-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? "Saving preferences..." : "Save Preferences"}</span>
+                  {saving ? (
+                    <>
+                      <Spinner />
+                      <span>Saving preferences...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Preferences</span>
+                    </>
+                  )}
                 </motion.button>
 
                 {/* Account Info & Logout */}

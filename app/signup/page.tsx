@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Anchor, ArrowRight, ShieldCheck, User, Mail, Lock, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Anchor, ArrowRight, ShieldCheck, User, Envelope as Mail, Lock, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react";
+import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import PasswordStrengthIndicator from "@/app/components/PasswordStrengthIndicator";
@@ -102,7 +103,7 @@ export default function SignupPage() {
         >
           <div className="mb-6">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#C86D51] dark:text-[#DB8165] mb-1">
-              <Sparkles className="w-3.5 h-3.5" />
+              <ShieldCheck className="w-3.5 h-3.5" />
               <span>Create Your Account</span>
             </div>
             <h2 className="font-serif-title text-xl sm:text-2xl text-[#2C2520] dark:text-[#ECE7E0]">
@@ -238,7 +239,10 @@ export default function SignupPage() {
               className="w-full mt-3 py-3.5 px-5 rounded-2xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-organic-sm"
             >
               {loading ? (
-                <span>Creating your space...</span>
+                <>
+                  <Spinner />
+                  <span>Creating your space...</span>
+                </>
               ) : (
                 <>
                   <span>Begin with Anchor</span>

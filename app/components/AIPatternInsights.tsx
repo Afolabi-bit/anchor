@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Compass, ThumbsUp, ThumbsDown, X, ArrowRight } from "lucide-react";
+import { Compass, ThumbsUp, ThumbsDown, X, ArrowRight } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { LoggedPattern, InsightsSynthesis } from "@/lib/insights-service";

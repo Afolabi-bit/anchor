@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, Activity } from "lucide-react";
+import { TrendUp } from "@phosphor-icons/react";
 import { triggerHaptic } from "@/lib/sensory";
 import type { CheckIn, JournalEntry } from "@/db/schema";
 
@@ -151,7 +151,7 @@ export default function MoodTimelineChart({
       {/* Header with 7/30/90 Day Switcher */}
       <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-[#658B70]" />
+          <TrendUp className="w-4 h-4 text-[#658B70]" />
           <div>
             <h3 className="font-serif-title text-lg text-[#2C2520] dark:text-[#ECE7E0]">
               Mood & Energy Timeline

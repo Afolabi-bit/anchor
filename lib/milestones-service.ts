@@ -44,7 +44,7 @@ export const MILESTONE_DEFINITIONS = [
     subtitle: "30 Days of Reflection",
     description: "A full month of non-judgmental presence and deep self-compassion.",
     thresholdDays: 30,
-    iconName: "Sparkles",
+    iconName: "Compass",
     accentColor: "#D4A373",
   },
   {

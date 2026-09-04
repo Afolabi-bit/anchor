@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, MicOff, Loader2 } from "lucide-react";
+import { Microphone as Mic, MicrophoneSlash as MicOff, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { isSpeechRecognitionSupported, createSpeechRecognizer } from "@/lib/voice-dictation";

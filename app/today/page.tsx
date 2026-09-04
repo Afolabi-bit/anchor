@@ -14,14 +14,15 @@ import JournalComposer from "@/app/components/JournalComposer";
 import {
   Sun,
   Moon,
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   Check,
   Anchor,
   ArrowRight,
   Plus,
-  MessageSquareHeart,
-  Quote,
-} from "lucide-react";
+  HandHeart as MessageSquareHeart,
+  Quotes as Quote,
+  CaretDown,
+} from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import type { User, Commitment, CheckIn } from "@/db/schema";
@@ -35,6 +36,7 @@ export default function TodayPage() {
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [activeCommitmentId, setActiveCommitmentId] = useState<string>("");
   const [newModalOpen, setNewModalOpen] = useState(false);
+  const [showAnchorMenu, setShowAnchorMenu] = useState(false);
 
   // Time-aware horizon
   const currentHour = new Date().getHours();
@@ -160,69 +162,134 @@ export default function TodayPage() {
       <Navigation
         userEmail={user?.email}
         userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
+        firstName={user?.firstName}
+        lastName={user?.lastName}
       />
       <OfflineSyncBadge />
 
       <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-5 py-5 sm:py-8 space-y-6">
+        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* ========================================================================= */}
-          {/* 1. COMPACT HEADER: Merged Greeting + Anchor Focus (No Box Border)          */}
+          {/* 1. ANCHOR FOCUS HEADER: Uninhibited Greeting + Intuitive Anchor Selector   */}
           {/* ========================================================================= */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 space-y-1">
-              <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
-                {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
-              </span>
-              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight truncate">
-                {activeCommitment?.name || "Daily Anchor Focus"}
-              </h1>
-              {activeCommitment?.why && (
-                <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] font-serif italic truncate">
-                  "{activeCommitment.why}"
-                </p>
-              )}
-            </div>
+          <div className="space-y-2 relative">
+            <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
+              {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
+            </span>
 
-            {/* Subtle Top Affordance: Toggle to review/edit the other check-in */}
-            <div className="shrink-0 flex items-center gap-1.5 pt-1">
-              {commitments.length > 1 && (
+            {/* Anchor Title with Intuitive Dropdown Switcher */}
+            <div className="relative inline-block">
+              {commitments.length > 1 ? (
                 <button
+                  type="button"
                   onClick={() => {
                     triggerHaptic(8);
-                    const currentIndex = commitments.findIndex((c) => c.id === activeCommitmentId);
-                    const nextIndex = (currentIndex + 1) % commitments.length;
-                    setActiveCommitmentId(commitments[nextIndex].id);
+                    setShowAnchorMenu(!showAnchorMenu);
                   }}
-                  className="text-xs px-2.5 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-white/80 dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-colors cursor-pointer"
-                  title="Cycle anchors"
+                  className="group flex items-center gap-2.5 text-left cursor-pointer rounded-2xl -ml-2 px-2 py-1 hover:bg-[#F3EFE7]/80 dark:hover:bg-[#25221F]/80 transition-colors"
+                  title="Switch Active Anchor"
+                  aria-expanded={showAnchorMenu}
                 >
-                  <span className="w-2 h-2 rounded-full inline-block mr-1.5" style={{ backgroundColor: activeColorHex }} />
-                  <span>Switch</span>
+                  <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight leading-snug">
+                    {activeCommitment?.name || "Daily Anchor Focus"}
+                  </h1>
+                  <div className="w-6 h-6 rounded-full bg-[#FAF7F2] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-center text-[#786F66] dark:text-[#A8A096] group-hover:text-[#2C2520] dark:group-hover:text-[#ECE7E0] transition-colors shrink-0 shadow-2xs">
+                    <CaretDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showAnchorMenu ? "rotate-180" : ""}`} />
+                  </div>
                 </button>
+              ) : (
+                <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight leading-snug">
+                  {activeCommitment?.name || "Daily Anchor Focus"}
+                </h1>
               )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic(8);
-                  setViewOverride(currentView === "evening" ? "morning" : "evening");
-                }}
-                className="text-xs px-3 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-white/80 dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title={currentView === "evening" ? "View Morning Intention" : "View Evening Reflection"}
-              >
-                {currentView === "evening" ? (
+              {/* Intuitive Vertical Anchor Dropdown Popover */}
+              <AnimatePresence>
+                {showAnchorMenu && (
                   <>
-                    <Sun className="w-3.5 h-3.5 text-[#B88452]" />
-                    <span className="text-xs font-medium">{morningCheckIn ? "Morning Sealed" : "Morning"}</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-3.5 h-3.5 text-[#C86D51]" />
-                    <span className="text-xs font-medium">{eveningCheckIn ? "Evening Done" : "Evening"}</span>
+                    {/* Click-outside overlay */}
+                    <div
+                      className="fixed inset-0 z-20 cursor-default"
+                      onClick={() => setShowAnchorMenu(false)}
+                    />
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 top-full mt-2 w-72 sm:w-84 p-2 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-lg z-30 space-y-1"
+                    >
+                      <div className="px-3 py-2 text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold border-b border-[#EAE3D7] dark:border-[#38332E]">
+                        Switch Active Anchor
+                      </div>
+
+                      <div className="max-h-64 overflow-y-auto space-y-1 py-1">
+                        {commitments.map((c) => {
+                          const isSelected = c.id === activeCommitmentId;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic(10);
+                                setActiveCommitmentId(c.id);
+                                setShowAnchorMenu(false);
+                              }}
+                              className={`w-full text-left p-3 rounded-2xl flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+                                isSelected
+                                  ? "bg-[#FAF7F2] dark:bg-[#2E2A26] text-[#2C2520] dark:text-[#ECE7E0] font-medium"
+                                  : "hover:bg-[#FAF7F2]/60 dark:hover:bg-[#2E2A26]/60 text-[#786F66] dark:text-[#A8A096]"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: c.color || activeColorHex }}
+                                />
+                                <div className="truncate">
+                                  <span className="text-xs sm:text-sm block truncate text-[#2C2520] dark:text-[#ECE7E0]">
+                                    {c.name}
+                                  </span>
+                                  {c.why && (
+                                    <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] italic block truncate">
+                                      "{c.why}"
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-[#658B70] shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="pt-1 border-t border-[#EAE3D7] dark:border-[#38332E]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAnchorMenu(false);
+                            setNewModalOpen(true);
+                          }}
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-[#FAF7F2] dark:hover:bg-[#2E2A26] text-xs font-semibold text-[#C86D51] dark:text-[#DB8165] flex items-center gap-2 cursor-pointer transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add New Anchor</span>
+                        </button>
+                      </div>
+                    </motion.div>
                   </>
                 )}
-              </button>
+              </AnimatePresence>
             </div>
+
+            {activeCommitment?.why && (
+              <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] font-serif italic leading-relaxed pt-0.5">
+                "{activeCommitment.why}"
+              </p>
+            )}
           </div>
 
           {/* Partner Encouragement Message Banner (Only shown if cheer is unread) */}
@@ -262,9 +329,53 @@ export default function TodayPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* 2. ONE PRIMARY CHECK-IN CARD WITH ONE CLEAR ACTION BUTTON (Framer Motion)  */}
+          {/* 2. ONE PRIMARY CHECK-IN CARD WITH TIME-OF-DAY TRACKER                     */}
           {/* ========================================================================= */}
-          <AnimatePresence mode="wait">
+          <div className="space-y-3">
+            {/* Segmented Morning / Evening View Tracker */}
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-[#F3EFE7] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic(8);
+                    setViewOverride("morning");
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                    currentView === "morning"
+                      ? "bg-white dark:bg-[#2E2A26] text-[#B88452] shadow-2xs font-semibold"
+                      : "text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0]"
+                  }`}
+                >
+                  <Sun className="w-3.5 h-3.5 text-[#B88452]" />
+                  <span>Morning Intention</span>
+                  {morningCheckIn && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#658B70]" title="Sealed" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic(8);
+                    setViewOverride("evening");
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                    currentView === "evening"
+                      ? "bg-white dark:bg-[#2E2A26] text-[#C86D51] dark:text-[#DB8165] shadow-2xs font-semibold"
+                      : "text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0]"
+                  }`}
+                >
+                  <Moon className="w-3.5 h-3.5 text-[#C86D51]" />
+                  <span>Evening Review</span>
+                  {eveningCheckIn && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#658B70]" title="Completed" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
             {currentView === "morning" ? (
               /* ----------------------- MORNING CHECK-IN CARD ----------------------- */
               <motion.div
@@ -273,7 +384,7 @@ export default function TodayPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
-                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#B88452]/40 dark:border-[#B88452]/30 clay-card shadow-organic-md space-y-5"
+                className="p-7 sm:p-9 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#B88452]/40 dark:border-[#B88452]/30 clay-card shadow-organic-md space-y-6 sm:space-y-7"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -301,7 +412,7 @@ export default function TodayPage() {
                 {morningCheckIn ? (
                   <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 text-xs">
                     <span className="text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
-                      Intention Sealed for Today:
+                      This morning's plan:
                     </span>
                     {morningCheckIn.plannedActions && morningCheckIn.plannedActions.length > 0 && (
                       <div className="space-y-1.5">
@@ -331,7 +442,7 @@ export default function TodayPage() {
                 ) : (
                   <div className="space-y-3.5">
                     <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                      Anchor your mindset before the day unfolds. Choose 1 or 2 small actions to protect your peace.
+                      Pick 1 or 2 specific actions that support your goal today.
                     </p>
                     <button
                       type="button"
@@ -355,7 +466,7 @@ export default function TodayPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
-                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#C86D51]/40 dark:border-[#C86D51]/30 clay-card shadow-organic-md space-y-5"
+                className="p-7 sm:p-9 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#C86D51]/40 dark:border-[#C86D51]/30 clay-card shadow-organic-md space-y-6 sm:space-y-7"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -367,7 +478,7 @@ export default function TodayPage() {
                         Evening Check-in
                       </span>
                       <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-                        Close Your Day with Compassion
+                        Review Your Day
                       </h2>
                     </div>
                   </div>
@@ -390,7 +501,7 @@ export default function TodayPage() {
                   ) : (
                     <div className="flex items-center gap-2 text-[#786F66] dark:text-[#A8A096]">
                       <Sun className="w-3.5 h-3.5 opacity-50 shrink-0" />
-                      <span>Morning intention skipped — no penalty. Every evening is a clean slate.</span>
+                      <span>No morning check-in — your evening still counts.</span>
                     </div>
                   )}
                   {morningCheckIn && (
@@ -404,7 +515,7 @@ export default function TodayPage() {
                   <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-xs uppercase tracking-wider text-[#786F66] font-semibold">
-                        Day Recorded & Anchored
+                        Today Recorded
                       </span>
                       <span className="capitalize px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
                         {eveningCheckIn.status === "yes" ? "Followed Through" : eveningCheckIn.status === "partial" ? "Partially" : "Learned"}
@@ -418,7 +529,7 @@ export default function TodayPage() {
                     )}
 
                     <div className="pt-2 text-[#786F66] dark:text-[#A8A096] italic text-xs flex items-center justify-between">
-                      <span>Your day is honored without judgment. Rest peacefully tonight.</span>
+                      <span>Logged {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}.</span>
                       <button
                         type="button"
                         onClick={() => setActiveStepper("evening")}
@@ -431,7 +542,7 @@ export default function TodayPage() {
                 ) : (
                   <div className="space-y-3.5">
                     <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                      Take 30 seconds to reflect on your anchor with honesty and self-compassion.
+                      30 seconds. Reflect honestly on how today went.
                     </p>
                     <button
                       type="button"
@@ -441,7 +552,7 @@ export default function TodayPage() {
                       }}
                       className="btn-primary w-full py-3.5 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
                     >
-                      <span>Close Your Day with Compassion (30s)</span>
+                      <span>Review Your Day (30s)</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -449,11 +560,12 @@ export default function TodayPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
 
           {/* ========================================================================= */}
           {/* 3. SECONDARY SUPPORTING AREA: Daily Quote & Pause & Breathe               */}
           {/* ========================================================================= */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3">
+          <div className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5 min-w-0">
                 <Quote className="w-4 h-4 text-[#B88452] shrink-0 opacity-75 mt-0.5" />
@@ -493,6 +605,26 @@ export default function TodayPage() {
           onSuccess={handleCheckInSuccess}
         />
       )}
+
+      {/* Floating Action Button for Adding New Anchors */}
+      <motion.button
+        type="button"
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
+        onClick={() => {
+          triggerHaptic(12);
+          if (commitments.length >= 5) {
+            alert("Anchor supports up to 5 active anchors to protect your focus and avoid cognitive overwhelm. You can pause or manage existing anchors in Settings.");
+            return;
+          }
+          setNewModalOpen(true);
+        }}
+        className="fixed bottom-20 sm:bottom-8 right-5 sm:right-8 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white flex items-center justify-center shadow-organic-lg hover:shadow-organic-xl transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#C86D51]/30 group"
+        aria-label="Add new anchor"
+        title="Add new anchor"
+      >
+        <Plus className="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-200 group-hover:rotate-90" />
+      </motion.button>
 
       {/* New Commitment Modal */}
       {newModalOpen && (

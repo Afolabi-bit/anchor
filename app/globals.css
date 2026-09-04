@@ -330,3 +330,11 @@ textarea {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Make the native time-input clock icon white */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+  opacity: 0.7;
+  cursor: pointer;
+}
+

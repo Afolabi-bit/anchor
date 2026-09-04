@@ -8,10 +8,9 @@ import {
   Calendar,
   Tag,
   Lightbulb,
-  Sparkles,
-  HeartHandshake,
-  CheckCircle2,
-} from "lucide-react";
+  HandHeart as HeartHandshake,
+  CheckCircle as CheckCircle2,
+} from "@phosphor-icons/react";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
 
 interface StoryRecapModalProps {

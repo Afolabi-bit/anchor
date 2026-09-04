@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, Sparkles, Anchor, Sun, Moon, Compass, Shield, Plus, Check } from "lucide-react";
+import { X, MagnifyingGlass as Search, Anchor, Sun, Moon, Compass, Shield, Plus, Check, Wind, Flame } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import { AnchorTemplate, ANCHOR_TEMPLATES } from "@/lib/templates";
@@ -51,7 +51,8 @@ export default function CommitmentLibraryModal({
       case "Sun": return <Sun {...props} />;
       case "Moon": return <Moon {...props} />;
       case "Shield": return <Shield {...props} />;
-      case "Sparkles": return <Sparkles {...props} />;
+      case "Wind": return <Wind {...props} />;
+      case "Flame": return <Flame {...props} />;
       default: return <Anchor {...props} />;
     }
   };
@@ -86,7 +87,7 @@ export default function CommitmentLibraryModal({
           <div className="p-6 border-b border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] flex items-center justify-center shadow-2xs">
-                <Sparkles className="w-5 h-5" />
+                <Compass className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">

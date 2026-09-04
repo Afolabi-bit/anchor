@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { X, Sparkles, Award, Sun, Anchor, Shield, Flame, Crown, Compass, Share2 } from "lucide-react";
+import { X, Trophy, Sun, Anchor, Shield, Flame, Crown, Compass, ShareNetwork as Share2 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
@@ -36,10 +36,10 @@ export default function MilestoneCardModal({ milestone, isOpen, onClose }: Miles
       case "Sun": return <Sun {...props} />;
       case "Anchor": return <Anchor {...props} />;
       case "Shield": return <Shield {...props} />;
-      case "Award": return <Award {...props} />;
+      case "Award": return <Trophy {...props} />;
       case "Flame": return <Flame {...props} />;
       case "Crown": return <Crown {...props} />;
-      default: return <Sparkles {...props} />;
+      default: return <Trophy {...props} />;
     }
   };
 
@@ -99,7 +99,7 @@ export default function MilestoneCardModal({ milestone, isOpen, onClose }: Miles
           <div className="pt-2">
             {milestone.unlocked ? (
               <div className="p-3 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] text-xs font-semibold flex items-center justify-center gap-1.5">
-                <Sparkles className="w-4 h-4" />
+                <Trophy className="w-4 h-4" />
                 <span>Milestone Honored & Unlocked</span>
               </div>
             ) : (
