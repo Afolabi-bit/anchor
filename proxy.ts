@@ -6,10 +6,10 @@ const JWT_SECRET_STR = process.env.JWT_SECRET || "anchor-secret-recovery-compani
 const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STR);
 const COOKIE_NAME = "anchor_session";
 
-// Fully protected routes (require an authenticated account)
-const PROTECTED_ROUTES = ["/progress", "/settings"];
+// Fully protected routes (require an authenticated account — no guest access)
+const PROTECTED_ROUTES = ["/progress", "/settings", "/community"];
 
-// Guest-eligible routes (allow guest mode or authenticated account)
+// Guest-eligible routes (allow guest mode OR authenticated account)
 const GUEST_ELIGIBLE_ROUTES = ["/today", "/journal"];
 
 export async function proxy(request: NextRequest) {
@@ -42,13 +42,13 @@ export async function proxy(request: NextRequest) {
   );
   const isOnboardingRoute = pathname === "/onboarding" || pathname.startsWith("/onboarding/");
 
-  // 1. Authenticated user visiting /login or /signup -> redirect to active destination
+  // 1. Authenticated user visiting /login or /signup → redirect to active destination
   if (isAuthRoute && isValidSession) {
     const destination = isOnboarded ? "/today" : "/onboarding";
     return NextResponse.redirect(new URL(destination, request.url));
   }
 
-  // 2. Strict protected routes (/progress, /settings)
+  // 2. Strict protected routes (/progress, /settings, /community) — no guest access
   if (isProtectedRoute) {
     if (!isValidSession) {
       const loginUrl = new URL("/login", request.url);
@@ -74,16 +74,18 @@ export async function proxy(request: NextRequest) {
 
   // 4. Onboarding route
   if (isOnboardingRoute) {
+    // Already onboarded authenticated users don't need to re-onboard
     if (isValidSession && isOnboarded) {
       return NextResponse.redirect(new URL("/today", request.url));
+    }
+    // Unauthenticated non-guest visitors shouldn't land on /onboarding directly
+    if (!isValidSession && !isGuest) {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
   return NextResponse.next();
 }
-
-// Support both Next.js proxy and traditional middleware exports
-export { proxy as middleware };
 
 export const config = {
   matcher: [
@@ -95,6 +97,8 @@ export const config = {
     "/progress/:path*",
     "/settings",
     "/settings/:path*",
+    "/community",
+    "/community/:path*",
     "/onboarding",
     "/onboarding/:path*",
     "/login",

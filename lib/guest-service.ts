@@ -53,11 +53,7 @@ export function isGuestMode(): boolean {
     const raw = localStorage.getItem(GUEST_STORAGE_KEY);
     if (!raw) return false;
     const parsed = JSON.parse(raw);
-    const active = Boolean(parsed?.isGuest);
-    if (active && typeof document !== "undefined") {
-      document.cookie = "anchor_guest=true; path=/; max-age=2592000; SameSite=Lax";
-    }
-    return active;
+    return Boolean(parsed?.isGuest);
   } catch {
     return false;
   }
