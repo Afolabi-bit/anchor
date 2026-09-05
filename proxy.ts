@@ -53,9 +53,12 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Onboarding route — already onboarded users go directly to /today
+  // 3. Onboarding route — requires active account
   if (isOnboardingRoute) {
-    if (isValidSession && isOnboarded) {
+    if (!isValidSession) {
+      return NextResponse.redirect(new URL("/signup", request.url));
+    }
+    if (isOnboarded) {
       return NextResponse.redirect(new URL("/today", request.url));
     }
   }
