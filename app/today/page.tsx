@@ -140,7 +140,7 @@ export default function TodayPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
+      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-6 sm:py-8 space-y-5 sm:space-y-6 pb-36">
           {/* ========================================================================= */}
           {/* 1. ANCHOR FOCUS HEADER: Uninhibited Greeting + Intuitive Anchor Selector   */}
           {/* ========================================================================= */}
@@ -355,49 +355,46 @@ export default function TodayPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                className="p-7 sm:p-9 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#B88452]/40 dark:border-[#B88452]/30 clay-card shadow-organic-md space-y-6 sm:space-y-7"
+                transition={{ duration: 0.2 }}
+                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shadow-2xs">
-                      <Sun className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0">
+                      <Sun className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="text-xs uppercase tracking-wider font-bold text-[#B88452]">
-                        Morning Check-in
-                      </span>
-                      <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-                        Set Your Daily Intention
+                      <h2 className="font-serif-title text-lg font-medium text-[#2C2520] dark:text-[#ECE7E0]">
+                        Morning Intention
                       </h2>
+                      <span className="text-2xs text-[#786F66] dark:text-[#A8A096]">
+                        {activeCommitment?.name}
+                      </span>
                     </div>
                   </div>
 
                   {morningCheckIn && (
-                    <span className="text-xs px-3 py-1 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold border border-[#B88452]/30 flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" />
+                    <span className="text-2xs px-2.5 py-1 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold flex items-center gap-1">
+                      <Check className="w-3 h-3" />
                       <span>Sealed</span>
                     </span>
                   )}
                 </div>
 
                 {morningCheckIn ? (
-                  <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 text-xs">
-                    <span className="text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold block">
-                      This morning's plan:
-                    </span>
+                  <div className="space-y-2.5 text-xs pt-1">
                     {morningCheckIn.plannedActions && morningCheckIn.plannedActions.length > 0 && (
                       <div className="space-y-1.5">
                         {morningCheckIn.plannedActions.map((act: string, i: number) => (
                           <div key={i} className="flex items-center gap-2 text-[#2C2520] dark:text-[#ECE7E0]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70]" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70] shrink-0" />
                             <span>{act}</span>
                           </div>
                         ))}
                       </div>
                     )}
                     {morningCheckIn.intentionNote && (
-                      <p className="font-serif italic text-[#786F66] dark:text-[#A8A096] pt-1">
+                      <p className="font-serif italic text-[#786F66] dark:text-[#A8A096] pt-0.5">
                         "{morningCheckIn.intentionNote}"
                       </p>
                     )}
@@ -407,14 +404,14 @@ export default function TodayPage() {
                         onClick={() => setActiveStepper("morning")}
                         className="text-xs text-[#B88452] hover:underline cursor-pointer font-medium"
                       >
-                        Edit morning intention
+                        Edit intention
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3.5">
-                    <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                      Pick 1 or 2 specific actions that support your goal today.
+                  <div className="space-y-3.5 pt-1">
+                    <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096]">
+                      Set your focus and planned actions for today.
                     </p>
                     <button
                       type="button"
@@ -422,9 +419,9 @@ export default function TodayPage() {
                         triggerHaptic(12);
                         setActiveStepper("morning");
                       }}
-                      className="btn-primary w-full py-3.5 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                      className="btn-primary w-full py-3 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
                     >
-                      <span>Anchor Your Day (15s)</span>
+                      <span>Set Morning Intention</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -437,84 +434,62 @@ export default function TodayPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                className="p-7 sm:p-9 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#C86D51]/40 dark:border-[#C86D51]/30 clay-card shadow-organic-md space-y-6 sm:space-y-7"
+                transition={{ duration: 0.2 }}
+                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] dark:text-[#DB8165] flex items-center justify-center shadow-2xs">
-                      <Moon className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] flex items-center justify-center shadow-2xs shrink-0">
+                      <Moon className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="text-xs uppercase tracking-wider font-bold text-[#C86D51]">
-                        Evening Check-in
-                      </span>
-                      <h2 className="font-serif-title text-xl text-[#2C2520] dark:text-[#ECE7E0]">
-                        Review Your Day
+                      <h2 className="font-serif-title text-lg font-medium text-[#2C2520] dark:text-[#ECE7E0]">
+                        Evening Reflection
                       </h2>
+                      <span className="text-2xs text-[#786F66] dark:text-[#A8A096]">
+                        {activeCommitment?.name}
+                      </span>
                     </div>
                   </div>
 
                   {eveningCheckIn && (
-                    <span className="text-xs px-3 py-1 rounded-full bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] font-semibold border border-[#C86D51]/30 flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Completed</span>
-                    </span>
-                  )}
-                </div>
-
-                {/* Folded-in Supporting Morning Status Context */}
-                <div className="p-3 rounded-xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs flex items-center justify-between gap-2">
-                  {morningCheckIn ? (
-                    <div className="flex items-center gap-2 text-[#786F66] dark:text-[#A8A096] truncate">
-                      <Sun className="w-3.5 h-3.5 text-[#B88452] shrink-0" />
-                      <span className="truncate">Morning: {morningCheckIn.plannedActions?.[0] || "Intention set"}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-[#786F66] dark:text-[#A8A096]">
-                      <Sun className="w-3.5 h-3.5 opacity-50 shrink-0" />
-                      <span>No morning check-in — your evening still counts.</span>
-                    </div>
-                  )}
-                  {morningCheckIn && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold shrink-0">
-                      Sealed ✓
+                    <span className="capitalize text-2xs px-2.5 py-1 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
+                      {eveningCheckIn.status === "yes"
+                        ? "Followed Through"
+                        : eveningCheckIn.status === "partial"
+                        ? "Adjusted"
+                        : "Learned"}
                     </span>
                   )}
                 </div>
 
                 {eveningCheckIn ? (
-                  <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-2.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs uppercase tracking-wider text-[#786F66] font-semibold">
-                        Today Recorded
-                      </span>
-                      <span className="capitalize px-2.5 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
-                        {eveningCheckIn.status === "yes" ? "Followed Through" : eveningCheckIn.status === "partial" ? "Partially" : "Learned"}
-                      </span>
-                    </div>
-
+                  <div className="space-y-2.5 text-xs pt-1">
                     {eveningCheckIn.reflection && (
                       <p className="font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
                         "{eveningCheckIn.reflection}"
                       </p>
                     )}
-
-                    <div className="pt-2 text-[#786F66] dark:text-[#A8A096] italic text-xs flex items-center justify-between">
-                      <span>Logged {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}.</span>
+                    {eveningCheckIn.lessonsLearned && (
+                      <p className="text-2xs text-[#786F66] dark:text-[#A8A096] pt-0.5">
+                        <strong className="text-[#C86D51] font-semibold">Lesson: </strong>
+                        <span className="italic">{eveningCheckIn.lessonsLearned}</span>
+                      </p>
+                    )}
+                    <div className="pt-2 flex justify-end">
                       <button
                         type="button"
                         onClick={() => setActiveStepper("evening")}
-                        className="text-xs text-[#C86D51] hover:underline cursor-pointer font-medium ml-2"
+                        className="text-xs text-[#C86D51] hover:underline cursor-pointer font-medium"
                       >
                         Edit reflection
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3.5">
-                    <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                      30 seconds. Reflect honestly on how today went.
+                  <div className="space-y-3.5 pt-1">
+                    <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096]">
+                      Pause and reflect honestly on how today unfolded.
                     </p>
                     <button
                       type="button"
@@ -522,9 +497,9 @@ export default function TodayPage() {
                         triggerHaptic(12);
                         setActiveStepper("evening");
                       }}
-                      className="btn-primary w-full py-3.5 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                      className="btn-primary w-full py-3 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
                     >
-                      <span>Review Your Day (30s)</span>
+                      <span>Review Your Day</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -535,7 +510,36 @@ export default function TodayPage() {
           </div>
 
           {/* ========================================================================= */}
-          {/* 3. DAILY ACTIVITY CARD (Across All Anchors)                               */}
+          {/* 3. WHAT'S ON YOUR MIND (Quick Reflection Composer)                       */}
+          {/* ========================================================================= */}
+          <div className="pt-0.5">
+            <JournalComposer variant="compact" commitmentId={activeCommitment?.id} />
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 4. SECONDARY SUPPORTING AREA: Daily Quote & Pause & Breathe               */}
+          {/* ========================================================================= */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2.5 min-w-0">
+                <Quote className="w-4 h-4 text-[#B88452] shrink-0 opacity-75 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    "{affirmation.quote}"
+                  </p>
+                  <span className="text-2xs text-[#B88452] font-semibold block">
+                    — {affirmation.author}
+                  </span>
+                </div>
+              </div>
+              <div className="shrink-0 pt-0.5">
+                <GroundingDrawer />
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 5. DAILY ACTIVITY CARD (Across All Anchors - Last Element)                 */}
           {/* ========================================================================= */}
           <DailyActivityCard
             commitments={commitments}
@@ -551,35 +555,6 @@ export default function TodayPage() {
               setActiveStepper(stage);
             }}
           />
-
-          {/* ========================================================================= */}
-          {/* 4. SECONDARY SUPPORTING AREA: Daily Quote & Pause & Breathe               */}
-          {/* ========================================================================= */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-2.5 min-w-0">
-                <Quote className="w-4 h-4 text-[#B88452] shrink-0 opacity-75 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                    "{affirmation.quote}"
-                  </p>
-                  <span className="text-xs text-[#B88452] font-semibold block">
-                    — {affirmation.author}
-                  </span>
-                </div>
-              </div>
-              <div className="shrink-0 pt-0.5">
-                <GroundingDrawer />
-              </div>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* 5. JOURNAL COMPOSER (Collapsed Accordion by Default)                      */}
-          {/* ========================================================================= */}
-          <div className="pt-1">
-            <JournalComposer variant="compact" commitmentId={activeCommitment?.id} />
-          </div>
         </main>
 
       {/* Stepper Modal for Morning / Evening */}
