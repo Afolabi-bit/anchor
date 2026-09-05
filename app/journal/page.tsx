@@ -441,11 +441,10 @@ export default function JournalPage() {
                 const isStarred = starredDates.includes(dateStr);
 
                 return (
-                  <motion.div
+                  <div
                     id={`entry-${dateStr}`}
                     key={dateStr}
-                    layout
-                    className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3 relative overflow-hidden transition-all"
+                    className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3 relative overflow-hidden"
                   >
                     {/* Header Row */}
                     <div
@@ -499,7 +498,7 @@ export default function JournalPage() {
                     )}
 
                     {/* Expanded Content */}
-                    <AnimatePresence>
+                    <AnimatePresence initial={false}>
                       {isExpanded && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
@@ -616,7 +615,7 @@ export default function JournalPage() {
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>

@@ -143,12 +143,12 @@ export default function VoiceDictationButton({
       </AnimatePresence>
 
       {/* Gentle Error / Fallback Tooltip */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {feedbackMsg && (
           <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="absolute bottom-full mb-2 right-0 w-60 p-2.5 rounded-2xl bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] text-xs leading-snug shadow-organic-md z-50 pointer-events-auto border border-[#443E38] dark:border-[#D5CFC7]"
           >
             <div className="flex items-start justify-between gap-2">

@@ -527,12 +527,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Feedback alerts */}
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {successMsg && (
               <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="p-4 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-[#658B70] dark:text-[#82A78C] text-xs sm:text-sm font-medium flex items-center gap-2.5 shadow-organic-xs"
               >
                 <CheckCircle2 className="w-4 h-4 shrink-0 text-[#658B70]" />
@@ -542,9 +542,9 @@ export default function SettingsPage() {
 
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="p-4 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] border border-[#F2D7CE] dark:border-[#4D332B] text-[#B88452] dark:text-[#E2A365] text-xs sm:text-sm font-medium"
               >
                 {error}

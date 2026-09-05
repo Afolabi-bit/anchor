@@ -354,8 +354,8 @@ export default function CommunityPage() {
                 return (
                   <motion.div
                     key={ref.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     className="p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm space-y-3.5 relative overflow-hidden"
                   >
                     {/* Header Chips */}

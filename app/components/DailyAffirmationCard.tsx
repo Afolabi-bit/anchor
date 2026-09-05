@@ -123,10 +123,10 @@ export default function DailyAffirmationCard() {
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={affirmation.id}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.25 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           className="space-y-1.5 relative z-10"
         >
           <p className="font-serif italic text-sm sm:text-base text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">

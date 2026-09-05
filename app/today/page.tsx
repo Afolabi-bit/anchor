@@ -171,9 +171,9 @@ export default function TodayPage() {
                     />
 
                     <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
                       transition={{ duration: 0.15 }}
                       className="absolute left-0 top-full mt-2 w-72 sm:w-84 p-2 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-lg z-30 space-y-1"
                     >
@@ -255,8 +255,8 @@ export default function TodayPage() {
               {partnerMessages.map((msg) => (
                 <motion.div
                   key={msg.id}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   className="p-4 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] clay-card shadow-organic-sm flex items-start justify-between gap-3"
                 >
                   <div className="flex items-start gap-3">
@@ -337,10 +337,10 @@ export default function TodayPage() {
               /* ----------------------- MORNING CHECK-IN CARD ----------------------- */
               <motion.div
                 key="morning-card"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
                 className="p-7 sm:p-9 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#B88452]/40 dark:border-[#B88452]/30 clay-card shadow-organic-md space-y-6 sm:space-y-7"
               >
                 <div className="flex items-center justify-between">
@@ -419,10 +419,10 @@ export default function TodayPage() {
               /* ----------------------- EVENING CHECK-IN CARD ----------------------- */
               <motion.div
                 key="evening-card"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
                 className="p-7 sm:p-9 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border-2 border-[#C86D51]/40 dark:border-[#C86D51]/30 clay-card shadow-organic-md space-y-6 sm:space-y-7"
               >
                 <div className="flex items-center justify-between">

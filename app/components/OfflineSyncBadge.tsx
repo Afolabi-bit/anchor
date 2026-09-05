@@ -55,13 +55,13 @@ export default function OfflineSyncBadge() {
   }
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 max-w-sm w-[90%] pointer-events-none">
         {isOffline ? (
           <motion.div
-            initial={{ opacity: 0, y: -16, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             className="p-3.5 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] border border-[#F2D7CE] dark:border-[#4D332B] shadow-organic-md text-[#B88452] dark:text-[#E2A365] flex items-center justify-between text-xs pointer-events-auto"
           >
             <div className="flex items-center gap-2.5">
@@ -81,9 +81,9 @@ export default function OfflineSyncBadge() {
           </motion.div>
         ) : justSynced ? (
           <motion.div
-            initial={{ opacity: 0, y: -16, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             className="p-3.5 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] shadow-organic-md text-[#658B70] dark:text-[#82A78C] flex items-center justify-between text-xs pointer-events-auto"
           >
             <div className="flex items-center gap-2.5">
@@ -94,8 +94,8 @@ export default function OfflineSyncBadge() {
           </motion.div>
         ) : syncing ? (
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className="p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-sm text-[#786F66] dark:text-[#A8A096] flex items-center justify-center gap-2 text-xs"
           >
             <CloudUpload className="w-4 h-4 animate-bounce text-[#C86D51]" />

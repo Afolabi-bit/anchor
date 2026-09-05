@@ -137,9 +137,9 @@ export default function LandingHero() {
       <header className="pt-14 sm:pt-20 pb-10 px-4 sm:px-6 max-w-4xl mx-auto flex flex-col items-center text-center">
         {/* Large Commanding Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
           className="font-serif-title text-4xl sm:text-6xl md:text-7xl font-normal tracking-tight text-[#ECE7E0] leading-[1.12] max-w-3xl"
         >
           Show up for yourself, <br />
@@ -148,9 +148,9 @@ export default function LandingHero() {
 
         {/* Welcoming, Emotionally Resonant Subtitle */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
           className="text-base sm:text-lg text-[#A8A096] mt-5 max-w-xl leading-relaxed"
         >
           A calm sanctuary to build trust with yourself. Choose one daily anchor, check in morning and night in under 45 seconds, and leave streak anxiety behind.
@@ -158,9 +158,9 @@ export default function LandingHero() {
 
         {/* Hero CTA Buttons */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
           className="mt-8 flex flex-col sm:flex-row items-center gap-3.5 w-full max-w-sm sm:max-w-none justify-center"
         >
           <Link
@@ -291,13 +291,13 @@ export default function LandingHero() {
               </div>
 
               {/* Dynamic Tab Body */}
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "morning" && (
                   <motion.div
                     key="morning"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2.5"
                   >
                     <div className="flex items-center justify-between">
@@ -324,9 +324,9 @@ export default function LandingHero() {
                 {activeTab === "circadian" && (
                   <motion.div
                     key="circadian"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2"
                   >
                     <svg viewBox="0 0 400 65" className="w-full h-14">
@@ -352,9 +352,9 @@ export default function LandingHero() {
                 {activeTab === "evening" && (
                   <motion.div
                     key="evening"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     className="p-4 rounded-2xl bg-[#1E1B18] border border-[#2E2824] space-y-2"
                   >
                     <div className="flex items-center justify-between text-xs">

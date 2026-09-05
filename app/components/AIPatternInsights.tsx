@@ -116,7 +116,7 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
       </div>
 
       <div className="space-y-3.5">
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="popLayout" initial={false}>
           {activeInsights.map((insight: LoggedPattern) => {
             const userReaction = reactions[insight.id];
             const isBlocker = insight.category === "blocker";
@@ -124,9 +124,8 @@ export default function AIPatternInsights({ commitmentId }: AIPatternInsightsPro
             return (
               <motion.div
                 key={insight.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
                 className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-3 shadow-2xs relative group"
               >

@@ -318,12 +318,12 @@ export default function MoodTimelineChart({
         </div>
 
         {/* Hover / Tap Details Popover */}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {hoveredPoint && (
             <motion.div
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="mt-3 p-3 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs space-y-1 shadow-2xs"
             >
               <div className="flex items-center justify-between">

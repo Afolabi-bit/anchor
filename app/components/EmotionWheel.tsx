@@ -144,8 +144,8 @@ export default function EmotionWheel({
         {/* Selected Emotion Feedback Bar */}
         {currentSelection && (
           <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className="mt-3.5 pt-3 border-t border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-between text-xs text-[#786F66] dark:text-[#A8A096]"
           >
             <span>

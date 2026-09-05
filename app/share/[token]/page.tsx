@@ -223,8 +223,8 @@ export default function SponsorSharePage() {
 
               {sentSuccess ? (
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   className="p-4 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] text-center space-y-2"
                 >
                   <div className="w-8 h-8 rounded-full bg-[#658B70] text-white flex items-center justify-center mx-auto">
