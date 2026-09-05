@@ -25,10 +25,10 @@ const NAV_ITEMS = [
  * E.g., "John" + "Doe" -> "JD", "Zerox" -> "Z", "zerox@example.com" -> "Z"
  */
 export function getInitials(
-  firstName?: string,
-  lastName?: string,
-  userName?: string,
-  userEmail?: string
+  firstName?: string | null,
+  lastName?: string | null,
+  userName?: string | null,
+  userEmail?: string | null
 ): string {
   const f = firstName?.trim();
   const l = lastName?.trim();
@@ -68,10 +68,10 @@ export default function Navigation({
   firstName,
   lastName,
 }: {
-  userEmail?: string;
-  userName?: string;
-  firstName?: string;
-  lastName?: string;
+  userEmail?: string | null;
+  userName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 }) {
   const pathname = usePathname();
   const isSettings = pathname === "/settings";

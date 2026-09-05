@@ -14,6 +14,7 @@ import {
   Wind,
   Check,
   CaretDown as ChevronDown,
+  Pulse as Activity,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, playGentleChime } from "@/lib/sensory";
@@ -73,8 +74,8 @@ export default function LandingHero() {
   return (
     <div className="w-full min-h-screen bg-[#0D0B0A] text-[#ECE7E0] selection:bg-[#C86D51]/30 selection:text-[#ECE7E0] overflow-x-hidden relative">
       {/* Ambient background glow points */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse_at_top,rgba(101,139,112,0.12),transparent_70%)] pointer-events-none -z-10" />
-      <div className="absolute top-[400px] left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(200,109,81,0.08),transparent_65%)] pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-125 bg-[radial-gradient(ellipse_at_top,rgba(101,139,112,0.12),transparent_70%)] pointer-events-none -z-10" />
+      <div className="absolute top-100 left-1/2 -translate-x-1/2 w-225 h-100 bg-[radial-gradient(ellipse_at_center,rgba(200,109,81,0.08),transparent_65%)] pointer-events-none -z-10" />
 
       {/* ========================================================================= */}
       {/* 1. TOP NAVIGATION BAR (Unfloated, Clean Header)                            */}
@@ -664,7 +665,7 @@ export default function LandingHero() {
       {/* 7. FINAL CALL TO ACTION (Bottom Card)                                     */}
       {/* ========================================================================= */}
       <section className="py-16 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="relative rounded-3xl bg-gradient-to-b from-[#1E1815] to-[#141210] border border-[#3D2E26] p-8 sm:p-12 text-center overflow-hidden shadow-organic-lg">
+        <div className="relative rounded-3xl bg-linear-to-b from-[#1E1815] to-[#141210] border border-[#3D2E26] p-8 sm:p-12 text-center overflow-hidden shadow-organic-lg">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#C86D51]/10 rounded-full blur-3xl pointer-events-none -z-10" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#658B70]/10 rounded-full blur-3xl pointer-events-none -z-10" />
 

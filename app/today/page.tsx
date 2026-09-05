@@ -245,7 +245,7 @@ export default function TodayPage() {
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <span
                                   className="w-2.5 h-2.5 rounded-full shrink-0"
-                                  style={{ backgroundColor: c.color || activeColorHex }}
+                                  style={{ backgroundColor: PALETTE_HEX[c.colorIndex % PALETTE_HEX.length] || activeColorHex }}
                                 />
                                 <div className="truncate">
                                   <span className="text-xs sm:text-sm block truncate text-[#2C2520] dark:text-[#ECE7E0]">
