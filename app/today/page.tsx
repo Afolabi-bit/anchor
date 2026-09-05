@@ -21,7 +21,6 @@ import {
   HandHeart as MessageSquareHeart,
   Quotes as Quote,
   CaretDown,
-  Lock,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
@@ -179,7 +178,7 @@ export default function TodayPage() {
     if (isAlreadySealed) {
       triggerHaptic(10);
       alert(
-        `Your ${stage} check-in for "${comm.name}" has already been sealed for today and cannot be modified.`
+        `Your ${stage} check-in for "${comm.name}" is already complete for today.`
       );
       return;
     }
@@ -381,7 +380,7 @@ export default function TodayPage() {
                   <Sun className="w-3.5 h-3.5 text-[#B88452]" />
                   <span>Morning Intention</span>
                   {morningCheckIn && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#658B70]" title="Sealed" />
+                    <Check className="w-3 h-3 text-[#658B70]" />
                   )}
                 </button>
 
@@ -400,7 +399,7 @@ export default function TodayPage() {
                   <Moon className="w-3.5 h-3.5 text-[#C86D51]" />
                   <span>Evening Review</span>
                   {eveningCheckIn && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#658B70]" title="Completed" />
+                    <Check className="w-3 h-3 text-[#658B70]" />
                   )}
                 </button>
               </div>
@@ -433,9 +432,9 @@ export default function TodayPage() {
                   </div>
 
                   {morningCheckIn && (
-                    <span className="text-2xs px-2.5 py-1 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      <span>Sealed</span>
+                    <span className="text-2xs text-[#658B70] font-medium flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Completed</span>
                     </span>
                   )}
                 </div>
@@ -457,15 +456,11 @@ export default function TodayPage() {
                         "{morningCheckIn.intentionNote}"
                       </p>
                     )}
-                    <div className="pt-2 flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
-                      <span className="flex items-center gap-1 font-medium text-[#658B70]">
-                        <Lock className="w-3 h-3" />
-                        <span>Sealed &bull; Immutable</span>
-                      </span>
-                      {morningCheckIn.createdAt && (
-                        <span>Sealed at {formatTimeFromTimestamp(morningCheckIn.createdAt)}</span>
-                      )}
-                    </div>
+                    {morningCheckIn.createdAt && (
+                      <div className="pt-2 text-right text-2xs text-[#786F66]/70 dark:text-[#A8A096]/70">
+                        {formatTimeFromTimestamp(morningCheckIn.createdAt)}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3.5 pt-1">
@@ -512,12 +507,9 @@ export default function TodayPage() {
                   </div>
 
                   {eveningCheckIn && (
-                    <span className="capitalize text-2xs px-2.5 py-1 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
-                      {eveningCheckIn.status === "yes"
-                        ? "Followed Through"
-                        : eveningCheckIn.status === "partial"
-                        ? "Adjusted"
-                        : "Learned"}
+                    <span className="text-2xs text-[#658B70] font-medium flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Completed</span>
                     </span>
                   )}
                 </div>
@@ -535,15 +527,11 @@ export default function TodayPage() {
                         <span className="italic">{eveningCheckIn.lessonsLearned}</span>
                       </p>
                     )}
-                    <div className="pt-2 flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
-                      <span className="flex items-center gap-1 font-medium text-[#658B70]">
-                        <Lock className="w-3 h-3" />
-                        <span>Sealed &bull; Immutable</span>
-                      </span>
-                      {eveningCheckIn.createdAt && (
-                        <span>Sealed at {formatTimeFromTimestamp(eveningCheckIn.createdAt)}</span>
-                      )}
-                    </div>
+                    {eveningCheckIn.createdAt && (
+                      <div className="pt-2 text-right text-2xs text-[#786F66]/70 dark:text-[#A8A096]/70">
+                        {formatTimeFromTimestamp(eveningCheckIn.createdAt)}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3.5 pt-1">

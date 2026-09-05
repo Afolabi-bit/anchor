@@ -4,11 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Sun,
   Moon,
-  PencilSimple as PenLine,
   CheckCircle as CheckCircle2,
   Clock,
-  Lock,
-  Compass,
 } from "@phosphor-icons/react";
 import { triggerHaptic } from "@/lib/sensory";
 import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
@@ -54,28 +51,22 @@ export default function DailyActivityCard({
 
   return (
     <section
-      aria-label="Daily Activity & Time Log"
+      aria-label="Daily Activity"
       className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-5"
     >
-      {/* Header: Title, Local Storage Badge, Progress */}
+      {/* Header: Title and Progress */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-[#FAF7F2] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0 mt-0.5">
             <Clock className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-serif-title text-base font-normal text-[#2C2520] dark:text-[#ECE7E0]">
-                Activity & Time Log
-              </h2>
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] border border-[#EAE3D7] dark:border-[#38332E]">
-                <Lock className="w-2.5 h-2.5 text-[#658B70]" />
-                Client-side • Sealed
-              </span>
-            </div>
+            <h2 className="font-serif-title text-base font-normal text-[#2C2520] dark:text-[#ECE7E0]">
+              Today&apos;s Activity
+            </h2>
             <p className="text-2xs text-[#786F66] dark:text-[#A8A096] mt-0.5">
-              {completedCheckIns} of {totalPossible} check-ins sealed
-              {todayJournals.length > 0 && ` • ${todayJournals.length} written note${todayJournals.length > 1 ? "s" : ""}`}
+              {completedCheckIns} of {totalPossible} check-ins completed
+              {todayJournals.length > 0 && `, ${todayJournals.length} written reflection${todayJournals.length > 1 ? "s" : ""}`}
             </p>
           </div>
         </div>
@@ -119,6 +110,7 @@ export default function DailyActivityCard({
                   onSelectCommitment(comm.id);
                 }
               }}
+              style={{ borderLeftColor: colorHex, borderLeftWidth: "3px" }}
               className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
                 isActive
                   ? "bg-[#FAF7F2] dark:bg-[#201D1A] border-[#C86D51]/40 ring-1 ring-[#C86D51]/20 shadow-2xs"
@@ -126,26 +118,19 @@ export default function DailyActivityCard({
               }`}
             >
               {/* Anchor Identity */}
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: colorHex }}
-                />
-                <span className="text-xs font-medium text-[#2C2520] dark:text-[#ECE7E0] truncate">
-                  {comm.name}
-                </span>
-              </div>
+              <span className="text-xs font-medium text-[#2C2520] dark:text-[#ECE7E0] truncate min-w-0">
+                {comm.name}
+              </span>
 
-              {/* Status Chips: Morning & Evening */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {/* Morning Chip: If sealed, locked with time; if unsealed, opens stepper */}
+              {/* Status Actions: Morning & Evening */}
+              <div className="flex items-center gap-2 shrink-0">
                 {isMorningSealed ? (
                   <span
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] cursor-default"
-                    title={`Sealed at ${morningLog?.timeStr || "morning"} — Cannot be edited`}
+                    className="flex items-center gap-1 text-2xs text-[#658B70] dark:text-[#82A78C] font-medium"
+                    title={morningLog?.timeStr ? `Completed at ${morningLog.timeStr}` : undefined}
                   >
-                    <Lock className="w-2.5 h-2.5 text-[#658B70]" />
-                    <span>{morningLog?.timeStr || "Sealed"}</span>
+                    <Sun className="w-3 h-3 text-[#B88452]" />
+                    <span>{morningLog?.timeStr || "Done"}</span>
                   </span>
                 ) : (
                   <button
@@ -155,22 +140,21 @@ export default function DailyActivityCard({
                       triggerHaptic(8);
                       onOpenStepper("morning", comm);
                     }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] border border-dashed border-[#EAE3D7] dark:border-[#38332E] transition-colors cursor-pointer"
-                    title="Tap to set morning intention"
+                    className="flex items-center gap-1 text-2xs text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-colors cursor-pointer"
+                    title="Set morning intention"
                   >
-                    <Sun className="w-3 h-3 opacity-60" />
-                    <span>+ Morning</span>
+                    <Sun className="w-3 h-3 opacity-40" />
+                    <span>Morning</span>
                   </button>
                 )}
 
-                {/* Evening Chip: If sealed, locked with time; if unsealed, opens stepper */}
                 {isEveningSealed ? (
                   <span
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] cursor-default"
-                    title={`Sealed at ${eveningLog?.timeStr || "evening"} — Cannot be edited`}
+                    className="flex items-center gap-1 text-2xs text-[#658B70] dark:text-[#82A78C] font-medium"
+                    title={eveningLog?.timeStr ? `Completed at ${eveningLog.timeStr}` : undefined}
                   >
-                    <Lock className="w-2.5 h-2.5 text-[#658B70]" />
-                    <span>{eveningLog?.timeStr || "Sealed"}</span>
+                    <Moon className="w-3 h-3 text-[#C86D51]" />
+                    <span>{eveningLog?.timeStr || "Done"}</span>
                   </span>
                 ) : (
                   <button
@@ -180,11 +164,11 @@ export default function DailyActivityCard({
                       triggerHaptic(8);
                       onOpenStepper("evening", comm);
                     }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] border border-dashed border-[#EAE3D7] dark:border-[#38332E] transition-colors cursor-pointer"
-                    title="Tap to review evening"
+                    className="flex items-center gap-1 text-2xs text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] transition-colors cursor-pointer"
+                    title="Review evening"
                   >
-                    <Moon className="w-3 h-3 opacity-60" />
-                    <span>+ Evening</span>
+                    <Moon className="w-3 h-3 opacity-40" />
+                    <span>Evening</span>
                   </button>
                 )}
               </div>
@@ -193,22 +177,24 @@ export default function DailyActivityCard({
         })}
       </div>
 
-      {/* Detailed Chronological Time Log Stream */}
+      {/* Detailed Chronological Timeline */}
       <div className="pt-2 border-t border-[#EAE3D7] dark:border-[#38332E] space-y-3">
         <div className="flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
           <span className="uppercase tracking-wider font-semibold">
-            Today&apos;s Time Log ({clientLogs.length})
+            Timeline
           </span>
-          <span className="italic">Immutable upon sealing</span>
+          {clientLogs.length > 0 && (
+            <span>{clientLogs.length} {clientLogs.length === 1 ? "entry" : "entries"}</span>
+          )}
         </div>
 
         {clientLogs.length === 0 ? (
           <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-center space-y-1">
             <p className="text-xs font-serif italic text-[#786F66] dark:text-[#A8A096]">
-              No sealed activities recorded yet today.
+              No activity recorded yet today.
             </p>
             <p className="text-2xs text-[#786F66] dark:text-[#A8A096]">
-              Complete your morning intention above to initiate today&apos;s time log.
+              Set your morning intention above to begin today&apos;s timeline.
             </p>
           </div>
         ) : (
@@ -220,40 +206,23 @@ export default function DailyActivityCard({
               return (
                 <div
                   key={log.id}
+                  style={{ borderLeftColor: colorHex, borderLeftWidth: "3px" }}
                   className="p-3.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs space-y-2 shadow-2xs"
                 >
-                  {/* Event Header: Time Badge, Anchor, Event Type, Sealed Lock */}
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      {/* Time pill */}
-                      <span className="text-2xs px-2 py-0.5 rounded-md bg-[#FFFFFF] dark:bg-[#25221F] text-[#2C2520] dark:text-[#ECE7E0] border border-[#EAE3D7] dark:border-[#38332E] font-medium shrink-0">
-                        {log.timeStr}
+                  {/* Event Header: Anchor, Type, Time */}
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-semibold text-[#2C2520] dark:text-[#ECE7E0] truncate">
+                        {log.commitmentName}
                       </span>
-
-                      {/* Anchor name badge */}
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: colorHex }}
-                        />
-                        <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
-                          {log.commitmentName}
-                        </span>
-                      </div>
-
-                      {/* Event Type Icon & Label */}
-                      <span className="text-2xs text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
-                        {log.type === "morning_checkin" && <Sun className="w-3 h-3 text-[#B88452]" />}
-                        {log.type === "evening_checkin" && <Moon className="w-3 h-3 text-[#C86D51]" />}
-                        {log.type === "journal_entry" && <PenLine className="w-3 h-3 text-[#658B70]" />}
-                        <span>{log.title}</span>
+                      <span className="text-[#786F66]/40 dark:text-[#A8A096]/40">/</span>
+                      <span className="text-2xs text-[#786F66] dark:text-[#A8A096] truncate">
+                        {log.title}
                       </span>
                     </div>
 
-                    {/* Sealed Permanent Badge (Non-Editable) */}
-                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-medium shrink-0">
-                      <Lock className="w-2.5 h-2.5" />
-                      Sealed
+                    <span className="text-2xs text-[#786F66] dark:text-[#A8A096] font-medium shrink-0">
+                      {log.timeStr}
                     </span>
                   </div>
 
@@ -264,7 +233,7 @@ export default function DailyActivityCard({
                         <div className="space-y-1">
                           {log.plannedActions.map((action, i) => (
                             <div key={i} className="flex items-center gap-1.5 text-[#2C2520] dark:text-[#ECE7E0]">
-                              <CheckCircle2 className="w-3 h-3 text-[#658B70] shrink-0" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70] shrink-0" />
                               <span>{action}</span>
                             </div>
                           ))}
@@ -280,9 +249,9 @@ export default function DailyActivityCard({
 
                   {log.type === "evening_checkin" && (
                     <div className="space-y-1.5 pt-0.5">
-                      {log.status && (
-                        <div className="flex items-center gap-2">
-                          <span className="capitalize text-2xs px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#C86D51] font-semibold border border-[#F2D7CE] dark:border-[#4D332B]">
+                      {(log.status || log.emotion) && (
+                        <div className="text-2xs text-[#786F66] dark:text-[#A8A096]">
+                          <span>
                             {log.status === "yes"
                               ? "Followed Through"
                               : log.status === "partial"
@@ -290,8 +259,8 @@ export default function DailyActivityCard({
                               : "Learned"}
                           </span>
                           {log.emotion && (
-                            <span className="text-2xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-medium">
-                              {log.emotion}
+                            <span className="italic text-[#658B70] dark:text-[#82A78C] ml-1.5">
+                              ({log.emotion})
                             </span>
                           )}
                         </div>
@@ -303,7 +272,7 @@ export default function DailyActivityCard({
                       )}
                       {log.lessonsLearned && (
                         <p className="text-2xs text-[#786F66] dark:text-[#A8A096]">
-                          <strong className="text-[#C86D51] font-semibold">Lesson: </strong>
+                          <strong className="text-[#C86D51] font-medium">Lesson: </strong>
                           <span className="italic">{log.lessonsLearned}</span>
                         </p>
                       )}
@@ -318,14 +287,9 @@ export default function DailyActivityCard({
                         </p>
                       )}
                       {log.tags && log.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 pt-0.5">
+                        <div className="flex flex-wrap gap-1.5 pt-0.5 text-2xs text-[#786F66] dark:text-[#A8A096]">
                           {log.tags.map((tg) => (
-                            <span
-                              key={tg}
-                              className="text-2xs px-1.5 py-0.5 rounded bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096]"
-                            >
-                              #{tg}
-                            </span>
+                            <span key={tg}>#{tg}</span>
                           ))}
                         </div>
                       )}
