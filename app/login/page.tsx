@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Anchor, ArrowRight, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react";
+import { Anchor, ArrowRight, Eye, EyeSlash as EyeOff, WarningCircle } from "@phosphor-icons/react";
 import Spinner from "@/app/components/Spinner";
 
 export default function LoginPage() {
@@ -12,14 +12,30 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setErrorCode(null);
 
-    if (!email || !password) {
-      setError("Please fill in your email and password");
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError("Please enter your email address");
+      setErrorCode("MISSING_EMAIL");
+      return;
+    }
+
+    if (!trimmedEmail.includes("@")) {
+      setError("Please provide a valid email address");
+      setErrorCode("INVALID_EMAIL");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password");
+      setErrorCode("MISSING_PASSWORD");
       return;
     }
 
@@ -28,12 +44,13 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: trimmedEmail, password }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Invalid email or password");
+        setError(data.error || "Login failed. Please check your credentials.");
+        setErrorCode(data.code || null);
         return;
       }
 
@@ -48,11 +65,14 @@ export default function LoginPage() {
 
       window.location.href = data.user && !data.user.isOnboarded ? "/onboarding" : "/today";
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError("An unexpected network error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  const isEmailError = errorCode === "USER_NOT_FOUND" || errorCode === "MISSING_EMAIL" || errorCode === "INVALID_EMAIL";
+  const isPasswordError = errorCode === "WRONG_PASSWORD" || errorCode === "MISSING_PASSWORD";
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-5 py-8 sm:py-12 bg-[#FAF7F2] dark:bg-[#1C1917] transition-colors duration-200">
@@ -73,8 +93,19 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] rounded-3xl p-5 sm:p-8 shadow-xs">
           {error && (
-            <div className="mb-5 p-3.5 rounded-2xl bg-[#FAF2EA] border border-[#F2D7CE] text-[#B88452] text-xs">
-              {error}
+            <div className="mb-5 p-4 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] border border-[#F2D7CE] dark:border-[#4D332B] text-[#B88452] dark:text-[#E2A365] text-xs leading-relaxed space-y-2">
+              <div className="flex items-start gap-2">
+                <WarningCircle className="w-4 h-4 shrink-0 text-[#C86D51] dark:text-[#DB8165] mt-0.5" />
+                <span className="font-medium text-[#2C2520] dark:text-[#ECE7E0]">{error}</span>
+              </div>
+              {errorCode === "USER_NOT_FOUND" && (
+                <div className="pl-6 text-[11px] text-[#786F66] dark:text-[#A8A096]">
+                  Don't have an account yet?{" "}
+                  <Link href="/signup" className="text-[#C86D51] dark:text-[#DB8165] font-semibold underline hover:opacity-80">
+                    Create an account here →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -88,9 +119,16 @@ export default function LoginPage() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (isEmailError) setError("");
+                }}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] text-sm focus:outline-none focus:border-[#C86D51] transition-colors"
+                className={`w-full px-4 py-3 rounded-2xl border bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] text-sm focus:outline-none transition-colors ${
+                  isEmailError
+                    ? "border-[#C86D51] focus:border-[#C86D51]"
+                    : "border-[#EAE3D7] dark:border-[#38332E] focus:border-[#C86D51]"
+                }`}
               />
             </div>
 
@@ -104,9 +142,16 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (isPasswordError) setError("");
+                  }}
                   placeholder="••••••••"
-                  className="w-full px-4 pr-11 py-3 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] text-sm focus:outline-none focus:border-[#C86D51] transition-colors"
+                  className={`w-full px-4 pr-11 py-3 rounded-2xl border bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] text-sm focus:outline-none transition-colors ${
+                    isPasswordError
+                      ? "border-[#C86D51] focus:border-[#C86D51]"
+                      : "border-[#EAE3D7] dark:border-[#38332E] focus:border-[#C86D51]"
+                  }`}
                 />
                 <button
                   type="button"

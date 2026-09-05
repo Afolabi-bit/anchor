@@ -7,25 +7,45 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password } = body;
 
-    if (!email || !password) {
+    if (!email || typeof email !== "string" || !email.trim()) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Please enter your email address", code: "MISSING_EMAIL" },
         { status: 400 }
       );
     }
 
-    const user = await getUserByEmail(email);
+    if (!email.includes("@")) {
+      return NextResponse.json(
+        { error: "Please provide a valid email address", code: "INVALID_EMAIL" },
+        { status: 400 }
+      );
+    }
+
+    if (!password || typeof password !== "string") {
+      return NextResponse.json(
+        { error: "Please enter your password", code: "MISSING_PASSWORD" },
+        { status: 400 }
+      );
+    }
+
+    const user = await getUserByEmail(email.trim().toLowerCase());
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
+        {
+          error: "Email not registered. No account found with this address.",
+          code: "USER_NOT_FOUND",
+        },
+        { status: 404 }
       );
     }
 
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        {
+          error: "Wrong password. Please check your password and try again.",
+          code: "WRONG_PASSWORD",
+        },
         { status: 401 }
       );
     }
