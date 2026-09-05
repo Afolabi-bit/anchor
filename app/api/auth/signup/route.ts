@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserByEmail, createUser } from "@/lib/db-service";
-import { hashPassword, createSessionToken, setSessionCookie } from "@/lib/auth";
+import { hashPassword, createSessionToken, setSessionCookie, attachSessionCookie } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
     await setSessionCookie(token);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
@@ -83,7 +83,10 @@ export async function POST(request: Request) {
         eveningNotificationTime: user.eveningNotificationTime,
         timezone: user.timezone,
       },
+      token,
     });
+
+    return attachSessionCookie(response, token);
   } catch (error) {
     console.error("Signup error:", error);
     return NextResponse.json(

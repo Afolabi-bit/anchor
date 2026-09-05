@@ -11,6 +11,12 @@ import {
   Check,
   CheckCircle as CheckCircle2,
   Shield,
+  ShieldCheck,
+  User as UserIcon,
+  Envelope as Mail,
+  Lock,
+  Eye,
+  EyeSlash as EyeOff,
 } from "@phosphor-icons/react";
 import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,16 +61,42 @@ export default function OnboardingPage() {
   const [user, setUser] = useState<User | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
+  // Unauthenticated account credentials state (only needed if user is not already authenticated)
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [authMode, setAuthMode] = useState<"signup" | "signin">("signup");
+
   // Load user if already authenticated
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch("/api/auth/me");
+        const token = typeof window !== "undefined" ? localStorage.getItem("anchor_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch("/api/auth/me", {
+          headers,
+          credentials: "include",
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
             setUser(data.user);
           }
+        } else {
+          // Check if user info was cached locally
+          try {
+            const cachedUser = localStorage.getItem("anchor_user");
+            if (cachedUser) {
+              const parsed = JSON.parse(cachedUser);
+              if (parsed?.firstName) setFirstName(parsed.firstName);
+              if (parsed?.lastName) setLastName(parsed.lastName);
+              if (parsed?.email) setEmail(parsed.email);
+            }
+          } catch {}
         }
       } catch (e) {
         console.warn("Could not load user in onboarding:", e);
@@ -79,7 +111,6 @@ export default function OnboardingPage() {
   const [frequency, setFrequency] = useState<"daily" | "custom_days">("daily");
   const [morningTime, setMorningTime] = useState("08:00");
   const [eveningTime, setEveningTime] = useState("20:00");
-
 
   // Restore draft anchor from sessionStorage if available
   useEffect(() => {
@@ -133,29 +164,100 @@ export default function OnboardingPage() {
       triggerHaptic([20, 50, 30]);
 
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const token = typeof window !== "undefined" ? localStorage.getItem("anchor_token") : null;
+
+      // If not authenticated and in sign-in mode, sign in first
+      if (!user && authMode === "signin") {
+        if (!email.trim() || !password) {
+          setError("Please enter your email and password to sign in.");
+          setLoading(false);
+          return;
+        }
+
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        });
+
+        const loginData = await loginRes.json();
+        if (!loginRes.ok) {
+          setError(loginData.error || "Invalid email or password.");
+          setLoading(false);
+          return;
+        }
+
+        if (loginData.token) {
+          try {
+            localStorage.setItem("anchor_token", loginData.token);
+            if (loginData.user) {
+              localStorage.setItem("anchor_user", JSON.stringify(loginData.user));
+            }
+          } catch {}
+        }
+        setUser(loginData.user);
+      }
+
+      // If not authenticated and in signup mode, validate details
+      if (!user && authMode === "signup") {
+        if (!firstName.trim() || !lastName.trim()) {
+          setError("Please provide your first and last name so Anchor can address you.");
+          setLoading(false);
+          return;
+        }
+        if (!email.trim() || !email.includes("@")) {
+          setError("Please enter a valid email address.");
+          setLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          setError("Password should be at least 6 characters.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const activeToken = (typeof window !== "undefined" ? localStorage.getItem("anchor_token") : null) || token;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+
+      const payload: Record<string, any> = {
+        commitmentName: commitmentName.trim(),
+        commitmentWhy: commitmentWhy.trim(),
+        frequency,
+        customDays: [0, 1, 2, 3, 4, 5, 6],
+        morningNotificationTime: morningTime,
+        eveningNotificationTime: eveningTime,
+        timezone: userTimezone,
+      };
+
+      if (!user && authMode === "signup") {
+        payload.firstName = firstName.trim();
+        payload.lastName = lastName.trim();
+        payload.email = email.trim().toLowerCase();
+        payload.password = password;
+      }
 
       const res = await fetch("/api/onboarding", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          commitmentName: commitmentName.trim(),
-          commitmentWhy: commitmentWhy.trim(),
-          frequency,
-          customDays: [0, 1, 2, 3, 4, 5, 6],
-          morningNotificationTime: morningTime,
-          eveningNotificationTime: eveningTime,
-          timezone: userTimezone,
-        }),
+        headers,
+        credentials: "include",
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401) {
-          window.location.href = "/signup";
-          return;
-        }
-        setError(data.error || "Failed to complete setup");
+        setError(data.error || "Failed to complete setup. Please check your details.");
         return;
+      }
+
+      if (data.token) {
+        try {
+          localStorage.setItem("anchor_token", data.token);
+          if (data.user) {
+            localStorage.setItem("anchor_user", JSON.stringify(data.user));
+          }
+        } catch {}
       }
 
       // Clear draft storage
@@ -515,6 +617,120 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
+                {/* Account Status / Inline Credentials */}
+                {user ? (
+                  <div className="p-3.5 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] text-xs font-medium flex items-center justify-between border border-[#658B70]/20">
+                    <div className="flex items-center gap-2 truncate">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-[#658B70]" />
+                      <span className="truncate">
+                        Signed in as <strong>{user.firstName || "Account"} {user.lastName || ""}</strong> ({user.email})
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#C86D51] dark:text-[#DB8165]">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>{authMode === "signup" ? "Create Your Private Account" : "Sign In to Save Anchor"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(8);
+                          setError("");
+                          setAuthMode(authMode === "signup" ? "signin" : "signup");
+                        }}
+                        className="text-xs text-[#C86D51] hover:underline font-medium cursor-pointer"
+                      >
+                        {authMode === "signup" ? "Already have an account? Sign in" : "Need an account? Sign up"}
+                      </button>
+                    </div>
+
+                    {authMode === "signup" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbFirstName">
+                            First Name <span className="text-[#C86D51]">*</span>
+                          </label>
+                          <div className="relative">
+                            <UserIcon className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                            <input
+                              id="onbFirstName"
+                              type="text"
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              placeholder="e.g. Alex"
+                              className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbLastName">
+                            Last Name <span className="text-[#C86D51]">*</span>
+                          </label>
+                          <div className="relative">
+                            <UserIcon className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                            <input
+                              id="onbLastName"
+                              type="text"
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              placeholder="e.g. Morgan"
+                              className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbEmail">
+                        Email Address <span className="text-[#C86D51]">*</span>
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                        <input
+                          id="onbEmail"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbPassword">
+                        Password <span className="text-[#C86D51]">*</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                        <input
+                          id="onbPassword"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder={authMode === "signup" ? "At least 6 characters" : "Your password"}
+                          className="w-full pl-8 pr-9 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic(8);
+                            setShowPassword(!showPassword);
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9E948A] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] p-1 cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Plain-Language Privacy Box */}
                 <div className="p-4 rounded-2xl bg-[#FAF2EA] dark:bg-[#2C221A] border border-[#EAE3D7] dark:border-[#38332E] text-xs space-y-2 text-[#786F66] dark:text-[#D5CFC7]">
                   <div className="flex items-center gap-2 font-semibold text-[#B88452] dark:text-[#E2A365]">
@@ -529,7 +745,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {error && (
-                  <div className="p-3 rounded-xl bg-[#F9EBE7] text-[#C86D51] text-xs text-center font-medium">
+                  <div className="p-3.5 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] border border-[#C86D51]/30 text-[#C86D51] dark:text-[#DB8165] text-xs text-center font-medium">
                     {error}
                   </div>
                 )}
@@ -549,7 +765,13 @@ export default function OnboardingPage() {
                       </>
                     ) : (
                       <>
-                        <span>Save Anchor & Start Today</span>
+                        <span>
+                          {user
+                            ? "Save Anchor & Start Today"
+                            : authMode === "signup"
+                            ? "Create Account & Save Anchor"
+                            : "Sign In & Save Anchor"}
+                        </span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}

@@ -37,6 +37,15 @@ export default function LoginPage() {
         return;
       }
 
+      if (data.token) {
+        try {
+          localStorage.setItem("anchor_token", data.token);
+          if (data.user) {
+            localStorage.setItem("anchor_user", JSON.stringify(data.user));
+          }
+        } catch {}
+      }
+
       window.location.href = data.user && !data.user.isOnboarded ? "/onboarding" : "/today";
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");

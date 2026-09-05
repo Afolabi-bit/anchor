@@ -64,6 +64,16 @@ export default function SignupPage() {
         return;
       }
 
+      // Store token and user in client storage as bulletproof fallback
+      if (data.token) {
+        try {
+          localStorage.setItem("anchor_token", data.token);
+          if (data.user) {
+            localStorage.setItem("anchor_user", JSON.stringify(data.user));
+          }
+        } catch {}
+      }
+
       // Hard redirect to ensure browser commits HttpOnly session cookie
       window.location.href = "/onboarding";
     } catch (err) {
