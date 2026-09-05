@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Navigation from "@/app/components/Navigation";
 import PageTransition from "@/app/components/PageTransition";
-import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import CheckInStepper from "@/app/components/CheckInStepper";
 import { JournalSkeleton } from "@/app/components/Skeletons";
 import JournalComposer from "@/app/components/JournalComposer";
+import { useAppContext } from "@/app/context/AppContext";
 import {
   Sun,
   Moon,
@@ -24,15 +23,22 @@ import {
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
-import type { User, Commitment, CheckIn, JournalEntry } from "@/db/schema";
+import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
 
 export default function JournalPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [activeCommitment, setActiveCommitment] = useState<Commitment | null>(null);
+  const {
+    user,
+    activeCommitment,
+    checkIns,
+    journalEntries,
+    setJournalEntries,
+    isInitialLoading,
+    refreshCheckIns,
+    refreshJournals,
+    updateCheckInLocally,
+  } = useAppContext();
+
   const [filterStatus, setFilterStatus] = useState<"all" | "yes" | "partial" | "no">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
@@ -71,40 +77,9 @@ export default function JournalPage() {
   };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const meRes = await fetch("/api/auth/me");
-        if (!meRes.ok) {
-          router.push("/login");
-          return;
-        }
-        const meData = await meRes.json();
-        setUser(meData.user);
-        setActiveCommitment(meData.commitment);
-
-        const [checkInsRes, journalRes] = await Promise.all([
-          fetch("/api/checkins"),
-          fetch("/api/journal"),
-        ]);
-
-        if (checkInsRes.ok) {
-          const data = await checkInsRes.json();
-          setCheckIns(data.checkIns || []);
-        }
-
-        if (journalRes.ok) {
-          const jData = await journalRes.json();
-          setJournalEntries(jData.entries || []);
-        }
-      } catch (err) {
-        console.error("Journal loading error:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [router]);
+    refreshCheckIns();
+    refreshJournals();
+  }, [refreshCheckIns, refreshJournals]);
 
   const handleNewJournalEntry = (newEntry: JournalEntry) => {
     setJournalEntries((prev) => [newEntry, ...prev.filter((j) => j.id !== newEntry.id)]);
@@ -258,25 +233,12 @@ export default function JournalPage() {
     .slice(0, 6)
     .filter((dStr) => !groupedByDate[dStr]?.evening && dStr >= accountStartDate);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-        <Navigation />
-        <JournalSkeleton />
-      </div>
-    );
+  if (isInitialLoading && !user && checkIns.length === 0) {
+    return <JournalSkeleton />;
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation
-        userEmail={user?.email}
-        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
-        firstName={user?.firstName}
-        lastName={user?.lastName}
-      />
-      <OfflineSyncBadge />
-
+    <div className="w-full flex-1 flex flex-col">
       <PageTransition>
         <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
@@ -676,7 +638,7 @@ export default function JournalPage() {
           commitmentId={activeCommitment?.id}
           onClose={() => setStepperOpen(false)}
           onSuccess={(saved) => {
-            setCheckIns((prev) => [saved, ...prev]);
+            updateCheckInLocally(saved);
             setStepperOpen(false);
           }}
         />

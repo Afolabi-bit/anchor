@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
 import PWAInstallPrompt from "@/app/components/PWAInstallPrompt";
+import { AppContextProvider } from "@/app/context/AppContext";
+import AppShell from "@/app/components/AppShell";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -55,7 +57,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plusJakartaSans.variable} ${fraunces.variable}`}>
       <body className="antialiased font-sans selection:bg-[#c86d51]/20 selection:text-[#2c2520]">
-        {children}
+        <AppContextProvider>
+          <AppShell>
+            {children}
+          </AppShell>
+        </AppContextProvider>
         <PWAInstallPrompt />
       </body>
     </html>

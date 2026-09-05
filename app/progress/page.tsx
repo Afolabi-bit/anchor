@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navigation from "@/app/components/Navigation";
 import StoryRecapModal from "@/app/components/StoryRecapModal";
 import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
 import MoodTimelineChart from "@/app/components/MoodTimelineChart";
@@ -12,6 +11,7 @@ import MilestoneGallery from "@/app/components/MilestoneGallery";
 import PageTransition from "@/app/components/PageTransition";
 import { ProgressSkeleton } from "@/app/components/Skeletons";
 import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-summary-service";
+import { useAppContext } from "@/app/context/AppContext";
 import {
   Calendar,
   Lightbulb,
@@ -22,18 +22,22 @@ import {
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
-import type { User, Commitment, CheckIn, JournalEntry } from "@/db/schema";
+import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
 
 export default function ProgressPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [commitment, setCommitment] = useState<Commitment | null>(null);
-  const [recapData, setRecapData] = useState<any>(null);
+  const {
+    user,
+    activeCommitment: commitment,
+    checkIns: allCheckIns,
+    journalEntries: allJournals,
+    isInitialLoading,
+    refreshCheckIns,
+    refreshJournals,
+  } = useAppContext();
 
+  const [recapData, setRecapData] = useState<any>(null);
   const [range, setRange] = useState<"7" | "30" | "90" | "all">("30");
-  const [allCheckIns, setAllCheckIns] = useState<CheckIn[]>([]);
-  const [allJournals, setAllJournals] = useState<JournalEntry[]>([]);
 
   // Modal states
   const [storyOpen, setStoryOpen] = useState(false);
@@ -61,57 +65,27 @@ export default function ProgressPage() {
   useEffect(() => {
     async function loadRecap() {
       try {
-        setLoading(true);
-        const meRes = await fetch("/api/auth/me");
-        if (!meRes.ok) {
-          router.push("/login");
-          return;
-        }
-        const meData = await meRes.json();
-        setUser(meData.user);
-        const comm = meData.commitment || meData.commitments?.[0];
-        setCommitment(comm);
-
         const res = await fetch(`/api/recaps?range=${range}`);
         if (res.ok) {
           const data = await res.json();
           setRecapData(data.recap);
         }
-
-        // Fetch check-ins and journal entries for mood timeline and summary
-        const [checkInsRes, journalRes] = await Promise.all([
-          fetch("/api/checkins"),
-          fetch("/api/journal"),
-        ]);
-        if (checkInsRes.ok) {
-          const ciData = await checkInsRes.json();
-          setAllCheckIns(ciData.checkIns || []);
-        }
-        if (journalRes.ok) {
-          const jData = await journalRes.json();
-          setAllJournals(jData.entries || []);
-        }
       } catch (err) {
-        console.error("Failed to load recap:", err);
-      } finally {
-        setLoading(false);
+        console.warn("Failed to load recap:", err);
       }
     }
     loadRecap();
-  }, [router, range]);
+    refreshCheckIns();
+    refreshJournals();
+  }, [range, refreshCheckIns, refreshJournals]);
 
   const handleRangeChange = async (newRange: "7" | "30" | "90" | "all") => {
     triggerHaptic(10);
     setRange(newRange);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-        <Navigation />
-        <ProgressSkeleton />
-      </div>
-    );
+  if (isInitialLoading && !user && allCheckIns.length === 0) {
+    return <ProgressSkeleton />;
   }
 
   const completionRate = recapData?.completionRate ?? 0;
@@ -119,14 +93,7 @@ export default function ProgressPage() {
   const totalAnchored = recapData?.daysAnchored ?? Math.round((completionRate / 100) * (recapData?.totalDays || 7));
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation
-        userEmail={user?.email}
-        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
-        firstName={user?.firstName}
-        lastName={user?.lastName}
-      />
-
+    <div className="w-full flex-1 flex flex-col">
       <PageTransition>
         <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}

@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navigation from "@/app/components/Navigation";
 import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
 import PageTransition from "@/app/components/PageTransition";
 import { SettingsSkeleton } from "@/app/components/Skeletons";
-import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-summary-service";
+import {
+  generateProgressSummary,
+  ProgressSummaryData,
+} from "@/lib/progress-summary-service";
 import {
   Anchor,
   Sun,
@@ -37,26 +39,39 @@ import {
 import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
-import { registerServiceWorker, subscribeToPush, unsubscribeFromPush } from "@/lib/push-client";
+import {
+  registerServiceWorker,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "@/lib/push-client";
 import { performClientLogout } from "@/lib/client-storage";
-import type { User, Commitment, PartnerPermission } from "@/db/schema";
+import { useAppContext } from "@/app/context/AppContext";
+import type { Commitment, PartnerPermission } from "@/db/schema";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const {
+    user,
+    setUser,
+    commitments,
+    setCommitments,
+    isInitialLoading,
+    refreshUser,
+  } = useAppContext();
+
+  const [loading, setLoading] = useState(() => !user);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [error, setError] = useState("");
 
-  const [user, setUser] = useState<User | null>(null);
-  const [allCommitments, setAllCommitments] = useState<Commitment[]>([]);
+  const [allCommitments, setAllCommitments] = useState<Commitment[]>(() => commitments);
 
   // Cadence state
-  const [morningTime, setMorningTime] = useState("08:00");
-  const [eveningTime, setEveningTime] = useState("20:00");
-  const [timezone, setTimezone] = useState("UTC");
+  const [morningTime, setMorningTime] = useState(() => user?.morningNotificationTime || "08:00");
+  const [eveningTime, setEveningTime] = useState(() => user?.eveningNotificationTime || "20:00");
+  const [timezone, setTimezone] = useState(() => user?.timezone || "UTC");
 
   // Push Notifications State
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -104,7 +119,8 @@ export default function SettingsPage() {
 
   // Modals
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
-  const [summaryReport, setSummaryReport] = useState<ProgressSummaryData | null>(null);
+  const [summaryReport, setSummaryReport] =
+    useState<ProgressSummaryData | null>(null);
   const [includeJournalInSummary, setIncludeJournalInSummary] = useState(false);
   const [newModalOpen, setNewModalOpen] = useState(false);
 
@@ -115,15 +131,20 @@ export default function SettingsPage() {
         fetch("/api/checkins"),
         fetch("/api/journal"),
       ]);
-      const checkInsData = checkInsRes.ok ? await checkInsRes.json() : { checkIns: [] };
-      const journalData = journalRes.ok ? await journalRes.json() : { entries: [] };
-      const activeComm = allCommitments.find((c) => c.active) || allCommitments[0];
+      const checkInsData = checkInsRes.ok
+        ? await checkInsRes.json()
+        : { checkIns: [] };
+      const journalData = journalRes.ok
+        ? await journalRes.json()
+        : { entries: [] };
+      const activeComm =
+        allCommitments.find((c) => c.active) || allCommitments[0];
       const report = generateProgressSummary(
         user,
         activeComm,
         checkInsData.checkIns || [],
         journalData.entries || [],
-        { includeJournalNotes: includeJournalInSummary }
+        { includeJournalNotes: includeJournalInSummary },
       );
       setSummaryReport(report);
       setSummaryModalOpen(true);
@@ -138,24 +159,36 @@ export default function SettingsPage() {
   const [editWhy, setEditWhy] = useState("");
 
   useEffect(() => {
+    if (user) {
+      setMorningTime(user.morningNotificationTime || "08:00");
+      setEveningTime(user.eveningNotificationTime || "20:00");
+      setTimezone(user.timezone || "UTC");
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
     async function loadData() {
       try {
-        setLoading(true);
-        const res = await fetch("/api/auth/me");
-        if (!res.ok) {
-          router.push("/login");
-          return;
+        if (!user) {
+          const res = await fetch("/api/auth/me");
+          if (!res.ok) {
+            router.push("/login");
+            return;
+          }
+          const data = await res.json();
+          setUser(data.user);
+          setMorningTime(data.user.morningNotificationTime || "08:00");
+          setEveningTime(data.user.eveningNotificationTime || "20:00");
+          setTimezone(data.user.timezone || "UTC");
         }
-        const data = await res.json();
-        setUser(data.user);
-        setMorningTime(data.user.morningNotificationTime || "08:00");
-        setEveningTime(data.user.eveningNotificationTime || "20:00");
-        setTimezone(data.user.timezone || "UTC");
 
         const commsRes = await fetch("/api/commitments");
         if (commsRes.ok) {
           const commsData = await commsRes.json();
-          setAllCommitments(commsData.allCommitments || commsData.commitments || []);
+          const list = commsData.allCommitments || commsData.commitments || [];
+          setAllCommitments(list);
+          setCommitments(list);
         }
 
         // Check push subscription state
@@ -179,7 +212,7 @@ export default function SettingsPage() {
       }
     }
     loadData();
-  }, [router]);
+  }, [router, user, setUser, setCommitments]);
 
   const handleTogglePush = async () => {
     try {
@@ -285,7 +318,9 @@ export default function SettingsPage() {
           shareBlockers: false,
           shareJournalNotes: false,
         });
-        setSuccessMsg("Partner link created with zero-sharing default permissions.");
+        setSuccessMsg(
+          "Partner link created with zero-sharing default permissions.",
+        );
         setTimeout(() => setSuccessMsg(""), 3500);
       } else {
         setError(data.error || "Failed to create partner link.");
@@ -300,14 +335,14 @@ export default function SettingsPage() {
   const handleTogglePartnerPermission = async (
     token: string,
     field: string,
-    currentValue: boolean
+    currentValue: boolean,
   ) => {
     try {
       triggerHaptic(8);
       const nextVal = !currentValue;
       // Optimistic update
       setPartnerShares((prev) =>
-        prev.map((s) => (s.token === token ? { ...s, [field]: nextVal } : s))
+        prev.map((s) => (s.token === token ? { ...s, [field]: nextVal } : s)),
       );
 
       const res = await fetch("/api/sponsor", {
@@ -322,7 +357,9 @@ export default function SettingsPage() {
       if (!res.ok) {
         // Rollback
         setPartnerShares((prev) =>
-          prev.map((s) => (s.token === token ? { ...s, [field]: currentValue } : s))
+          prev.map((s) =>
+            s.token === token ? { ...s, [field]: currentValue } : s,
+          ),
         );
         setError("Failed to update partner permission.");
       }
@@ -334,7 +371,7 @@ export default function SettingsPage() {
   const handleDisconnectPartner = async (token: string) => {
     if (
       !confirm(
-        "Are you sure you want to disconnect this partner? Their access token will be revoked immediately."
+        "Are you sure you want to disconnect this partner? Their access token will be revoked immediately.",
       )
     ) {
       return;
@@ -381,7 +418,7 @@ export default function SettingsPage() {
 
       if (res.ok) {
         setAllCommitments((prev) =>
-          prev.map((c) => (c.id === comm.id ? { ...c, active: newActive } : c))
+          prev.map((c) => (c.id === comm.id ? { ...c, active: newActive } : c)),
         );
         setSuccessMsg(newActive ? "Anchor reactivated." : "Anchor paused.");
         setTimeout(() => setSuccessMsg(""), 2500);
@@ -406,7 +443,9 @@ export default function SettingsPage() {
 
       if (res.ok) {
         setAllCommitments((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, name: editName, why: editWhy } : c))
+          prev.map((c) =>
+            c.id === id ? { ...c, name: editName, why: editWhy } : c,
+          ),
         );
         setEditingId(null);
         setSuccessMsg("Anchor updated.");
@@ -418,12 +457,18 @@ export default function SettingsPage() {
   };
 
   const handleDeleteCommitment = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this anchor? Past reflections will remain in your archive.")) {
+    if (
+      !confirm(
+        "Are you sure you want to remove this anchor? Past reflections will remain in your archive.",
+      )
+    ) {
       return;
     }
     try {
       triggerHaptic(15);
-      const res = await fetch(`/api/commitments?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/commitments?id=${id}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         setAllCommitments((prev) => prev.filter((c) => c.id !== id));
         setSuccessMsg("Anchor removed.");
@@ -440,8 +485,6 @@ export default function SettingsPage() {
     setTimeout(() => setSuccessMsg(""), 2500);
   };
 
-
-
   const handleLogout = async () => {
     triggerHaptic(10);
     try {
@@ -454,16 +497,13 @@ export default function SettingsPage() {
     router.refresh();
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-        <Navigation />
-        <SettingsSkeleton />
-      </div>
-    );
+  if ((loading || isInitialLoading) && !user) {
+    return <SettingsSkeleton />;
   }
 
-  const userInitial = (user?.firstName?.trim() || user?.email?.trim() || "A").charAt(0).toUpperCase();
+  const userInitial = (user?.firstName?.trim() || user?.email?.trim() || "A")
+    .charAt(0)
+    .toUpperCase();
   const hasCadenceChanged =
     user &&
     (morningTime !== (user.morningNotificationTime || "08:00") ||
@@ -471,14 +511,7 @@ export default function SettingsPage() {
       timezone !== (user.timezone || "UTC"));
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation
-        userEmail={user?.email}
-        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
-        firstName={user?.firstName}
-        lastName={user?.lastName}
-      />
-
+    <div className="w-full flex-1 flex flex-col">
       <PageTransition>
         <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-8 pb-28 sm:pb-20">
           {/* Header Title */}
@@ -490,7 +523,8 @@ export default function SettingsPage() {
               Settings & Anchors
             </h1>
             <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-              Tailor your daily check-in cadence, active anchors, data privacy, and partner connections.
+              Tailor your daily check-in cadence, active anchors, data privacy,
+              and partner connections.
             </p>
           </div>
 
@@ -529,7 +563,9 @@ export default function SettingsPage() {
                 </div>
                 <div className="min-w-0 space-y-1">
                   <h2 className="text-base sm:text-lg font-semibold text-[#2C2520] dark:text-[#ECE7E0] tracking-tight truncate">
-                    {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "My Account"}
+                    {user?.firstName
+                      ? `${user.firstName} ${user.lastName || ""}`
+                      : "My Account"}
                   </h2>
                   <p className="text-xs text-[#786F66] dark:text-[#A8A096] truncate font-normal">
                     {user?.email || "Signed in"}
@@ -648,14 +684,20 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shrink-0 shadow-2xs">
-                      {pushEnabled ? <BellRing className="w-4.5 h-4.5" /> : <BellOff className="w-4.5 h-4.5" />}
+                      {pushEnabled ? (
+                        <BellRing className="w-4.5 h-4.5" />
+                      ) : (
+                        <BellOff className="w-4.5 h-4.5" />
+                      )}
                     </div>
                     <div className="min-w-0">
                       <span className="text-sm font-semibold text-[#2C2520] dark:text-[#ECE7E0] block">
                         Browser Push Reminders
                       </span>
                       <span className="text-xs text-[#786F66] dark:text-[#A8A096] block truncate">
-                        {pushEnabled ? "Active on this device" : "Receive quiet reminders at your cadence"}
+                        {pushEnabled
+                          ? "Active on this device"
+                          : "Receive quiet reminders at your cadence"}
                       </span>
                     </div>
                   </div>
@@ -667,7 +709,9 @@ export default function SettingsPage() {
                     disabled={pushLoading}
                     onClick={handleTogglePush}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-                      pushEnabled ? "bg-[#C86D51]" : "bg-[#DCD5CB] dark:bg-[#3D3730]"
+                      pushEnabled
+                        ? "bg-[#C86D51]"
+                        : "bg-[#DCD5CB] dark:bg-[#3D3730]"
                     }`}
                   >
                     <span
@@ -698,7 +742,9 @@ export default function SettingsPage() {
               {/* Contextual Save Row */}
               <div className="p-4 sm:p-5 bg-[#FAF7F2]/60 dark:bg-[#1E1B18]/60 flex items-center justify-between">
                 <span className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                  {hasCadenceChanged ? "Modifications ready to apply" : "Cadence is synchronized"}
+                  {hasCadenceChanged
+                    ? "Modifications ready to apply"
+                    : "Cadence is synchronized"}
                 </span>
                 <button
                   type="button"
@@ -774,7 +820,8 @@ export default function SettingsPage() {
               ) : (
                 allCommitments.map((comm) => {
                   const isEditing = editingId === comm.id;
-                  const commColor = PALETTE_HEX[comm.colorIndex ?? 0] || "#C86D51";
+                  const commColor =
+                    PALETTE_HEX[comm.colorIndex ?? 0] || "#C86D51";
 
                   return (
                     <div key={comm.id} className="p-4 sm:p-5 transition-colors">
@@ -815,7 +862,10 @@ export default function SettingsPage() {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="min-w-0 space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: commColor }} />
+                              <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: commColor }}
+                              />
                               <span className="font-semibold text-sm text-[#2C2520] dark:text-[#ECE7E0] truncate">
                                 {comm.name}
                               </span>
@@ -837,7 +887,11 @@ export default function SettingsPage() {
                                   : "bg-[#FAF7F2] dark:bg-[#1E1B18] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
                               }`}
                             >
-                              {comm.active ? <PlayCircle className="w-3.5 h-3.5 text-[#658B70]" /> : <PauseCircle className="w-3.5 h-3.5 text-[#786F66]" />}
+                              {comm.active ? (
+                                <PlayCircle className="w-3.5 h-3.5 text-[#658B70]" />
+                              ) : (
+                                <PauseCircle className="w-3.5 h-3.5 text-[#786F66]" />
+                              )}
                               <span>{comm.active ? "Active" : "Paused"}</span>
                             </button>
 
@@ -894,7 +948,8 @@ export default function SettingsPage() {
                       Discreet Blur Mode
                     </span>
                     <span className="text-xs text-[#786F66] dark:text-[#A8A096] block truncate">
-                      Obscures private reflection notes in public transit or shared spaces
+                      Obscures private reflection notes in public transit or
+                      shared spaces
                     </span>
                   </div>
                 </div>
@@ -905,7 +960,9 @@ export default function SettingsPage() {
                   aria-checked={privacyMode}
                   onClick={togglePrivacyMode}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    privacyMode ? "bg-[#C86D51]" : "bg-[#DCD5CB] dark:bg-[#3D3730]"
+                    privacyMode
+                      ? "bg-[#C86D51]"
+                      : "bg-[#DCD5CB] dark:bg-[#3D3730]"
                   }`}
                 >
                   <span
@@ -927,7 +984,8 @@ export default function SettingsPage() {
                       Vault Encryption
                     </span>
                     <span className="text-xs text-[#786F66] dark:text-[#A8A096] block">
-                      Reflections and notes are encrypted with server-managed AES-256-GCM
+                      Reflections and notes are encrypted with server-managed
+                      AES-256-GCM
                     </span>
                   </div>
                 </div>
@@ -947,7 +1005,8 @@ export default function SettingsPage() {
                     Zero-Tracker Privacy Policy
                   </span>
                   <span className="text-xs text-[#786F66] dark:text-[#A8A096] block">
-                    Read our commitment to zero advertising, zero brokers, and opt-in sharing
+                    Read our commitment to zero advertising, zero brokers, and
+                    opt-in sharing
                   </span>
                 </div>
                 <CaretRight className="w-4 h-4 text-[#9E948A] group-hover:text-[#C86D51] transition-colors shrink-0" />
@@ -976,7 +1035,9 @@ export default function SettingsPage() {
 
             <div className="bg-white dark:bg-[#25221F] rounded-3xl border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-sm overflow-hidden divide-y divide-[#EAE3D7]/60 dark:divide-[#38332E]/60">
               <div className="p-4 sm:p-5 bg-[#FAF7F2]/40 dark:bg-[#1E1B18]/40 text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                Granular, opt-in companion sharing. Nothing is shared with a sponsor or partner by default. You control every data category individually.
+                Granular, opt-in companion sharing. Nothing is shared with a
+                sponsor or partner by default. You control every data category
+                individually.
               </div>
 
               {/* New Partner Invite Accordion */}
@@ -1018,7 +1079,9 @@ export default function SettingsPage() {
                         </label>
                         <select
                           value={newExpiresInDays}
-                          onChange={(e) => setNewExpiresInDays(Number(e.target.value))}
+                          onChange={(e) =>
+                            setNewExpiresInDays(Number(e.target.value))
+                          }
                           className="w-full px-3.5 py-2 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51]"
                         >
                           <option value={30}>30 Days</option>
@@ -1034,13 +1097,23 @@ export default function SettingsPage() {
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {[
-                          { key: "shareConsistency", label: "Consistency Rate" },
+                          {
+                            key: "shareConsistency",
+                            label: "Consistency Rate",
+                          },
                           { key: "shareMilestones", label: "Milestone Totals" },
                           { key: "shareMoodTrends", label: "Mood Trends" },
                           { key: "shareBlockers", label: "Blocker Categories" },
-                          { key: "shareJournalNotes", label: "Written Journal Notes", confidential: true },
+                          {
+                            key: "shareJournalNotes",
+                            label: "Written Journal Notes",
+                            confidential: true,
+                          },
                         ].map((p) => {
-                          const isChecked = newPermissions[p.key as keyof typeof newPermissions];
+                          const isChecked =
+                            newPermissions[
+                              p.key as keyof typeof newPermissions
+                            ];
                           return (
                             <label
                               key={p.key}
@@ -1081,7 +1154,9 @@ export default function SettingsPage() {
                         disabled={creatingShare}
                         className="text-xs px-4 py-1.5 rounded-xl bg-[#C86D51] hover:bg-[#B35D43] text-white font-medium disabled:opacity-50"
                       >
-                        {creatingShare ? "Generating Link..." : "Create Companion Link"}
+                        {creatingShare
+                          ? "Generating Link..."
+                          : "Create Companion Link"}
                       </button>
                     </div>
                   </motion.form>
@@ -1096,7 +1171,8 @@ export default function SettingsPage() {
                     <span>No Active Partner Links</span>
                   </div>
                   <p className="text-xs text-[#786F66] dark:text-[#A8A096] max-w-sm mx-auto">
-                    Your journal reflections, streaks, and check-ins are currently 100% private to you.
+                    Your journal reflections, streaks, and check-ins are
+                    currently 100% private to you.
                   </p>
                 </div>
               ) : (
@@ -1108,7 +1184,8 @@ export default function SettingsPage() {
                           {share.partnerEmail || "Partner Companion"}
                         </span>
                         <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] block">
-                          Created {new Date(share.createdAt).toLocaleDateString()}
+                          Created{" "}
+                          {new Date(share.createdAt).toLocaleDateString()}
                         </span>
                       </div>
 
@@ -1151,12 +1228,20 @@ export default function SettingsPage() {
                         { key: "shareBlockers", label: "Blockers" },
                         { key: "shareJournalNotes", label: "Journal Notes" },
                       ].map((perm) => {
-                        const active = Boolean(share[perm.key as keyof typeof share]);
+                        const active = Boolean(
+                          share[perm.key as keyof typeof share],
+                        );
                         return (
                           <button
                             key={perm.key}
                             type="button"
-                            onClick={() => handleTogglePartnerPermission(share.token, perm.key, active)}
+                            onClick={() =>
+                              handleTogglePartnerPermission(
+                                share.token,
+                                perm.key,
+                                active,
+                              )
+                            }
                             className={`p-2 rounded-xl border text-left flex items-center justify-between transition-colors cursor-pointer ${
                               active
                                 ? "bg-[#EEF4F0] dark:bg-[#202D24] border-[#658B70]/30 text-[#658B70] dark:text-[#82A78C]"
@@ -1197,7 +1282,8 @@ export default function SettingsPage() {
                       Progress Summary (PDF)
                     </span>
                     <span className="text-xs text-[#786F66] dark:text-[#A8A096] block truncate">
-                      Evidence-informed summary report formatted for therapist or sponsor review
+                      Evidence-informed summary report formatted for therapist
+                      or sponsor review
                     </span>
                   </div>
                 </div>
@@ -1223,7 +1309,8 @@ export default function SettingsPage() {
                       Raw Portable Dataset (CSV)
                     </span>
                     <span className="text-xs text-[#786F66] dark:text-[#A8A096] block truncate">
-                      Complete uncompressed data archive of all your check-ins and habits
+                      Complete uncompressed data archive of all your check-ins
+                      and habits
                     </span>
                   </div>
                 </div>
@@ -1259,13 +1346,15 @@ export default function SettingsPage() {
               {/* Identity Row */}
               <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#C86D51] to-[#B88452] text-white font-serif-title text-base font-bold flex items-center justify-center shrink-0 shadow-organic-xs">
+                  <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-[#C86D51] to-[#B88452] text-white font-serif-title text-base font-bold flex items-center justify-center shrink-0 shadow-organic-xs">
                     {userInitial}
                   </div>
                   <div className="min-w-0 space-y-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[#2C2520] dark:text-[#ECE7E0] truncate">
-                        {user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : "Anchor Member"}
+                        {user?.firstName
+                          ? `${user.firstName} ${user.lastName || ""}`.trim()
+                          : "Anchor Member"}
                       </span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] border border-[#658B70]/20 shrink-0">
                         Active
@@ -1373,7 +1462,8 @@ export default function SettingsPage() {
               </span>
             </div>
             <p className="text-[11px] text-[#A8A096] dark:text-[#6E665D]">
-              Version 1.2.0 • Zero-knowledge accountability & quiet daily progress
+              Version 1.2.0 • Zero-knowledge accountability & quiet daily
+              progress
             </p>
             <div className="flex items-center justify-center gap-3 text-[10px] text-[#786F66] dark:text-[#A8A096] font-mono">
               <span>Encrypted Vault</span>
@@ -1448,15 +1538,20 @@ export default function SettingsPage() {
               fetch("/api/checkins"),
               fetch("/api/journal"),
             ]);
-            const checkInsData = checkInsRes.ok ? await checkInsRes.json() : { checkIns: [] };
-            const journalData = journalRes.ok ? await journalRes.json() : { entries: [] };
-            const activeComm = allCommitments.find((c) => c.active) || allCommitments[0];
+            const checkInsData = checkInsRes.ok
+              ? await checkInsRes.json()
+              : { checkIns: [] };
+            const journalData = journalRes.ok
+              ? await journalRes.json()
+              : { entries: [] };
+            const activeComm =
+              allCommitments.find((c) => c.active) || allCommitments[0];
             const updated = generateProgressSummary(
               user,
               activeComm,
               checkInsData.checkIns || [],
               journalData.entries || [],
-              { includeJournalNotes: include }
+              { includeJournalNotes: include },
             );
             setSummaryReport(updated);
           }}

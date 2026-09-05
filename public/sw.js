@@ -1,12 +1,95 @@
-// Anchor Push Service Worker
+// Anchor PWA Service Worker: App Shell Pre-caching, Runtime Asset Caching & Push Notifications
+const CACHE_NAME = "anchor-cache-v1";
+
+const PRECACHE_ASSETS = [
+  "/",
+  "/manifest.json",
+  "/favicon.ico",
+  "/favicon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png",
+];
+
 self.addEventListener("install", (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn("Pre-cache error (non-fatal):", err);
+      });
+    })
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+
+  // Only handle GET requests with HTTP/HTTPS schemes
+  if (request.method !== "GET" || !request.url.startsWith("http")) {
+    return;
+  }
+
+  const url = new URL(request.url);
+
+  // Dynamic API calls: never cache in Service Worker to prevent stale DB updates
+  if (url.pathname.startsWith("/api/")) {
+    return;
+  }
+
+  // Next.js static assets & fonts: Cache-first strategy for instant subsequent loads
+  if (
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|woff2|woff|ttf|ico|css|js)$/)
+  ) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          }
+          return networkResponse;
+        });
+      })
+    );
+    return;
+  }
+
+  // HTML Navigation: Network-first with cache fallback
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(request))
+    );
+  }
+});
+
+// Push Notifications
 self.addEventListener("push", (event) => {
   let data = {
     title: "Anchor • Daily Companion",

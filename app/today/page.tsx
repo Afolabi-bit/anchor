@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Navigation from "@/app/components/Navigation";
 import GroundingDrawer from "@/app/components/GroundingDrawer";
 import CheckInStepper from "@/app/components/CheckInStepper";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
 import PageTransition from "@/app/components/PageTransition";
-import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import { TodaySkeleton } from "@/app/components/Skeletons";
 import { getTodayAffirmation } from "@/lib/affirmations";
 import JournalComposer from "@/app/components/JournalComposer";
+import { useAppContext } from "@/app/context/AppContext";
 import {
   Sun,
   Moon,
@@ -25,16 +24,28 @@ import {
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
-import type { User, Commitment, CheckIn } from "@/db/schema";
+import type { Commitment, CheckIn } from "@/db/schema";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
 export default function TodayPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [commitments, setCommitments] = useState<Commitment[]>([]);
-  const [activeCommitmentId, setActiveCommitmentId] = useState<string>("");
+  const {
+    user,
+    commitments,
+    setCommitments,
+    activeCommitmentId,
+    setActiveCommitmentId,
+    activeCommitment,
+    checkIns,
+    partnerMessages,
+    setPartnerMessages,
+    isInitialLoading,
+    refreshCheckIns,
+    refreshPartnerMessages,
+    updateCheckInLocally,
+  } = useAppContext();
+
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [showAnchorMenu, setShowAnchorMenu] = useState(false);
 
@@ -46,11 +57,6 @@ export default function TodayPage() {
 
   const greeting = isEvening ? "Good Evening" : "Good Morning";
 
-  // Check-in data
-  const [morningCheckIn, setMorningCheckIn] = useState<CheckIn | null>(null);
-  const [eveningCheckIn, setEveningCheckIn] = useState<CheckIn | null>(null);
-  const [partnerMessages, setPartnerMessages] = useState<any[]>([]);
-
   // Stepper Modal State
   const [activeStepper, setActiveStepper] = useState<"morning" | "evening" | null>(null);
 
@@ -60,6 +66,34 @@ export default function TodayPage() {
 
   // Daily Affirmation quote
   const affirmation = getTodayAffirmation();
+
+  // Background refresh of check-ins and sponsor messages
+  useEffect(() => {
+    refreshCheckIns(todayStr);
+    refreshPartnerMessages();
+  }, [todayStr, refreshCheckIns, refreshPartnerMessages]);
+
+  const morningCheckIn = useMemo(() => {
+    return (
+      checkIns.find(
+        (c: CheckIn) =>
+          c.type === "morning" &&
+          c.date === todayStr &&
+          (!c.commitmentId || c.commitmentId === activeCommitmentId)
+      ) || null
+    );
+  }, [checkIns, todayStr, activeCommitmentId]);
+
+  const eveningCheckIn = useMemo(() => {
+    return (
+      checkIns.find(
+        (c: CheckIn) =>
+          c.type === "evening" &&
+          c.date === todayStr &&
+          (!c.commitmentId || c.commitmentId === activeCommitmentId)
+      ) || null
+    );
+  }, [checkIns, todayStr, activeCommitmentId]);
 
   const dismissPartnerMessage = async (msgId: string) => {
     triggerHaptic(10);
@@ -75,72 +109,10 @@ export default function TodayPage() {
     }
   };
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const meRes = await fetch("/api/auth/me");
-        if (!meRes.ok) {
-          router.push("/login");
-          return;
-        }
-        const meData = await meRes.json();
-        if (!meData.user.isOnboarded) {
-          router.push("/onboarding");
-          return;
-        }
-        setUser(meData.user);
-        const comms: Commitment[] = meData.commitments || (meData.commitment ? [meData.commitment] : []);
-        setCommitments(comms);
-        if (comms.length > 0) {
-          setActiveCommitmentId((prev) => prev || comms[0].id);
-        }
-
-        // Fetch sponsor encouragement messages
-        try {
-          const sponsorRes = await fetch("/api/sponsor");
-          if (sponsorRes.ok) {
-            const sponsorData = await sponsorRes.json();
-            setPartnerMessages(sponsorData.messages?.filter((m: any) => !m.read) || []);
-          }
-        } catch (e) {
-          console.warn("Failed to fetch sponsor encouragement messages:", e);
-        }
-      } catch (err) {
-        console.error("Error loading today state:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [router, todayStr]);
-
-  // Unified single-loader for commitment check-ins when active commitment changes
-  useEffect(() => {
-    if (!activeCommitmentId) return;
-    async function reloadCommitmentCheckIns() {
-      try {
-        const checkInsRes = await fetch(`/api/checkins?date=${todayStr}`);
-        if (checkInsRes.ok) {
-          const data = await checkInsRes.json();
-          const m = data.checkIns.find((c: CheckIn) => c.type === "morning" && (!c.commitmentId || c.commitmentId === activeCommitmentId));
-          const e = data.checkIns.find((c: CheckIn) => c.type === "evening" && (!c.commitmentId || c.commitmentId === activeCommitmentId));
-          setMorningCheckIn(m || null);
-          setEveningCheckIn(e || null);
-        }
-      } catch (e) {
-        console.error("Failed to load checkins for commitment", e);
-      }
-    }
-    reloadCommitmentCheckIns();
-  }, [activeCommitmentId, todayStr]);
-
-  const activeCommitment = commitments.find((c) => c.id === activeCommitmentId) || commitments[0];
   const activeColorHex = PALETTE_HEX[activeCommitment?.colorIndex ?? 0] || "#C86D51";
 
   const handleCheckInSuccess = (savedCheckIn: CheckIn) => {
-    if (savedCheckIn.type === "morning") setMorningCheckIn(savedCheckIn);
-    if (savedCheckIn.type === "evening") setEveningCheckIn(savedCheckIn);
+    updateCheckInLocally(savedCheckIn);
   };
 
   const handleCommitmentCreated = (newComm: Commitment) => {
@@ -148,25 +120,12 @@ export default function TodayPage() {
     setActiveCommitmentId(newComm.id);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-        <Navigation />
-        <TodaySkeleton />
-      </div>
-    );
+  if (isInitialLoading && !user) {
+    return <TodaySkeleton />;
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation
-        userEmail={user?.email}
-        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
-        firstName={user?.firstName}
-        lastName={user?.lastName}
-      />
-      <OfflineSyncBadge />
-
+    <div className="w-full flex-1 flex flex-col">
       <PageTransition>
         <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* ========================================================================= */}

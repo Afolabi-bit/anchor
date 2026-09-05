@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navigation from "@/app/components/Navigation";
 import PageTransition from "@/app/components/PageTransition";
 import {
   Heart,
@@ -21,6 +20,7 @@ import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { triggerHaptic, playSingingBowlChime } from "@/lib/sensory";
+import { useAppContext } from "@/app/context/AppContext";
 
 const CATEGORIES = [
   "All",
@@ -33,10 +33,10 @@ const CATEGORIES = [
 const EMOTION_PRESETS = ["Peaceful", "Grounded", "Grateful", "Courageous", "Serene", "Reflective"];
 
 export default function CommunityPage() {
-  const [user, setUser] = useState<any>(null);
+  const { user, communityReflections, setCategoryReflections } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [reflections, setReflections] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reflections, setReflections] = useState<any[]>(() => communityReflections["All"] || []);
+  const [loading, setLoading] = useState(() => !(communityReflections["All"]?.length > 0));
 
   // Sharing form state
   const [isComposing, setIsComposing] = useState(false);
@@ -50,21 +50,6 @@ export default function CommunityPage() {
   const [resonatedIds, setResonatedIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        }
-      } catch (e) {
-        // guest mode
-      }
-    }
-    loadUser();
-  }, []);
-
-  useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("anchor_resonated_ids") || "{}");
       setResonatedIds(saved);
@@ -74,13 +59,22 @@ export default function CommunityPage() {
   }, []);
 
   useEffect(() => {
+    // If cached reflections exist for this category, load them immediately
+    if (communityReflections[selectedCategory]?.length > 0) {
+      setReflections(communityReflections[selectedCategory]);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     async function loadReflections() {
       try {
-        setLoading(true);
         const res = await fetch(`/api/community?category=${encodeURIComponent(selectedCategory)}`);
         if (res.ok) {
           const data = await res.json();
-          setReflections(data.reflections || []);
+          const list = data.reflections || [];
+          setReflections(list);
+          setCategoryReflections(selectedCategory, list);
         }
       } catch (err) {
         console.error("Community feed load error:", err);
@@ -89,7 +83,7 @@ export default function CommunityPage() {
       }
     }
     loadReflections();
-  }, [selectedCategory]);
+  }, [selectedCategory, communityReflections, setCategoryReflections]);
 
   const handleShare = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,14 +166,7 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#1C1917] flex flex-col pb-24 sm:pb-16 transition-colors duration-200">
-      <Navigation
-        userEmail={user?.email}
-        userName={user?.firstName ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}` : undefined}
-        firstName={user?.firstName}
-        lastName={user?.lastName}
-      />
-
+    <div className="w-full flex-1 flex flex-col">
       <PageTransition>
         <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
