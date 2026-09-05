@@ -15,12 +15,10 @@ import {
   Moon,
   CheckCircle as CheckCircle2,
   Check,
-  Anchor,
   ArrowRight,
   Plus,
   HandHeart as MessageSquareHeart,
-  Quotes as Quote,
-  CaretDown,
+  Sparkle,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
@@ -50,23 +48,30 @@ export default function TodayPage() {
   } = useAppContext();
 
   const [newModalOpen, setNewModalOpen] = useState(false);
-  const [showAnchorMenu, setShowAnchorMenu] = useState(false);
 
-  // Time-aware horizon
+  // Time-aware horizon: before 2:00 PM is Morning Intention, after 2:00 PM is Evening Reflection
   const currentHour = new Date().getHours();
-  const isEvening = currentHour >= 14; // After 2:00 PM is Evening reflection horizon
+  const isEveningHorizon = currentHour >= 14;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const greeting = isEvening ? "Good Evening" : "Good Morning";
+  const formattedDate = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }).format(new Date());
+    } catch {
+      return "Today";
+    }
+  }, []);
+
+  const greeting = isEveningHorizon ? "Good evening" : "Good morning";
 
   // Stepper Modal State
   const [activeStepper, setActiveStepper] = useState<"morning" | "evening" | null>(null);
   const [stepperCommitment, setStepperCommitment] = useState<Commitment | null>(null);
-
-  // Optional manual view override to review or edit the other check-in
-  const [viewOverride, setViewOverride] = useState<"morning" | "evening" | null>(null);
-  const currentView = viewOverride || (isEvening ? "evening" : "morning");
 
   // Daily Affirmation quote
   const affirmation = getTodayAffirmation();
@@ -123,8 +128,6 @@ export default function TodayPage() {
       console.warn("Failed to dismiss sponsor message:", e);
     }
   };
-
-  const activeColorHex = PALETTE_HEX[activeCommitment?.colorIndex ?? 0] || "#C86D51";
 
   const handleCheckInSuccess = (savedCheckIn: CheckIn) => {
     updateCheckInLocally(savedCheckIn);
@@ -198,411 +201,356 @@ export default function TodayPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-6 sm:py-8 space-y-5 sm:space-y-6 pb-36">
-          {/* ========================================================================= */}
-          {/* 1. ANCHOR FOCUS HEADER: Uninhibited Greeting + Intuitive Anchor Selector   */}
-          {/* ========================================================================= */}
-          <div className="space-y-2 relative">
-            <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
-              {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
-            </span>
-
-            {/* Anchor Title with Intuitive Dropdown Switcher */}
-            <div className="relative inline-block">
-              {commitments.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic(8);
-                    setShowAnchorMenu(!showAnchorMenu);
-                  }}
-                  className="group flex items-center gap-2.5 text-left cursor-pointer rounded-2xl -ml-2 px-2 py-1 hover:bg-[#F3EFE7]/80 dark:hover:bg-[#25221F]/80 transition-colors"
-                  title="Switch Active Anchor"
-                  aria-expanded={showAnchorMenu}
-                >
-                  <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight leading-snug">
-                    {activeCommitment?.name || "Daily Anchor Focus"}
-                  </h1>
-                  <div className="w-6 h-6 rounded-full bg-[#FAF7F2] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] flex items-center justify-center text-[#786F66] dark:text-[#A8A096] group-hover:text-[#2C2520] dark:group-hover:text-[#ECE7E0] transition-colors shrink-0 shadow-2xs">
-                    <CaretDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showAnchorMenu ? "rotate-180" : ""}`} />
-                  </div>
-                </button>
-              ) : (
-                <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight leading-snug">
-                  {activeCommitment?.name || "Daily Anchor Focus"}
-                </h1>
-              )}
-
-              {/* Intuitive Vertical Anchor Dropdown Popover */}
-              <AnimatePresence>
-                {showAnchorMenu && (
-                  <>
-                    {/* Click-outside overlay */}
-                    <div
-                      className="fixed inset-0 z-20 cursor-default"
-                      onClick={() => setShowAnchorMenu(false)}
-                    />
-
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-0 top-full mt-2 w-72 sm:w-84 p-2 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-lg z-30 space-y-1"
-                    >
-                      <div className="px-3 py-2 text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold border-b border-[#EAE3D7] dark:border-[#38332E]">
-                        Switch Active Anchor
-                      </div>
-
-                      <div className="max-h-64 overflow-y-auto space-y-1 py-1">
-                        {commitments.map((c) => {
-                          const isSelected = c.id === activeCommitmentId;
-                          return (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => {
-                                triggerHaptic(10);
-                                setActiveCommitmentId(c.id);
-                                setShowAnchorMenu(false);
-                              }}
-                              className={`w-full text-left p-3 rounded-2xl flex items-center justify-between gap-3 transition-colors cursor-pointer ${
-                                isSelected
-                                  ? "bg-[#FAF7F2] dark:bg-[#2E2A26] text-[#2C2520] dark:text-[#ECE7E0] font-medium"
-                                  : "hover:bg-[#FAF7F2]/60 dark:hover:bg-[#2E2A26]/60 text-[#786F66] dark:text-[#A8A096]"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <span
-                                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                                  style={{ backgroundColor: PALETTE_HEX[c.colorIndex % PALETTE_HEX.length] || activeColorHex }}
-                                />
-                                <div className="truncate">
-                                  <span className="text-xs sm:text-sm block truncate text-[#2C2520] dark:text-[#ECE7E0]">
-                                    {c.name}
-                                  </span>
-                                  {c.why && (
-                                    <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] italic block truncate">
-                                      "{c.why}"
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <Check className="w-4 h-4 text-[#658B70] shrink-0" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="pt-1 border-t border-[#EAE3D7] dark:border-[#38332E]">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowAnchorMenu(false);
-                            setNewModalOpen(true);
-                          }}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-[#FAF7F2] dark:hover:bg-[#2E2A26] text-xs font-semibold text-[#C86D51] dark:text-[#DB8165] flex items-center gap-2 cursor-pointer transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Add New Anchor</span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-6 sm:py-8 space-y-6 pb-28">
+        {/* ========================================================================= */}
+        {/* 1. SANCTUARY HEADER & HORIZONTAL ANCHOR BAR                               */}
+        {/* ========================================================================= */}
+        <header className="space-y-3.5">
+          {/* Top Line: Date, Greeting, Grounding Drawer */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="text-2xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
+                {formattedDate}
+              </span>
+              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight">
+                {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
+              </h1>
             </div>
-
-            {activeCommitment?.why && (
-              <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] font-serif italic leading-relaxed pt-0.5">
-                "{activeCommitment.why}"
-              </p>
-            )}
+            <div className="shrink-0 pt-0.5">
+              <GroundingDrawer />
+            </div>
           </div>
 
-          {/* Partner Encouragement Message Banner (Only shown if cheer is unread) */}
-          {partnerMessages.length > 0 && (
+          {/* Horizontal Anchor Pill Switcher */}
+          {commitments.length > 0 ? (
             <div className="space-y-2">
-              {partnerMessages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="p-4 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] clay-card shadow-organic-sm flex items-start justify-between gap-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#658B70] text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                      <MessageSquareHeart className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <span className="text-xs uppercase tracking-wider font-semibold text-[#658B70] dark:text-[#82A78C]">
-                        Word from {msg.senderName}
-                      </span>
-                      <p className="text-xs sm:text-sm font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
-                        "{msg.message}"
-                      </p>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                {commitments.map((c) => {
+                  const isSelected = c.id === activeCommitmentId;
+                  const colorHex = PALETTE_HEX[c.colorIndex % PALETTE_HEX.length] || "#C86D51";
 
+                  const isMorningDone = todayCheckIns.some(
+                    (ck) => ck.commitmentId === c.id && ck.type === "morning"
+                  );
+                  const isEveningDone = todayCheckIns.some(
+                    (ck) => ck.commitmentId === c.id && ck.type === "evening"
+                  );
+                  const isAllDone = isMorningDone && isEveningDone;
+
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic(8);
+                        setActiveCommitmentId(c.id);
+                      }}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                        isSelected
+                          ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] shadow-organic-sm font-semibold"
+                          : "bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0]"
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: colorHex }}
+                      />
+                      <span>{c.name}</span>
+                      {isAllDone && <Check className="w-3 h-3 text-[#658B70]" />}
+                    </button>
+                  );
+                })}
+
+                {/* Inline Add Anchor Button */}
+                {commitments.length < 5 && (
                   <button
                     type="button"
-                    onClick={() => dismissPartnerMessage(msg.id)}
-                    className="text-xs font-medium text-[#658B70] hover:text-[#2C2520] bg-white/80 dark:bg-[#1E1B18]/80 px-2.5 py-1 rounded-full border border-[#D9E6DD] dark:border-[#2C4032] shrink-0 cursor-pointer"
+                    onClick={() => {
+                      triggerHaptic(8);
+                      setNewModalOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:border-[#C86D51] hover:text-[#C86D51] transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+                    title="Add new anchor"
                   >
-                    Thank you
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>New Anchor</span>
                   </button>
-                </motion.div>
-              ))}
+                )}
+              </div>
+
+              {/* Active Anchor Purpose / Why */}
+              {activeCommitment?.why && (
+                <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed pt-0.5">
+                  &ldquo;{activeCommitment.why}&rdquo;
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card text-center space-y-3">
+              <Sparkle className="w-5 h-5 text-[#C86D51] mx-auto opacity-80" />
+              <div className="space-y-1">
+                <h3 className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0]">
+                  Begin Your Journey
+                </h3>
+                <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
+                  Anchor is your daily compass. Set your first personal commitment to begin.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewModalOpen(true)}
+                className="btn-primary py-2 px-4 text-xs font-semibold"
+              >
+                Create First Anchor
+              </button>
             </div>
           )}
+        </header>
 
-          {/* ========================================================================= */}
-          {/* 2. ONE PRIMARY CHECK-IN CARD WITH TIME-OF-DAY TRACKER                     */}
-          {/* ========================================================================= */}
-          <div className="space-y-3">
-            {/* Segmented Morning / Evening View Tracker */}
-            <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-[#F3EFE7] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs">
+        {/* Partner Encouragement Message Banner */}
+        {partnerMessages.length > 0 && (
+          <div className="space-y-2">
+            {partnerMessages.map((msg) => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] clay-card shadow-organic-sm flex items-start justify-between gap-3"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#658B70] text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+                    <MessageSquareHeart className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-xs uppercase tracking-wider font-semibold text-[#658B70] dark:text-[#82A78C]">
+                      Word from {msg.senderName}
+                    </span>
+                    <p className="text-xs sm:text-sm font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
+                      &ldquo;{msg.message}&rdquo;
+                    </p>
+                  </div>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => {
-                    triggerHaptic(8);
-                    setViewOverride("morning");
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                    currentView === "morning"
-                      ? "bg-white dark:bg-[#2E2A26] text-[#B88452] shadow-2xs font-semibold"
-                      : "text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0]"
-                  }`}
+                  onClick={() => dismissPartnerMessage(msg.id)}
+                  className="text-xs font-medium text-[#658B70] hover:text-[#2C2520] bg-white/80 dark:bg-[#1E1B18]/80 px-2.5 py-1 rounded-full border border-[#D9E6DD] dark:border-[#2C4032] shrink-0 cursor-pointer"
                 >
-                  <Sun className="w-3.5 h-3.5 text-[#B88452]" />
-                  <span>Morning Intention</span>
-                  {morningCheckIn && (
-                    <Check className="w-3 h-3 text-[#658B70]" />
-                  )}
+                  Thank you
                 </button>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic(8);
-                    setViewOverride("evening");
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                    currentView === "evening"
-                      ? "bg-white dark:bg-[#2E2A26] text-[#C86D51] dark:text-[#DB8165] shadow-2xs font-semibold"
-                      : "text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0]"
-                  }`}
-                >
-                  <Moon className="w-3.5 h-3.5 text-[#C86D51]" />
-                  <span>Evening Review</span>
-                  {eveningCheckIn && (
-                    <Check className="w-3 h-3 text-[#658B70]" />
-                  )}
-                </button>
-              </div>
+        {/* ========================================================================= */}
+        {/* 2. THE DAY'S RHYTHM (Unified Morning & Evening Ritual)                     */}
+        {/* ========================================================================= */}
+        {activeCommitment && (
+          <section aria-label="Today's Rhythm" className="space-y-3">
+            <div className="flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
+              <span className="uppercase tracking-wider font-semibold">
+                Daily Rhythm
+              </span>
+              <span>{activeCommitment.name}</span>
             </div>
 
-            <AnimatePresence mode="wait" initial={false}>
-            {currentView === "morning" ? (
-              /* ----------------------- MORNING CHECK-IN CARD ----------------------- */
-              <motion.div
-                key="morning-card"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+              {/* -------------------- MORNING INTENTION CARD -------------------- */}
+              <div
+                className={`p-5 rounded-3xl border clay-card shadow-2xs flex flex-col justify-between space-y-4 transition-all ${
+                  morningCheckIn
+                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
+                    : !isEveningHorizon
+                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#B88452]/40 ring-1 ring-[#B88452]/20"
+                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0">
-                      <Sun className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2 className="font-serif-title text-lg font-medium text-[#2C2520] dark:text-[#ECE7E0]">
+                <div className="space-y-3">
+                  {/* Card Header: Icon, Title, Status Badge */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0">
+                        <Sun className="w-4 h-4" />
+                      </div>
+                      <h2 className="font-serif-title text-base font-medium text-[#2C2520] dark:text-[#ECE7E0]">
                         Morning Intention
                       </h2>
-                      <span className="text-2xs text-[#786F66] dark:text-[#A8A096]">
-                        {activeCommitment?.name}
-                      </span>
                     </div>
+
+                    {morningCheckIn ? (
+                      <span className="text-2xs text-[#658B70] dark:text-[#82A78C] font-medium flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Done</span>
+                      </span>
+                    ) : !isEveningHorizon ? (
+                      <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]">
+                        Active
+                      </span>
+                    ) : null}
                   </div>
 
-                  {morningCheckIn && (
-                    <span className="text-2xs text-[#658B70] font-medium flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Completed</span>
-                    </span>
-                  )}
-                </div>
-
-                {morningCheckIn ? (
-                  <div className="space-y-2.5 text-xs pt-1">
-                    {morningCheckIn.plannedActions && morningCheckIn.plannedActions.length > 0 && (
-                      <div className="space-y-1.5">
-                        {morningCheckIn.plannedActions.map((act: string, i: number) => (
-                          <div key={i} className="flex items-center gap-2 text-[#2C2520] dark:text-[#ECE7E0]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70] shrink-0" />
-                            <span>{act}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {morningCheckIn.intentionNote && (
-                      <p className="font-serif italic text-[#786F66] dark:text-[#A8A096] pt-0.5">
-                        "{morningCheckIn.intentionNote}"
-                      </p>
-                    )}
-                    {morningCheckIn.createdAt && (
-                      <div className="pt-2 text-right text-2xs text-[#786F66]/70 dark:text-[#A8A096]/70">
-                        {formatTimeFromTimestamp(morningCheckIn.createdAt)}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3.5 pt-1">
-                    <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096]">
-                      Set your focus and planned actions for today.
+                  {/* Card Content */}
+                  {morningCheckIn ? (
+                    <div className="space-y-2 text-xs pt-1">
+                      {morningCheckIn.plannedActions && morningCheckIn.plannedActions.length > 0 && (
+                        <div className="space-y-1.5">
+                          {morningCheckIn.plannedActions.map((act: string, i: number) => (
+                            <div key={i} className="flex items-center gap-2 text-[#2C2520] dark:text-[#ECE7E0]">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70] shrink-0" />
+                              <span className="leading-snug">{act}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {morningCheckIn.intentionNote && (
+                        <p className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] pt-1 leading-relaxed">
+                          &ldquo;{morningCheckIn.intentionNote}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed pt-1">
+                      Set your focus and intentional actions for today.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic(12);
-                        setActiveStepper("morning");
-                      }}
-                      className="btn-primary w-full py-3 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <span>Set Morning Intention</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            ) : (
-              /* ----------------------- EVENING CHECK-IN CARD ----------------------- */
-              <motion.div
-                key="evening-card"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] flex items-center justify-center shadow-2xs shrink-0">
-                      <Moon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2 className="font-serif-title text-lg font-medium text-[#2C2520] dark:text-[#ECE7E0]">
-                        Evening Reflection
-                      </h2>
-                      <span className="text-2xs text-[#786F66] dark:text-[#A8A096]">
-                        {activeCommitment?.name}
-                      </span>
-                    </div>
-                  </div>
-
-                  {eveningCheckIn && (
-                    <span className="text-2xs text-[#658B70] font-medium flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Completed</span>
-                    </span>
                   )}
                 </div>
 
-                {eveningCheckIn ? (
-                  <div className="space-y-2.5 text-xs pt-1">
-                    {eveningCheckIn.reflection && (
-                      <p className="font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
-                        "{eveningCheckIn.reflection}"
-                      </p>
-                    )}
-                    {eveningCheckIn.lessonsLearned && (
-                      <p className="text-2xs text-[#786F66] dark:text-[#A8A096] pt-0.5">
-                        <strong className="text-[#C86D51] font-semibold">Lesson: </strong>
-                        <span className="italic">{eveningCheckIn.lessonsLearned}</span>
-                      </p>
-                    )}
-                    {eveningCheckIn.createdAt && (
-                      <div className="pt-2 text-right text-2xs text-[#786F66]/70 dark:text-[#A8A096]/70">
-                        {formatTimeFromTimestamp(eveningCheckIn.createdAt)}
-                      </div>
-                    )}
-                  </div>
+                {/* Card Footer / Action */}
+                {morningCheckIn ? (
+                  morningCheckIn.createdAt && (
+                    <div className="pt-1 text-right text-2xs text-[#786F66]/60 dark:text-[#A8A096]/60">
+                      {formatTimeFromTimestamp(morningCheckIn.createdAt)}
+                    </div>
+                  )
                 ) : (
-                  <div className="space-y-3.5 pt-1">
-                    <p className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic(10);
+                      handleOpenStepper("morning", activeCommitment);
+                    }}
+                    className="btn-primary w-full py-2.5 text-xs font-semibold shadow-organic-sm flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <span>Set Intention</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* -------------------- EVENING REFLECTION CARD -------------------- */}
+              <div
+                className={`p-5 rounded-3xl border clay-card shadow-2xs flex flex-col justify-between space-y-4 transition-all ${
+                  eveningCheckIn
+                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
+                    : isEveningHorizon
+                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#C86D51]/40 ring-1 ring-[#C86D51]/20"
+                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
+                }`}
+              >
+                <div className="space-y-3">
+                  {/* Card Header: Icon, Title, Status Badge */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] flex items-center justify-center shadow-2xs shrink-0">
+                        <Moon className="w-4 h-4" />
+                      </div>
+                      <h2 className="font-serif-title text-base font-medium text-[#2C2520] dark:text-[#ECE7E0]">
+                        Evening Review
+                      </h2>
+                    </div>
+
+                    {eveningCheckIn ? (
+                      <span className="text-2xs text-[#658B70] dark:text-[#82A78C] font-medium flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Done</span>
+                      </span>
+                    ) : isEveningHorizon ? (
+                      <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]">
+                        Active
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {/* Card Content */}
+                  {eveningCheckIn ? (
+                    <div className="space-y-2 text-xs pt-1">
+                      {eveningCheckIn.reflection && (
+                        <p className="font-serif italic text-xs text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
+                          &ldquo;{eveningCheckIn.reflection}&rdquo;
+                        </p>
+                      )}
+                      {eveningCheckIn.lessonsLearned && (
+                        <p className="text-2xs text-[#786F66] dark:text-[#A8A096]">
+                          <strong className="text-[#C86D51] font-medium">Lesson: </strong>
+                          <span className="italic">{eveningCheckIn.lessonsLearned}</span>
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed pt-1">
                       Pause and reflect honestly on how today unfolded.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic(12);
-                        setActiveStepper("evening");
-                      }}
-                      className="btn-primary w-full py-3 text-sm font-semibold shadow-organic-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <span>Review Your Day</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* 3. WHAT'S ON YOUR MIND (Quick Reflection Composer)                       */}
-          {/* ========================================================================= */}
-          <div className="pt-0.5">
-            <JournalComposer
-              variant="compact"
-              commitmentId={activeCommitment?.id}
-              onEntryCreated={handleJournalEntryCreated}
-            />
-          </div>
-
-          {/* ========================================================================= */}
-          {/* 4. SECONDARY SUPPORTING AREA: Daily Quote & Pause & Breathe               */}
-          {/* ========================================================================= */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-2.5 min-w-0">
-                <Quote className="w-4 h-4 text-[#B88452] shrink-0 opacity-75 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed">
-                    "{affirmation.quote}"
-                  </p>
-                  <span className="text-2xs text-[#B88452] font-semibold block">
-                    — {affirmation.author}
-                  </span>
+                  )}
                 </div>
-              </div>
-              <div className="shrink-0 pt-0.5">
-                <GroundingDrawer />
+
+                {/* Card Footer / Action */}
+                {eveningCheckIn ? (
+                  eveningCheckIn.createdAt && (
+                    <div className="pt-1 text-right text-2xs text-[#786F66]/60 dark:text-[#A8A096]/60">
+                      {formatTimeFromTimestamp(eveningCheckIn.createdAt)}
+                    </div>
+                  )
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic(10);
+                      handleOpenStepper("evening", activeCommitment);
+                    }}
+                    className="btn-primary w-full py-2.5 text-xs font-semibold shadow-organic-sm flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <span>Review Day</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
-          </div>
+          </section>
+        )}
 
-          {/* ========================================================================= */}
-          {/* 5. DAILY ACTIVITY CARD (Across All Anchors - Last Element)                 */}
-          {/* ========================================================================= */}
-          <DailyActivityCard
-            commitments={commitments}
-            activeCommitmentId={activeCommitmentId}
-            onSelectCommitment={(id) => {
-              setActiveCommitmentId(id);
-            }}
-            todayCheckIns={todayCheckIns}
-            todayJournals={todayJournals}
-            onOpenStepper={handleOpenStepper}
+        {/* ========================================================================= */}
+        {/* 3. AMBIENT QUICK REFLECTION CAPTURE                                       */}
+        {/* ========================================================================= */}
+        <div className="pt-1">
+          <JournalComposer
+            variant="compact"
+            commitmentId={activeCommitment?.id}
+            onEntryCreated={handleJournalEntryCreated}
           />
-        </main>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* 4. TODAY'S JOURNEY (Connected Activity Timeline)                          */}
+        {/* ========================================================================= */}
+        <DailyActivityCard
+          commitments={commitments}
+          todayCheckIns={todayCheckIns}
+          todayJournals={todayJournals}
+        />
+
+        {/* ========================================================================= */}
+        {/* 5. AMBIENT DAILY WISDOM                                                   */}
+        {/* ========================================================================= */}
+        <footer className="pt-2 pb-4 text-center space-y-1">
+          <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed max-w-md mx-auto">
+            &ldquo;{affirmation.quote}&rdquo;
+          </p>
+          <span className="text-2xs font-semibold text-[#B88452] block">
+            — {affirmation.author}
+          </span>
+        </footer>
+      </main>
 
       {/* Stepper Modal for Morning / Evening */}
       {activeStepper && (
@@ -619,26 +567,6 @@ export default function TodayPage() {
           onSuccess={handleCheckInSuccess}
         />
       )}
-
-      {/* Floating Action Button for Adding New Anchors */}
-      <motion.button
-        type="button"
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
-        onClick={() => {
-          triggerHaptic(12);
-          if (commitments.length >= 5) {
-            alert("Anchor supports up to 5 active anchors to protect your focus and avoid cognitive overwhelm. You can pause or manage existing anchors in Settings.");
-            return;
-          }
-          setNewModalOpen(true);
-        }}
-        className="fixed bottom-floating-fab right-5 sm:right-8 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white flex items-center justify-center shadow-organic-lg hover:shadow-organic-xl transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#C86D51]/30 group"
-        aria-label="Add new anchor"
-        title="Add new anchor"
-      >
-        <Plus className="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-200 group-hover:rotate-90" />
-      </motion.button>
 
       {/* New Commitment Modal */}
       {newModalOpen && (

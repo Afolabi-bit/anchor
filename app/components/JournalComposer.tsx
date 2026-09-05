@@ -181,6 +181,32 @@ export default function JournalComposer({
     }
   };
 
+  // Ambient sleek resting bar for compact mode
+  if (variant === "compact" && !isExpanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          triggerHaptic(8);
+          setIsExpanded(true);
+        }}
+        className="w-full p-4 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs hover:border-[#C86D51]/40 transition-all flex items-center justify-between gap-3 text-left cursor-pointer group"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <PenLine className="w-4 h-4" />
+          </div>
+          <span className="text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] group-hover:text-[#2C2520] dark:group-hover:text-[#ECE7E0] transition-colors truncate">
+            {content.trim() ? content.slice(0, 40) + "..." : "Write a quiet note, thought, or reflection..."}
+          </span>
+        </div>
+        <span className="text-2xs font-medium px-2.5 py-1 rounded-full bg-[#FAF7F2] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] shrink-0">
+          Capture
+        </span>
+      </button>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3.5 transition-all">
       {/* Header & Prompt */}
@@ -220,11 +246,12 @@ export default function JournalComposer({
               type="button"
               onClick={() => {
                 triggerHaptic(8);
-                setIsExpanded(!isExpanded);
+                setIsExpanded(false);
               }}
               className="text-xs text-[#786F66] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] p-1 cursor-pointer"
+              title="Collapse"
             >
-              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              <ChevronUp className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -677,20 +704,6 @@ export default function JournalComposer({
             </motion.div>
           )}
         </AnimatePresence>
-      )}
-
-      {/* Collapsed state click target if compact */}
-      {!isExpanded && variant === "compact" && (
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic(8);
-            setIsExpanded(true);
-          }}
-          className="w-full py-2 px-3 rounded-xl border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-left text-xs text-[#9E948A] hover:border-[#C86D51] hover:text-[#C86D51] transition-colors cursor-pointer"
-        >
-          Tap to write a quiet note or reflection...
-        </button>
       )}
     </div>
   );
