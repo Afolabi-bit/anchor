@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import PageTransition from "@/app/components/PageTransition";
 import CheckInStepper from "@/app/components/CheckInStepper";
 import { JournalSkeleton } from "@/app/components/Skeletons";
 import JournalComposer from "@/app/components/JournalComposer";
@@ -239,8 +238,7 @@ export default function JournalPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
+      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -624,7 +622,6 @@ export default function JournalPage() {
             </div>
           )}
         </main>
-      </PageTransition>
 
       {/* Backfill Stepper Modal */}
       {stepperOpen && (

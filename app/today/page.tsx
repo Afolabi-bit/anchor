@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import GroundingDrawer from "@/app/components/GroundingDrawer";
 import CheckInStepper from "@/app/components/CheckInStepper";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
-import PageTransition from "@/app/components/PageTransition";
 import { TodaySkeleton } from "@/app/components/Skeletons";
 import { getTodayAffirmation } from "@/lib/affirmations";
 import JournalComposer from "@/app/components/JournalComposer";
@@ -126,8 +125,7 @@ export default function TodayPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
+      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* ========================================================================= */}
           {/* 1. ANCHOR FOCUS HEADER: Uninhibited Greeting + Intuitive Anchor Selector   */}
           {/* ========================================================================= */}
@@ -334,7 +332,7 @@ export default function TodayPage() {
               </div>
             </div>
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
             {currentView === "morning" ? (
               /* ----------------------- MORNING CHECK-IN CARD ----------------------- */
               <motion.div
@@ -550,7 +548,6 @@ export default function TodayPage() {
             <JournalComposer variant="compact" />
           </div>
         </main>
-      </PageTransition>
 
       {/* Stepper Modal for Morning / Evening */}
       {activeStepper && (

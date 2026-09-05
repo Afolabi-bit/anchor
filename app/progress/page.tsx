@@ -8,7 +8,6 @@ import MoodTimelineChart from "@/app/components/MoodTimelineChart";
 import AIPatternInsights from "@/app/components/AIPatternInsights";
 import CalendarHeatmap from "@/app/components/CalendarHeatmap";
 import MilestoneGallery from "@/app/components/MilestoneGallery";
-import PageTransition from "@/app/components/PageTransition";
 import { ProgressSkeleton } from "@/app/components/Skeletons";
 import { generateProgressSummary, ProgressSummaryData } from "@/lib/progress-summary-service";
 import { useAppContext } from "@/app/context/AppContext";
@@ -94,8 +93,7 @@ export default function ProgressPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
+      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
           <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
             <div>
@@ -268,7 +266,6 @@ export default function ProgressPage() {
             </span>
           </div>
         </main>
-      </PageTransition>
 
       {/* Story Recap Modal Deck */}
       {storyOpen && (

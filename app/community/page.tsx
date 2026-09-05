@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import PageTransition from "@/app/components/PageTransition";
 import {
   Heart,
   Anchor,
@@ -167,8 +166,7 @@ export default function CommunityPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      <PageTransition>
-        <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
+      <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -431,7 +429,6 @@ export default function CommunityPage() {
             </div>
           )}
         </main>
-      </PageTransition>
     </div>
   );
 }

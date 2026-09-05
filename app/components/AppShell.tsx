@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Navigation from "@/app/components/Navigation";
 import OfflineSyncBadge from "@/app/components/OfflineSyncBadge";
 import { useAppContext } from "@/app/context/AppContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const TAB_INDEX_MAP: Record<string, number> = {
   "/today": 0,
@@ -13,21 +13,6 @@ const TAB_INDEX_MAP: Record<string, number> = {
   "/progress": 2,
   "/community": 3,
   "/settings": 4,
-};
-
-const slideVariants = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? "25%" : "-25%",
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? "-25%" : "25%",
-    opacity: 0,
-  }),
 };
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -38,6 +23,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const prevPathRef = useRef(pathname);
   const directionRef = useRef<number>(1);
+  const isFirstRender = useRef(true);
 
   if (prevPathRef.current !== pathname) {
     const prevIdx = TAB_INDEX_MAP[prevPathRef.current] ?? 0;
@@ -46,7 +32,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       directionRef.current = currIdx > prevIdx ? 1 : -1;
     }
     prevPathRef.current = pathname;
+    isFirstRender.current = false;
   }
+
+  useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
 
   if (!isAppRoute) {
     return <>{children}</>;
@@ -68,23 +59,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       />
       <OfflineSyncBadge />
       <div className="flex-1 flex flex-col pb-24 sm:pb-16 relative w-full overflow-x-hidden">
-        <AnimatePresence mode="popLayout" custom={direction} initial={false}>
-          <motion.div
-            key={pathname}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              duration: 0.22,
-              ease: [0.25, 1, 0.5, 1],
-            }}
-            className="w-full flex-1 flex flex-col"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={pathname}
+          initial={isFirstRender.current ? false : { x: direction * 36, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{
+            duration: 0.18,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+          className="w-full flex-1 flex flex-col"
+        >
+          {children}
+        </motion.div>
       </div>
     </div>
   );

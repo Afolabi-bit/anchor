@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProgressSummaryExportModal from "@/app/components/ProgressSummaryExportModal";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
-import PageTransition from "@/app/components/PageTransition";
 import { SettingsSkeleton } from "@/app/components/Skeletons";
 import {
   generateProgressSummary,
@@ -512,8 +511,7 @@ export default function SettingsPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      <PageTransition>
-        <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-8 pb-28 sm:pb-20">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-8 pb-28 sm:pb-20">
           {/* Header Title */}
           <div className="space-y-1">
             <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
@@ -1474,7 +1472,6 @@ export default function SettingsPage() {
             </div>
           </footer>
         </main>
-      </PageTransition>
 
       {/* Floating Glassmorphic Save Dock (Appears smoothly when cadence changes) */}
       <AnimatePresence>

@@ -120,7 +120,7 @@ export default function DailyAffirmationCard() {
       </div>
 
       {/* Quote Content with Animated Transition */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={affirmation.id}
           initial={{ opacity: 0, y: 6 }}
