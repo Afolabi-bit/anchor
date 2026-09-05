@@ -418,7 +418,7 @@ export default function JournalPage() {
               if (day) {
                 if (selectedCommitmentId !== "all") {
                   const ag = day.anchors[selectedCommitmentId];
-                  eveningStatus = ag?.evening?.status;
+                  eveningStatus = ag?.evening?.status ?? undefined;
                   hasMorning = Boolean(ag?.morning);
                 } else {
                   const activeId = activeCommitment?.id;
@@ -428,7 +428,7 @@ export default function JournalPage() {
                     hasMorning = Boolean(ag.morning);
                   } else {
                     const anyAgWithEvening = Object.values(day.anchors).find((a) => a.evening?.status);
-                    eveningStatus = anyAgWithEvening?.evening?.status;
+                    eveningStatus = anyAgWithEvening?.evening?.status ?? undefined;
                     hasMorning = Object.values(day.anchors).some((a) => Boolean(a.morning));
                   }
                 }

@@ -8,6 +8,7 @@ import NewCommitmentModal from "@/app/components/NewCommitmentModal";
 import { TodaySkeleton } from "@/app/components/Skeletons";
 import { getTodayAffirmation } from "@/lib/affirmations";
 import JournalComposer from "@/app/components/JournalComposer";
+import DailyActivityCard from "@/app/components/DailyActivityCard";
 import { useAppContext } from "@/app/context/AppContext";
 import {
   Sun,
@@ -23,7 +24,7 @@ import {
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
-import type { Commitment, CheckIn } from "@/db/schema";
+import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
@@ -37,10 +38,12 @@ export default function TodayPage() {
     setActiveCommitmentId,
     activeCommitment,
     checkIns,
+    journalEntries,
     partnerMessages,
     setPartnerMessages,
     isInitialLoading,
     refreshCheckIns,
+    refreshJournals,
     refreshPartnerMessages,
     updateCheckInLocally,
   } = useAppContext();
@@ -58,6 +61,7 @@ export default function TodayPage() {
 
   // Stepper Modal State
   const [activeStepper, setActiveStepper] = useState<"morning" | "evening" | null>(null);
+  const [stepperCommitment, setStepperCommitment] = useState<Commitment | null>(null);
 
   // Optional manual view override to review or edit the other check-in
   const [viewOverride, setViewOverride] = useState<"morning" | "evening" | null>(null);
@@ -66,11 +70,20 @@ export default function TodayPage() {
   // Daily Affirmation quote
   const affirmation = getTodayAffirmation();
 
-  // Background refresh of check-ins and sponsor messages
+  // Background refresh of check-ins, journals, and sponsor messages
   useEffect(() => {
     refreshCheckIns(todayStr);
+    refreshJournals();
     refreshPartnerMessages();
-  }, [todayStr, refreshCheckIns, refreshPartnerMessages]);
+  }, [todayStr, refreshCheckIns, refreshJournals, refreshPartnerMessages]);
+
+  const todayCheckIns = useMemo(() => {
+    return checkIns.filter((c: CheckIn) => c.date === todayStr);
+  }, [checkIns, todayStr]);
+
+  const todayJournals = useMemo(() => {
+    return journalEntries.filter((j: JournalEntry) => j.date === todayStr);
+  }, [journalEntries, todayStr]);
 
   const morningCheckIn = useMemo(() => {
     if (!activeCommitment?.id) return null;
@@ -522,7 +535,25 @@ export default function TodayPage() {
           </div>
 
           {/* ========================================================================= */}
-          {/* 3. SECONDARY SUPPORTING AREA: Daily Quote & Pause & Breathe               */}
+          {/* 3. DAILY ACTIVITY CARD (Across All Anchors)                               */}
+          {/* ========================================================================= */}
+          <DailyActivityCard
+            commitments={commitments}
+            activeCommitmentId={activeCommitmentId}
+            onSelectCommitment={(id) => {
+              setActiveCommitmentId(id);
+            }}
+            todayCheckIns={todayCheckIns}
+            todayJournals={todayJournals}
+            onOpenStepper={(stage, comm) => {
+              setStepperCommitment(comm);
+              setActiveCommitmentId(comm.id);
+              setActiveStepper(stage);
+            }}
+          />
+
+          {/* ========================================================================= */}
+          {/* 4. SECONDARY SUPPORTING AREA: Daily Quote & Pause & Breathe               */}
           {/* ========================================================================= */}
           <div className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4">
             <div className="flex items-start justify-between gap-3">
@@ -544,7 +575,7 @@ export default function TodayPage() {
           </div>
 
           {/* ========================================================================= */}
-          {/* 4. JOURNAL COMPOSER (Collapsed Accordion by Default)                      */}
+          {/* 5. JOURNAL COMPOSER (Collapsed Accordion by Default)                      */}
           {/* ========================================================================= */}
           <div className="pt-1">
             <JournalComposer variant="compact" commitmentId={activeCommitment?.id} />
@@ -556,10 +587,13 @@ export default function TodayPage() {
         <CheckInStepper
           isOpen={Boolean(activeStepper)}
           initialStage={activeStepper}
-          commitmentName={activeCommitment?.name || "Daily Anchor"}
-          commitmentWhy={activeCommitment?.why || undefined}
-          commitmentId={activeCommitment?.id}
-          onClose={() => setActiveStepper(null)}
+          commitmentName={(stepperCommitment || activeCommitment)?.name || "Daily Anchor"}
+          commitmentWhy={(stepperCommitment || activeCommitment)?.why || undefined}
+          commitmentId={(stepperCommitment || activeCommitment)?.id}
+          onClose={() => {
+            setActiveStepper(null);
+            setStepperCommitment(null);
+          }}
           onSuccess={handleCheckInSuccess}
         />
       )}
