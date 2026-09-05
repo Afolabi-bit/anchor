@@ -61,14 +61,14 @@ export default function SignupPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to create account");
-        setLoading(false);
         return;
       }
 
-      router.push("/onboarding");
-      router.refresh();
+      // Hard redirect to ensure browser commits HttpOnly session cookie
+      window.location.href = "/onboarding";
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
     }
   };

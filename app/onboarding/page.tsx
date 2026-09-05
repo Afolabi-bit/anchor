@@ -61,7 +61,13 @@ export default function OnboardingPage() {
         const res = await fetch("/api/auth/me");
         if (res.ok) {
           const data = await res.json();
-          setUser(data.user);
+          if (data.user) {
+            setUser(data.user);
+          } else {
+            window.location.href = "/signup";
+          }
+        } else {
+          window.location.href = "/signup";
         }
       } catch (e) {
         console.warn("Could not load user in onboarding:", e);
@@ -70,9 +76,9 @@ export default function OnboardingPage() {
     loadUser();
   }, []);
 
-  // Form State
-  const [commitmentName, setCommitmentName] = useState(INTENTION_PRESETS[0].name);
-  const [commitmentWhy, setCommitmentWhy] = useState(INTENTION_PRESETS[0].why);
+  // Form State - start with clean, un-autofilled fields
+  const [commitmentName, setCommitmentName] = useState("");
+  const [commitmentWhy, setCommitmentWhy] = useState("");
   const [frequency, setFrequency] = useState<"daily" | "custom_days">("daily");
   const [morningTime, setMorningTime] = useState("08:00");
   const [eveningTime, setEveningTime] = useState("20:00");
@@ -109,7 +115,7 @@ export default function OnboardingPage() {
 
       // If user is not yet signed up, redirect to signup
       if (!user) {
-        router.push("/signup?from=onboarding");
+        window.location.href = "/signup";
         return;
       }
 
@@ -132,14 +138,13 @@ export default function OnboardingPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to complete setup");
-        setLoading(false);
         return;
       }
 
-      router.push("/today");
-      router.refresh();
+      window.location.href = "/today";
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -516,11 +521,11 @@ export default function OnboardingPage() {
                     {loading ? (
                       <>
                         <Spinner />
-                        <span>{user ? "Saving..." : "Creating account..."}</span>
+                        <span>Saving your anchor...</span>
                       </>
                     ) : (
                       <>
-                        <span>{user ? "Save Anchor & Start Today" : "Create Account & Start Today"}</span>
+                        <span>Save Anchor & Start Today</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}

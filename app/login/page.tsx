@@ -34,18 +34,13 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Invalid email or password");
-        setLoading(false);
         return;
       }
 
-      if (data.user && !data.user.isOnboarded) {
-        router.push("/onboarding");
-      } else {
-        router.push("/today");
-      }
-      router.refresh();
+      window.location.href = data.user && !data.user.isOnboarded ? "/onboarding" : "/today";
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
     }
   };

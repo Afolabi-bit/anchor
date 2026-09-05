@@ -33,6 +33,8 @@ export async function POST(request: Request) {
     const token = await createSessionToken({
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       isOnboarded: user.isOnboarded,
       morningNotificationTime: user.morningNotificationTime,
       eveningNotificationTime: user.eveningNotificationTime,
@@ -45,6 +47,8 @@ export async function POST(request: Request) {
       user: {
         id: user.id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
         isOnboarded: user.isOnboarded,
         morningNotificationTime: user.morningNotificationTime,
         eveningNotificationTime: user.eveningNotificationTime,

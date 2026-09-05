@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, clearSessionCookie } from "@/lib/auth";
 import { getUserById, getActiveCommitmentsByUserId, getAllCommitmentsByUserId } from "@/lib/db-service";
 
 export async function GET() {
@@ -10,6 +10,8 @@ export async function GET() {
 
   const user = await getUserById(session.id);
   if (!user) {
+    // Session token is signed but user does not exist in DB (e.g. DB reset or stale test cookie)
+    await clearSessionCookie();
     return NextResponse.json({ user: null }, { status: 401 });
   }
 
