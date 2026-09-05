@@ -253,33 +253,41 @@ export async function updateCommitment(
 }
 
 // ----------------- CHECK-INS -----------------
-export async function getCheckInsByUserId(userId: string): Promise<schema.CheckIn[]> {
+export async function getCheckInsByUserId(userId: string, commitmentId?: string): Promise<schema.CheckIn[]> {
   if (db) {
+    const conditions = [eq(schema.checkIns.userId, userId)];
+    if (commitmentId) {
+      conditions.push(eq(schema.checkIns.commitmentId, commitmentId));
+    }
     const rows = await db
       .select()
       .from(schema.checkIns)
-      .where(eq(schema.checkIns.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(schema.checkIns.date), desc(schema.checkIns.createdAt));
     return rows.map(decryptCheckIn);
   }
   const store = readLocalStore();
   return (store.checkIns || [])
-    .filter((c) => c.userId === userId)
+    .filter((c) => c.userId === userId && (!commitmentId || c.commitmentId === commitmentId))
     .sort((a, b) => (b.date > a.date ? 1 : -1))
     .map(decryptCheckIn);
 }
 
-export async function getCheckInsForDate(userId: string, dateStr: string): Promise<schema.CheckIn[]> {
+export async function getCheckInsForDate(userId: string, dateStr: string, commitmentId?: string): Promise<schema.CheckIn[]> {
   if (db) {
+    const conditions = [eq(schema.checkIns.userId, userId), eq(schema.checkIns.date, dateStr)];
+    if (commitmentId) {
+      conditions.push(eq(schema.checkIns.commitmentId, commitmentId));
+    }
     const rows = await db
       .select()
       .from(schema.checkIns)
-      .where(and(eq(schema.checkIns.userId, userId), eq(schema.checkIns.date, dateStr)));
+      .where(and(...conditions));
     return rows.map(decryptCheckIn);
   }
   const store = readLocalStore();
   return (store.checkIns || [])
-    .filter((c) => c.userId === userId && c.date === dateStr)
+    .filter((c) => c.userId === userId && c.date === dateStr && (!commitmentId || c.commitmentId === commitmentId))
     .map(decryptCheckIn);
 }
 
@@ -594,39 +602,48 @@ export async function incrementReflectionResonates(id: string): Promise<boolean>
 }
 
 // ----------------- JOURNAL ENTRIES -----------------
-export async function getJournalEntriesForUser(userId: string): Promise<schema.JournalEntry[]> {
+export async function getJournalEntriesForUser(userId: string, commitmentId?: string): Promise<schema.JournalEntry[]> {
   if (db) {
+    const conditions = [eq(schema.journalEntries.userId, userId)];
+    if (commitmentId) {
+      conditions.push(eq(schema.journalEntries.commitmentId, commitmentId));
+    }
     const rows = await db
       .select()
       .from(schema.journalEntries)
-      .where(eq(schema.journalEntries.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(schema.journalEntries.date), desc(schema.journalEntries.createdAt));
     return rows.map(decryptJournalEntry);
   }
   const store = readLocalStore();
   return (store.journalEntries || [])
-    .filter((j) => j.userId === userId)
+    .filter((j) => j.userId === userId && (!commitmentId || j.commitmentId === commitmentId))
     .sort((a, b) => (b.date > a.date ? 1 : -1))
     .map(decryptJournalEntry);
 }
 
-export async function getJournalEntriesForDate(userId: string, dateStr: string): Promise<schema.JournalEntry[]> {
+export async function getJournalEntriesForDate(userId: string, dateStr: string, commitmentId?: string): Promise<schema.JournalEntry[]> {
   if (db) {
+    const conditions = [eq(schema.journalEntries.userId, userId), eq(schema.journalEntries.date, dateStr)];
+    if (commitmentId) {
+      conditions.push(eq(schema.journalEntries.commitmentId, commitmentId));
+    }
     const rows = await db
       .select()
       .from(schema.journalEntries)
-      .where(and(eq(schema.journalEntries.userId, userId), eq(schema.journalEntries.date, dateStr)))
+      .where(and(...conditions))
       .orderBy(desc(schema.journalEntries.createdAt));
     return rows.map(decryptJournalEntry);
   }
   const store = readLocalStore();
   return (store.journalEntries || [])
-    .filter((j) => j.userId === userId && j.date === dateStr)
+    .filter((j) => j.userId === userId && j.date === dateStr && (!commitmentId || j.commitmentId === commitmentId))
     .map(decryptJournalEntry);
 }
 
 export async function createJournalEntry(data: {
   userId: string;
+  commitmentId?: string;
   date: string;
   title?: string;
   content: string;
@@ -659,6 +676,7 @@ export async function createJournalEntry(data: {
       .insert(schema.journalEntries)
       .values({
         userId: data.userId,
+        commitmentId: data.commitmentId || null,
         date: data.date,
         title: data.title?.trim() || null,
         content: contentPayload,
@@ -679,6 +697,7 @@ export async function createJournalEntry(data: {
   const newEntry: schema.JournalEntry = {
     id: crypto.randomUUID(),
     userId: data.userId,
+    commitmentId: data.commitmentId || null,
     date: data.date,
     title: data.title?.trim() || null,
     content: contentPayload,

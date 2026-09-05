@@ -24,11 +24,29 @@ import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
 
+const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
+
+interface DayAnchorGroup {
+  commitmentId: string;
+  commitment?: Commitment;
+  morning?: CheckIn;
+  evening?: CheckIn;
+}
+
+interface DayGroup {
+  date: string;
+  anchors: Record<string, DayAnchorGroup>;
+  journals: JournalEntry[];
+}
+
 export default function JournalPage() {
   const router = useRouter();
   const {
     user,
+    commitments,
     activeCommitment,
+    activeCommitmentId,
+    setActiveCommitmentId,
     checkIns,
     journalEntries,
     setJournalEntries,
@@ -37,6 +55,18 @@ export default function JournalPage() {
     refreshJournals,
     updateCheckInLocally,
   } = useAppContext();
+
+  // Selected Anchor filter: "all" or commitment.id.
+  // Defaults to activeCommitment?.id || "all"
+  const [selectedCommitmentId, setSelectedCommitmentId] = useState<string>(() => {
+    return activeCommitment?.id || "all";
+  });
+
+  useEffect(() => {
+    if (activeCommitment?.id && selectedCommitmentId === "all") {
+      setSelectedCommitmentId(activeCommitment.id);
+    }
+  }, [activeCommitment?.id]);
 
   const [filterStatus, setFilterStatus] = useState<"all" | "yes" | "partial" | "no">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,9 +106,9 @@ export default function JournalPage() {
   };
 
   useEffect(() => {
-    refreshCheckIns();
-    refreshJournals();
-  }, [refreshCheckIns, refreshJournals]);
+    refreshCheckIns(undefined, selectedCommitmentId === "all" ? undefined : selectedCommitmentId);
+    refreshJournals(selectedCommitmentId === "all" ? undefined : selectedCommitmentId);
+  }, [selectedCommitmentId, refreshCheckIns, refreshJournals]);
 
   const handleNewJournalEntry = (newEntry: JournalEntry) => {
     setJournalEntries((prev) => [newEntry, ...prev.filter((j) => j.id !== newEntry.id)]);
@@ -99,30 +129,58 @@ export default function JournalPage() {
     }
   };
 
-  // Group check-ins and journal entries by Date
-  interface DayGroup {
-    morning?: CheckIn;
-    evening?: CheckIn;
-    journals: JournalEntry[];
-  }
+  // Group check-ins and journal entries by Date and by Anchor
+  // This guarantees entries from multiple anchors on the same date never clobber each other!
+  const groupedByDate: Record<string, DayGroup> = useMemo(() => {
+    const map: Record<string, DayGroup> = {};
 
-  const groupedByDate: Record<string, DayGroup> = {};
-  checkIns.forEach((item) => {
-    if (!groupedByDate[item.date]) {
-      groupedByDate[item.date] = { journals: [] };
-    }
-    if (item.type === "morning") groupedByDate[item.date].morning = item;
-    if (item.type === "evening") groupedByDate[item.date].evening = item;
-  });
+    checkIns.forEach((item) => {
+      // If user selected a specific anchor, skip check-ins from other anchors
+      if (selectedCommitmentId !== "all" && item.commitmentId !== selectedCommitmentId) {
+        return;
+      }
 
-  journalEntries.forEach((entry) => {
-    if (!groupedByDate[entry.date]) {
-      groupedByDate[entry.date] = { journals: [] };
-    }
-    groupedByDate[entry.date].journals.push(entry);
-  });
+      const cId = item.commitmentId || "unassigned";
+      if (!map[item.date]) {
+        map[item.date] = { date: item.date, anchors: {}, journals: [] };
+      }
+      if (!map[item.date].anchors[cId]) {
+        const comm = commitments.find((c) => c.id === item.commitmentId);
+        map[item.date].anchors[cId] = {
+          commitmentId: cId,
+          commitment: comm,
+        };
+      }
+      if (item.type === "morning") {
+        map[item.date].anchors[cId].morning = item;
+      }
+      if (item.type === "evening") {
+        map[item.date].anchors[cId].evening = item;
+      }
+    });
 
-  const sortedDates = Object.keys(groupedByDate).sort((a, b) => (b > a ? 1 : -1));
+    journalEntries.forEach((entry) => {
+      // If user selected a specific anchor and entry has commitmentId, filter if mismatch
+      if (
+        selectedCommitmentId !== "all" &&
+        entry.commitmentId &&
+        entry.commitmentId !== selectedCommitmentId
+      ) {
+        return;
+      }
+
+      if (!map[entry.date]) {
+        map[entry.date] = { date: entry.date, anchors: {}, journals: [] };
+      }
+      map[entry.date].journals.push(entry);
+    });
+
+    return map;
+  }, [checkIns, journalEntries, selectedCommitmentId, commitments]);
+
+  const sortedDates = useMemo(() => {
+    return Object.keys(groupedByDate).sort((a, b) => (b > a ? 1 : -1));
+  }, [groupedByDate]);
 
   // Past 7 Days Strip
   const past7Days = useMemo(() => {
@@ -136,38 +194,68 @@ export default function JournalPage() {
     return list;
   }, []);
 
+  const accountStartDate = user?.createdAt
+    ? new Date(user.createdAt).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+
+  const missedPastDays = useMemo(() => {
+    return past7Days.slice(0, 6).filter((dStr) => {
+      if (dStr < accountStartDate) return false;
+      const day = groupedByDate[dStr];
+      if (!day) return true;
+      if (selectedCommitmentId !== "all") {
+        return !day.anchors[selectedCommitmentId]?.evening;
+      }
+      const activeId = activeCommitment?.id;
+      if (activeId) {
+        return !day.anchors[activeId]?.evening;
+      }
+      return Object.values(day.anchors).every((ag) => !ag.evening);
+    });
+  }, [past7Days, accountStartDate, groupedByDate, selectedCommitmentId, activeCommitment?.id]);
+
   // Filtered & Searched dates
   const filteredDates = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return sortedDates.filter((dateStr) => {
-      const entry = groupedByDate[dateStr];
-      const evening = entry.evening;
-      const morning = entry.morning;
+      const day = groupedByDate[dateStr];
+      if (!day) return false;
 
       if (showStarredOnly && !starredDates.includes(dateStr)) {
         return false;
       }
 
-      if (filterStatus !== "all" && evening?.status !== filterStatus) {
-        return false;
+      const anchorGroups = Object.values(day.anchors);
+
+      if (filterStatus !== "all") {
+        const matchesStatus = anchorGroups.some((ag) => ag.evening?.status === filterStatus);
+        if (!matchesStatus) return false;
       }
 
       if (q) {
-        const morningMatches =
-          morning?.intentionNote?.toLowerCase().includes(q) ||
-          morning?.plannedActions?.some((a: string) => a.toLowerCase().includes(q));
-        const eveningMatches =
-          evening?.reflection?.toLowerCase().includes(q) ||
-          evening?.lessonsLearned?.toLowerCase().includes(q) ||
-          evening?.blockerTags?.some((t: string) => t.toLowerCase().includes(q)) ||
-          evening?.emotionName?.toLowerCase().includes(q);
-        const journalMatches = entry.journals?.some(
+        const checkInMatches = anchorGroups.some((ag) => {
+          const m = ag.morning;
+          const e = ag.evening;
+          const commMatch = ag.commitment?.name.toLowerCase().includes(q);
+          const morningMatch =
+            m?.intentionNote?.toLowerCase().includes(q) ||
+            m?.plannedActions?.some((a: string) => a.toLowerCase().includes(q));
+          const eveningMatch =
+            e?.reflection?.toLowerCase().includes(q) ||
+            e?.lessonsLearned?.toLowerCase().includes(q) ||
+            e?.blockerTags?.some((t: string) => t.toLowerCase().includes(q)) ||
+            e?.emotionName?.toLowerCase().includes(q);
+          return Boolean(commMatch || morningMatch || eveningMatch);
+        });
+
+        const journalMatches = day.journals?.some(
           (j: any) =>
             j.content?.toLowerCase().includes(q) ||
             j.title?.toLowerCase().includes(q) ||
             (j.tags && j.tags.some((t: string) => t.toLowerCase().includes(q)))
         );
-        return Boolean(morningMatches || eveningMatches || journalMatches || dateStr.includes(q));
+
+        return Boolean(checkInMatches || journalMatches || dateStr.includes(q));
       }
 
       return true;
@@ -224,360 +312,540 @@ export default function JournalPage() {
     }
   };
 
-  const accountStartDate = user?.createdAt
-    ? new Date(user.createdAt).toISOString().slice(0, 10)
-    : new Date().toISOString().slice(0, 10);
-
-  const missedPastDays = past7Days
-    .slice(0, 6)
-    .filter((dStr) => !groupedByDate[dStr]?.evening && dStr >= accountStartDate);
-
   if (isInitialLoading && !user && checkIns.length === 0) {
     return <JournalSkeleton />;
   }
 
+  const activeAnchorForComposer =
+    selectedCommitmentId !== "all"
+      ? selectedCommitmentId
+      : activeCommitment?.id;
+
   return (
     <div className="w-full flex-1 flex flex-col">
       <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
-                Reflective Archive
-              </span>
-              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
-                Personal Journal
-              </h1>
-            </div>
-            <span className="text-xs px-3 py-1 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs shrink-0">
-              {filteredDates.length} {filteredDates.length === 1 ? "entry" : "entries"}
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+              Reflective Archive
             </span>
+            <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
+              Personal Journal
+            </h1>
           </div>
+          <span className="text-xs px-3 py-1 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs shrink-0">
+            {filteredDates.length} {filteredDates.length === 1 ? "entry" : "entries"}
+          </span>
+        </div>
 
-          {/* Prominent Freeform Journal Composer */}
-          <JournalComposer onEntryCreated={handleNewJournalEntry} variant="full" />
-
-          {/* Compact 7-Day Timeline Pebble Strip */}
-          <div className="p-3.5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-2">
-            <div className="flex items-center justify-between px-1 text-xs text-[#786F66] dark:text-[#A8A096]">
-              <span className="uppercase tracking-wider font-semibold">This Week</span>
-              <span className="text-xs">Tap pebble to focus</span>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1.5">
-              {past7Days.map((dStr) => {
-                const entry = groupedByDate[dStr];
-                const eveningStatus = entry?.evening?.status;
-                const hasMorning = Boolean(entry?.morning);
-                const isToday = dStr === new Date().toISOString().slice(0, 10);
-                const isPreAccount = dStr < accountStartDate;
-
-                return (
-                  <button
-                    key={dStr}
-                    type="button"
-                    disabled={isPreAccount}
-                    onClick={() => !isPreAccount && scrollToDate(dStr)}
-                    className={`flex flex-col items-center gap-1 py-0.5 ${
-                      isPreAccount ? "opacity-35 cursor-not-allowed" : "cursor-pointer"
-                    }`}
-                    title={isPreAccount ? "Prior to joining Anchor" : undefined}
-                  >
-                    <span className="text-xs text-[#786F66] dark:text-[#A8A096] font-medium">
-                      {formatWeekday(dStr)}
-                    </span>
-                    <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-2xs ${
-                        isPreAccount
-                          ? "bg-[#F3EFE7]/40 dark:bg-[#25221F]/30 border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-[#A8A096]"
-                          : eveningStatus === "yes"
-                          ? "bg-[#658B70] text-white font-semibold"
-                          : eveningStatus === "partial"
-                          ? "bg-[#B88452] text-white font-semibold"
-                          : eveningStatus === "no"
-                          ? "bg-[#82786F] text-white font-semibold"
-                          : hasMorning
-                          ? "border-2 border-[#B88452] bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold"
-                          : "bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-[#9E948A]"
-                      } ${isToday ? "ring-2 ring-[#C86D51]" : ""}`}
-                    >
-                      <span className="text-xs">{formatDayNumber(dStr)}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Soft Landing Backfill Banner (If missed days exist) */}
-          {missedPastDays.length > 0 && (
-            <div className="p-3.5 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] border border-[#F2D7CE] dark:border-[#4D332B] flex items-center justify-between text-xs text-[#B88452] dark:text-[#E2A365] shadow-2xs">
-              <div className="flex items-center gap-2">
-                <HeartHandshake className="w-4 h-4 shrink-0" />
-                <span>{missedPastDays.length} unrecorded past days • Soft landing</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setBackfillDate(missedPastDays[0]);
-                  setStepperOpen(true);
-                }}
-                className="font-semibold underline cursor-pointer"
-              >
-                Backfill →
-              </button>
-            </div>
-          )}
-
-          {/* Unified Search & Quick Filter Capsule */}
-          <div className="space-y-2.5">
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9E948A]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search reflections, emotions, lessons..."
-                className="w-full pl-9 pr-8 py-2.5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FFFFFF] dark:bg-[#25221F] text-xs text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] focus:outline-none focus:border-[#C86D51] shadow-2xs"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9E948A] hover:text-[#2C2520]"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Filter Pills */}
+        {/* Anchor Switcher / Filter Bar */}
+        {commitments.length > 0 && (
+          <div className="space-y-1.5">
+            <span className="text-2xs uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096] block px-1">
+              Filter by Anchor
+            </span>
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
               <button
                 type="button"
                 onClick={() => {
                   triggerHaptic(8);
-                  setFilterStatus("all");
-                  setShowStarredOnly(false);
+                  setSelectedCommitmentId("all");
                 }}
                 className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
-                  filterStatus === "all" && !showStarredOnly
-                    ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] font-semibold"
-                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
+                  selectedCommitmentId === "all"
+                    ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] font-semibold border-transparent shadow-2xs"
+                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
                 }`}
               >
-                All Days
+                All Anchors
               </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic(8);
-                  setShowStarredOnly(!showStarredOnly);
-                }}
-                className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors flex items-center gap-1 shrink-0 ${
-                  showStarredOnly
-                    ? "bg-[#B88452] border-[#B88452] text-white font-semibold"
-                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
-                }`}
-              >
-                <Star className={`w-3 h-3 ${showStarredOnly ? "fill-current" : ""}`} />
-                <span>Starred ({starredDates.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic(8);
-                  setFilterStatus("yes");
-                  setShowStarredOnly(false);
-                }}
-                className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
-                  filterStatus === "yes" && !showStarredOnly
-                    ? "bg-[#658B70] border-[#658B70] text-white font-semibold"
-                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
-                }`}
-              >
-                Followed Through
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic(8);
-                  setFilterStatus("partial");
-                  setShowStarredOnly(false);
-                }}
-                className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
-                  filterStatus === "partial" && !showStarredOnly
-                    ? "bg-[#B88452] border-[#B88452] text-white font-semibold"
-                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
-                }`}
-              >
-                Adjusted
-              </button>
+              {commitments.map((comm) => {
+                const isSelected = selectedCommitmentId === comm.id;
+                const colorHex = PALETTE_HEX[comm.colorIndex % PALETTE_HEX.length] || "#C86D51";
+                return (
+                  <button
+                    key={comm.id}
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic(8);
+                      setSelectedCommitmentId(comm.id);
+                      setActiveCommitmentId(comm.id);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
+                      isSelected
+                        ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] font-semibold border-transparent shadow-2xs"
+                        : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
+                    }`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: colorHex }}
+                    />
+                    <span className="truncate max-w-[140px]">{comm.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
+        )}
 
-          {/* Reflections Stream */}
-          {filteredDates.length === 0 ? (
-            <div className="p-10 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-center space-y-2 clay-card shadow-2xs">
-              <Quote className="w-6 h-6 text-[#786F66] mx-auto opacity-70" />
-              <h3 className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0]">
-                No matching journal reflections found
-              </h3>
-              <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
-                Try adjusting your search or filter criteria.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3.5">
-              {filteredDates.map((dateStr) => {
-                const entry = groupedByDate[dateStr];
-                const morning = entry.morning;
-                const evening = entry.evening;
-                const isExpanded = Boolean(expandedDates[dateStr]);
-                const isStarred = starredDates.includes(dateStr);
+        {/* Prominent Freeform Journal Composer */}
+        <JournalComposer
+          onEntryCreated={handleNewJournalEntry}
+          variant="full"
+          commitmentId={activeAnchorForComposer}
+        />
 
-                return (
+        {/* Compact 7-Day Timeline Pebble Strip */}
+        <div className="p-3.5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-2">
+          <div className="flex items-center justify-between px-1 text-xs text-[#786F66] dark:text-[#A8A096]">
+            <span className="uppercase tracking-wider font-semibold">
+              This Week {selectedCommitmentId !== "all" && `• ${commitments.find((c) => c.id === selectedCommitmentId)?.name || ""}`}
+            </span>
+            <span className="text-xs">Tap pebble to focus</span>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5">
+            {past7Days.map((dStr) => {
+              const day = groupedByDate[dStr];
+              const isToday = dStr === new Date().toISOString().slice(0, 10);
+              const isPreAccount = dStr < accountStartDate;
+
+              let eveningStatus: string | undefined;
+              let hasMorning = false;
+
+              if (day) {
+                if (selectedCommitmentId !== "all") {
+                  const ag = day.anchors[selectedCommitmentId];
+                  eveningStatus = ag?.evening?.status;
+                  hasMorning = Boolean(ag?.morning);
+                } else {
+                  const activeId = activeCommitment?.id;
+                  const ag = activeId ? day.anchors[activeId] : undefined;
+                  if (ag?.evening?.status) {
+                    eveningStatus = ag.evening.status;
+                    hasMorning = Boolean(ag.morning);
+                  } else {
+                    const anyAgWithEvening = Object.values(day.anchors).find((a) => a.evening?.status);
+                    eveningStatus = anyAgWithEvening?.evening?.status;
+                    hasMorning = Object.values(day.anchors).some((a) => Boolean(a.morning));
+                  }
+                }
+              }
+
+              return (
+                <button
+                  key={dStr}
+                  type="button"
+                  disabled={isPreAccount}
+                  onClick={() => !isPreAccount && scrollToDate(dStr)}
+                  className={`flex flex-col items-center gap-1 py-0.5 ${
+                    isPreAccount ? "opacity-35 cursor-not-allowed" : "cursor-pointer"
+                  }`}
+                  title={isPreAccount ? "Prior to joining Anchor" : undefined}
+                >
+                  <span className="text-xs text-[#786F66] dark:text-[#A8A096] font-medium">
+                    {formatWeekday(dStr)}
+                  </span>
                   <div
-                    id={`entry-${dateStr}`}
-                    key={dateStr}
-                    className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3 relative overflow-hidden"
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-2xs ${
+                      isPreAccount
+                        ? "bg-[#F3EFE7]/40 dark:bg-[#25221F]/30 border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-[#A8A096]"
+                        : eveningStatus === "yes"
+                        ? "bg-[#658B70] text-white font-semibold"
+                        : eveningStatus === "partial"
+                        ? "bg-[#B88452] text-white font-semibold"
+                        : eveningStatus === "no"
+                        ? "bg-[#82786F] text-white font-semibold"
+                        : hasMorning
+                        ? "border-2 border-[#B88452] bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold"
+                        : "bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-[#9E948A]"
+                    } ${isToday ? "ring-2 ring-[#C86D51]" : ""}`}
                   >
-                    {/* Header Row */}
-                    <div
-                      onClick={() => toggleExpand(dateStr)}
-                      className="flex items-center justify-between cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0] font-medium">
-                          {formatDate(dateStr)}
+                    <span className="text-xs">{formatDayNumber(dStr)}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Soft Landing Backfill Banner (If missed days exist) */}
+        {missedPastDays.length > 0 && (
+          <div className="p-3.5 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] border border-[#F2D7CE] dark:border-[#4D332B] flex items-center justify-between text-xs text-[#B88452] dark:text-[#E2A365] shadow-2xs">
+            <div className="flex items-center gap-2">
+              <HeartHandshake className="w-4 h-4 shrink-0" />
+              <span>{missedPastDays.length} unrecorded past days • Soft landing</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setBackfillDate(missedPastDays[0]);
+                setStepperOpen(true);
+              }}
+              className="font-semibold underline cursor-pointer"
+            >
+              Backfill →
+            </button>
+          </div>
+        )}
+
+        {/* Unified Search & Quick Filter Capsule */}
+        <div className="space-y-2.5">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search reflections, emotions, lessons, anchors..."
+              className="w-full pl-9 pr-8 py-2.5 rounded-2xl border border-[#EAE3D7] dark:border-[#38332E] bg-[#FFFFFF] dark:bg-[#25221F] text-xs text-[#2C2520] dark:text-[#ECE7E0] placeholder:text-[#9E948A] focus:outline-none focus:border-[#C86D51] shadow-2xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9E948A] hover:text-[#2C2520]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setFilterStatus("all");
+                setShowStarredOnly(false);
+              }}
+              className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
+                filterStatus === "all" && !showStarredOnly
+                  ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] font-semibold"
+                  : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
+              }`}
+            >
+              All Days
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setShowStarredOnly(!showStarredOnly);
+              }}
+              className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors flex items-center gap-1 shrink-0 ${
+                showStarredOnly
+                  ? "bg-[#B88452] border-[#B88452] text-white font-semibold"
+                  : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
+              }`}
+            >
+              <Star className={`w-3 h-3 ${showStarredOnly ? "fill-current" : ""}`} />
+              <span>Starred ({starredDates.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setFilterStatus("yes");
+                setShowStarredOnly(false);
+              }}
+              className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
+                filterStatus === "yes" && !showStarredOnly
+                  ? "bg-[#658B70] border-[#658B70] text-white font-semibold"
+                  : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
+              }`}
+            >
+              Followed Through
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setFilterStatus("partial");
+                setShowStarredOnly(false);
+              }}
+              className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
+                filterStatus === "partial" && !showStarredOnly
+                  ? "bg-[#B88452] border-[#B88452] text-white font-semibold"
+                  : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66]"
+              }`}
+            >
+              Adjusted
+            </button>
+          </div>
+        </div>
+
+        {/* Reflections Stream */}
+        {filteredDates.length === 0 ? (
+          <div className="p-10 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-center space-y-2 clay-card shadow-2xs">
+            <Quote className="w-6 h-6 text-[#786F66] mx-auto opacity-70" />
+            <h3 className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0]">
+              No matching journal reflections found
+            </h3>
+            <p className="text-xs text-[#786F66] dark:text-[#A8A096]">
+              Try adjusting your search or filter criteria.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3.5">
+            {filteredDates.map((dateStr) => {
+              const day = groupedByDate[dateStr];
+              const anchorGroups = Object.values(day.anchors);
+              const isExpanded = Boolean(expandedDates[dateStr]);
+              const isStarred = starredDates.includes(dateStr);
+
+              // Find unique emotions for this day across anchors
+              const emotionNames = Array.from(
+                new Set(
+                  anchorGroups
+                    .map((ag) => ag.evening?.emotionName)
+                    .filter(Boolean) as string[]
+                )
+              );
+
+              return (
+                <div
+                  id={`entry-${dateStr}`}
+                  key={dateStr}
+                  className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3 relative overflow-hidden"
+                >
+                  {/* Header Row */}
+                  <div
+                    onClick={() => toggleExpand(dateStr)}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span className="font-serif-title text-base text-[#2C2520] dark:text-[#ECE7E0] font-medium">
+                        {formatDate(dateStr)}
+                      </span>
+
+                      {emotionNames.map((emo, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold"
+                        >
+                          {emo}
                         </span>
-
-                        {evening?.emotionName && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
-                            {evening.emotionName}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={(e) => toggleStarDate(dateStr, e)}
-                          className="p-1.5 text-[#9E948A] hover:text-[#B88452] cursor-pointer"
-                        >
-                          <Star className={`w-4 h-4 ${isStarred ? "fill-[#B88452] text-[#B88452]" : ""}`} />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="p-1.5 text-[#786F66] hover:text-[#2C2520] cursor-pointer"
-                        >
-                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </button>
-                      </div>
+                      ))}
                     </div>
 
-                    {/* Excerpt preview when collapsed */}
-                    {!isExpanded && (
-                      <p
-                        onClick={() => toggleExpand(dateStr)}
-                        className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] truncate cursor-pointer"
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => toggleStarDate(dateStr, e)}
+                        className="p-1.5 text-[#9E948A] hover:text-[#B88452] cursor-pointer"
                       >
-                        {entry.journals?.[0]?.content
-                          ? `"${entry.journals[0].content}"`
-                          : evening?.reflection
-                          ? `"${evening.reflection}"`
-                          : morning?.intentionNote
-                          ? `"${morning.intentionNote}"`
-                          : "Tap to view day details"}
-                      </p>
-                    )}
+                        <Star className={`w-4 h-4 ${isStarred ? "fill-[#B88452] text-[#B88452]" : ""}`} />
+                      </button>
 
-                    {/* Expanded Content */}
-                    <AnimatePresence initial={false}>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="pt-3 border-t border-[#EAE3D7] dark:border-[#38332E] space-y-3.5 text-xs overflow-hidden"
-                        >
-                          {/* Morning Section */}
-                          {morning && (
-                            <div className="p-3.5 rounded-2xl bg-[#FAF2EA] dark:bg-[#352A1E] space-y-2">
-                              <span className="text-xs uppercase tracking-wider font-bold text-[#B88452] flex items-center gap-1">
-                                <Sun className="w-3.5 h-3.5" />
-                                Morning Intention
+                      <button
+                        type="button"
+                        className="p-1.5 text-[#786F66] hover:text-[#2C2520] cursor-pointer"
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Excerpt preview when collapsed */}
+                  {!isExpanded && (
+                    <div
+                      onClick={() => toggleExpand(dateStr)}
+                      className="cursor-pointer space-y-1"
+                    >
+                      {day.journals?.[0]?.content ? (
+                        <p className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] truncate">
+                          "{day.journals[0].content}"
+                        </p>
+                      ) : anchorGroups[0]?.evening?.reflection ? (
+                        <p className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] truncate">
+                          "{anchorGroups[0].evening.reflection}"
+                        </p>
+                      ) : anchorGroups[0]?.morning?.intentionNote ? (
+                        <p className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] truncate">
+                          "{anchorGroups[0].morning.intentionNote}"
+                        </p>
+                      ) : (
+                        <p className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] truncate">
+                          Tap to view day details
+                        </p>
+                      )}
+
+                      {/* If viewing all anchors and multiple anchors exist on this date, show anchor badges */}
+                      {selectedCommitmentId === "all" && anchorGroups.length > 0 && (
+                        <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                          {anchorGroups.map((ag) => {
+                            const colorHex =
+                              PALETTE_HEX[(ag.commitment?.colorIndex ?? 0) % PALETTE_HEX.length] ||
+                              "#C86D51";
+                            return (
+                              <span
+                                key={ag.commitmentId}
+                                className="inline-flex items-center gap-1 text-2xs px-2 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] border border-[#EAE3D7] dark:border-[#38332E]"
+                              >
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: colorHex }}
+                                />
+                                <span className="truncate max-w-[100px]">
+                                  {ag.commitment?.name || "Anchor"}
+                                </span>
                               </span>
-                              {morning.plannedActions && morning.plannedActions.length > 0 && (
-                                <div className="space-y-1 text-[#2C2520] dark:text-[#ECE7E0]">
-                                  {morning.plannedActions.map((act: string, i: number) => (
-                                    <div key={i} className="flex items-center gap-1.5">
-                                      <CheckCircle2 className="w-3 h-3 text-[#658B70]" />
-                                      <span>{act}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {morning.intentionNote && (
-                                <p className="font-serif italic text-[#786F66] dark:text-[#A8A096]">
-                                  "{morning.intentionNote}"
-                                </p>
-                              )}
-                            </div>
-                          )}
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                          {/* Evening Section */}
-                          {evening && (
-                            <div className="p-3.5 rounded-2xl bg-[#F9EBE7] dark:bg-[#38251F] space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs uppercase tracking-wider font-bold text-[#C86D51] flex items-center gap-1">
-                                  <Moon className="w-3.5 h-3.5" />
-                                  Evening Reflection
-                                </span>
-                                <span className="capitalize px-2 py-0.5 rounded-full bg-[#FFFFFF]/70 dark:bg-[#1E1B18]/70 text-[#C86D51] font-semibold text-xs">
-                                  {evening.status === "yes" ? "Followed Through" : evening.status === "partial" ? "Adjusted" : "Learned"}
-                                </span>
+                  {/* Expanded Content */}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="pt-3 border-t border-[#EAE3D7] dark:border-[#38332E] space-y-4 text-xs overflow-hidden"
+                      >
+                        {/* Anchors Check-In Blocks */}
+                        {anchorGroups.map((ag) => {
+                          const commName =
+                            ag.commitment?.name ||
+                            (ag.commitmentId !== "unassigned" ? "Anchor" : "Daily Check-in");
+                          const colorHex =
+                            PALETTE_HEX[(ag.commitment?.colorIndex ?? 0) % PALETTE_HEX.length] ||
+                            "#C86D51";
+
+                          return (
+                            <div
+                              key={ag.commitmentId}
+                              className="p-3.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-3"
+                            >
+                              {/* Anchor Badge Header */}
+                              <div className="flex items-center justify-between pb-1.5 border-b border-[#EAE3D7]/60 dark:border-[#38332E]/60">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: colorHex }}
+                                  />
+                                  <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
+                                    {commName}
+                                  </span>
+                                </div>
+                                {ag.evening?.status && (
+                                  <span className="capitalize px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] border border-[#EAE3D7] dark:border-[#38332E] font-medium text-2xs">
+                                    {ag.evening.status === "yes"
+                                      ? "Followed Through"
+                                      : ag.evening.status === "partial"
+                                      ? "Adjusted"
+                                      : "Learned"}
+                                  </span>
+                                )}
                               </div>
 
-                              {evening.reflection && (
-                                <p className="font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
-                                  "{evening.reflection}"
-                                </p>
+                              {/* Morning Section */}
+                              {ag.morning && (
+                                <div className="p-3 rounded-xl bg-[#FAF2EA] dark:bg-[#352A1E] space-y-2">
+                                  <span className="text-2xs uppercase tracking-wider font-bold text-[#B88452] flex items-center gap-1">
+                                    <Sun className="w-3.5 h-3.5" />
+                                    Morning Intention
+                                  </span>
+                                  {ag.morning.plannedActions && ag.morning.plannedActions.length > 0 && (
+                                    <div className="space-y-1 text-[#2C2520] dark:text-[#ECE7E0]">
+                                      {ag.morning.plannedActions.map((act: string, i: number) => (
+                                        <div key={i} className="flex items-center gap-1.5">
+                                          <CheckCircle2 className="w-3 h-3 text-[#658B70]" />
+                                          <span>{act}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {ag.morning.intentionNote && (
+                                    <p className="font-serif italic text-[#786F66] dark:text-[#A8A096]">
+                                      "{ag.morning.intentionNote}"
+                                    </p>
+                                  )}
+                                </div>
                               )}
 
-                              {evening.lessonsLearned && (
-                                <div className="pt-1.5 border-t border-[#C86D51]/20">
-                                  <span className="text-xs font-semibold text-[#C86D51] block mb-0.5">Lesson Learned:</span>
-                                  <p className="text-[#2C2520] dark:text-[#ECE7E0] italic">{evening.lessonsLearned}</p>
+                              {/* Evening Section */}
+                              {ag.evening && (
+                                <div className="p-3 rounded-xl bg-[#F9EBE7] dark:bg-[#38251F] space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-2xs uppercase tracking-wider font-bold text-[#C86D51] flex items-center gap-1">
+                                      <Moon className="w-3.5 h-3.5" />
+                                      Evening Reflection
+                                    </span>
+                                    {ag.evening.emotionName && (
+                                      <span className="text-2xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-semibold">
+                                        {ag.evening.emotionName}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {ag.evening.reflection && (
+                                    <p className="font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
+                                      "{ag.evening.reflection}"
+                                    </p>
+                                  )}
+
+                                  {ag.evening.lessonsLearned && (
+                                    <div className="pt-1.5 border-t border-[#C86D51]/20">
+                                      <span className="text-2xs font-semibold text-[#C86D51] block mb-0.5">
+                                        Lesson Learned:
+                                      </span>
+                                      <p className="text-[#2C2520] dark:text-[#ECE7E0] italic">
+                                        {ag.evening.lessonsLearned}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
-                          )}
+                          );
+                        })}
 
-                          {/* Freeform Journal Reflections Section */}
-                          {entry.journals && entry.journals.length > 0 && (
-                            <div className="space-y-2.5">
-                              <span className="text-xs uppercase tracking-wider font-bold text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
-                                <PenLine className="w-3 h-3 text-[#C86D51]" />
-                                Written Reflections ({entry.journals.length})
-                              </span>
-                              {entry.journals.map((journal: any) => (
+                        {/* Freeform Journal Reflections Section */}
+                        {day.journals && day.journals.length > 0 && (
+                          <div className="space-y-2.5">
+                            <span className="text-xs uppercase tracking-wider font-bold text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
+                              <PenLine className="w-3 h-3 text-[#C86D51]" />
+                              Written Reflections ({day.journals.length})
+                            </span>
+                            {day.journals.map((journal: any) => {
+                              const journalComm = commitments.find((c) => c.id === journal.commitmentId);
+                              const jColor = journalComm
+                                ? PALETTE_HEX[journalComm.colorIndex % PALETTE_HEX.length]
+                                : undefined;
+
+                              return (
                                 <div
                                   key={journal.id}
                                   className="p-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#201D1A] border border-[#EAE3D7] dark:border-[#38332E] space-y-2 shadow-2xs"
                                 >
                                   <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                       <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
                                         {journal.title || "Daily Reflection"}
                                       </span>
+                                      {journalComm && (
+                                        <span className="text-2xs px-2 py-0.5 rounded-full bg-[#F3EFE7] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
+                                          <span
+                                            className="w-1.5 h-1.5 rounded-full"
+                                            style={{ backgroundColor: jColor }}
+                                          />
+                                          {journalComm.name}
+                                        </span>
+                                      )}
                                       {journal.moodValence !== null && journal.moodValence !== undefined && (
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold">
+                                        <span className="text-2xs px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold">
                                           Mood {journal.moodValence > 0 ? `+${journal.moodValence}` : journal.moodValence}
                                         </span>
                                       )}
@@ -609,18 +877,19 @@ export default function JournalPage() {
                                     </div>
                                   )}
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </main>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
 
       {/* Backfill Stepper Modal */}
       {stepperOpen && (
@@ -629,9 +898,19 @@ export default function JournalPage() {
           initialStage="evening"
           targetDate={backfillDate || undefined}
           isLate={true}
-          commitmentName={activeCommitment?.name || "Daily Anchor"}
-          commitmentWhy={activeCommitment?.why || undefined}
-          commitmentId={activeCommitment?.id}
+          commitmentName={
+            (selectedCommitmentId !== "all"
+              ? commitments.find((c) => c.id === selectedCommitmentId)?.name
+              : activeCommitment?.name) || "Daily Anchor"
+          }
+          commitmentWhy={
+            selectedCommitmentId !== "all"
+              ? commitments.find((c) => c.id === selectedCommitmentId)?.why || undefined
+              : activeCommitment?.why || undefined
+          }
+          commitmentId={
+            selectedCommitmentId !== "all" ? selectedCommitmentId : activeCommitment?.id
+          }
           onClose={() => setStepperOpen(false)}
           onSuccess={(saved) => {
             updateCheckInLocally(saved);

@@ -23,8 +23,8 @@ interface AppContextType {
   isInitialLoading: boolean;
   refreshUser: () => Promise<User | null>;
   refreshCommitments: () => Promise<Commitment[]>;
-  refreshCheckIns: (date?: string) => Promise<CheckIn[]>;
-  refreshJournals: () => Promise<JournalEntry[]>;
+  refreshCheckIns: (date?: string, commitmentId?: string) => Promise<CheckIn[]>;
+  refreshJournals: (commitmentId?: string) => Promise<JournalEntry[]>;
   refreshPartnerMessages: () => Promise<any[]>;
   updateCheckInLocally: (saved: CheckIn) => void;
 }
@@ -39,7 +39,28 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
 
   const [user, setUser] = useState<User | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
-  const [activeCommitmentId, setActiveCommitmentId] = useState<string>("");
+  const [activeCommitmentId, setActiveCommitmentIdState] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return localStorage.getItem("anchor_active_commitment_id") || "";
+      } catch {
+        return "";
+      }
+    }
+    return "";
+  });
+
+  const setActiveCommitmentId = useCallback((id: string) => {
+    setActiveCommitmentIdState(id);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("anchor_active_commitment_id", id);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [partnerMessages, setPartnerMessages] = useState<any[]>([]);
@@ -73,7 +94,15 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       const comms: Commitment[] = data.commitments || (data.commitment ? [data.commitment] : []);
       setCommitments(comms);
       if (comms.length > 0) {
-        setActiveCommitmentId((prev) => prev || comms[0].id);
+        setActiveCommitmentIdState((prev) => {
+          const saved = typeof window !== "undefined" ? localStorage.getItem("anchor_active_commitment_id") : null;
+          const validSaved = saved && comms.some((c) => c.id === saved) ? saved : null;
+          const chosen = validSaved || (prev && comms.some((c) => c.id === prev) ? prev : comms[0].id);
+          try {
+            localStorage.setItem("anchor_active_commitment_id", chosen);
+          } catch {}
+          return chosen;
+        });
       }
       return data.user;
     } catch (e) {
@@ -90,7 +119,15 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         const list = data.allCommitments || data.commitments || [];
         setCommitments(list);
         if (list.length > 0) {
-          setActiveCommitmentId((prev) => prev || list[0].id);
+          setActiveCommitmentIdState((prev) => {
+            const saved = typeof window !== "undefined" ? localStorage.getItem("anchor_active_commitment_id") : null;
+            const validSaved = saved && list.some((c: Commitment) => c.id === saved) ? saved : null;
+            const chosen = validSaved || (prev && list.some((c: Commitment) => c.id === prev) ? prev : list[0].id);
+            try {
+              localStorage.setItem("anchor_active_commitment_id", chosen);
+            } catch {}
+            return chosen;
+          });
         }
         return list;
       }
@@ -100,16 +137,24 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     return [];
   }, []);
 
-  const refreshCheckIns = useCallback(async (date?: string): Promise<CheckIn[]> => {
+  const refreshCheckIns = useCallback(async (date?: string, commitmentId?: string): Promise<CheckIn[]> => {
     try {
-      const url = date ? `/api/checkins?date=${date}` : "/api/checkins";
+      const params = new URLSearchParams();
+      if (date) params.set("date", date);
+      if (commitmentId) params.set("commitmentId", commitmentId);
+      const queryString = params.toString();
+      const url = queryString ? `/api/checkins?${queryString}` : "/api/checkins";
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        const fetched = data.checkIns || [];
+        const fetched: CheckIn[] = data.checkIns || [];
         setCheckIns((prev) => {
-          if (date) {
-            const filtered = prev.filter((c) => c.date !== date);
+          if (date || commitmentId) {
+            const filtered = prev.filter((c) => {
+              if (date && c.date === date && (!commitmentId || c.commitmentId === commitmentId)) return false;
+              if (!date && commitmentId && c.commitmentId === commitmentId) return false;
+              return true;
+            });
             return [...filtered, ...fetched];
           }
           return fetched;
@@ -122,13 +167,20 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     return [];
   }, []);
 
-  const refreshJournals = useCallback(async (): Promise<JournalEntry[]> => {
+  const refreshJournals = useCallback(async (commitmentId?: string): Promise<JournalEntry[]> => {
     try {
-      const res = await fetch("/api/journal");
+      const url = commitmentId ? `/api/journal?commitmentId=${commitmentId}` : "/api/journal";
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        const entries = data.entries || [];
-        setJournalEntries(entries);
+        const entries: JournalEntry[] = data.entries || [];
+        setJournalEntries((prev) => {
+          if (commitmentId) {
+            const filtered = prev.filter((j) => j.commitmentId !== commitmentId);
+            return [...filtered, ...entries];
+          }
+          return entries;
+        });
         return entries;
       }
     } catch (e) {

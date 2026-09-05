@@ -10,13 +10,14 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date");
+  const commitmentId = searchParams.get("commitmentId") || undefined;
 
   if (date) {
-    const checkIns = await getCheckInsForDate(session.id, date);
+    const checkIns = await getCheckInsForDate(session.id, date, commitmentId);
     return NextResponse.json({ checkIns });
   }
 
-  const allCheckIns = await getCheckInsByUserId(session.id);
+  const allCheckIns = await getCheckInsByUserId(session.id, commitmentId);
   return NextResponse.json({ checkIns: allCheckIns });
 }
 

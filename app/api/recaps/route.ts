@@ -31,11 +31,11 @@ export async function GET(request: Request) {
     Math.round((todayMidnight - creationMidnight) / msPerDay) + 1
   );
 
-  const rawCheckIns = await getCheckInsByUserId(session.id);
+  const rawCheckIns = await getCheckInsByUserId(session.id, commitmentId || undefined);
   // Filter check-ins so we only evaluate records on or after the account creation date
   const validCheckIns = rawCheckIns.filter((c) => c.date >= accountStartDate);
   const allCheckIns = commitmentId
-    ? validCheckIns.filter((c) => !c.commitmentId || c.commitmentId === commitmentId)
+    ? validCheckIns.filter((c) => c.commitmentId === commitmentId)
     : validCheckIns;
   const existingRecaps = await getWeeklyRecapsByUserId(session.id);
 

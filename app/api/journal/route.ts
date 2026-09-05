@@ -15,13 +15,14 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date");
+    const commitmentId = searchParams.get("commitmentId") || undefined;
 
     if (date) {
-      const entries = await getJournalEntriesForDate(session.id, date);
+      const entries = await getJournalEntriesForDate(session.id, date, commitmentId);
       return NextResponse.json({ entries });
     }
 
-    const entries = await getJournalEntriesForUser(session.id);
+    const entries = await getJournalEntriesForUser(session.id, commitmentId);
     return NextResponse.json({ entries });
   } catch (error) {
     console.error("Failed to load journal entries:", error);
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { date, title, content, moodValence, moodEnergy, moodArousal, tags, isStarred } = body;
+    const { date, title, content, moodValence, moodEnergy, moodArousal, tags, isStarred, commitmentId } = body;
 
     if (!content || typeof content !== "string" || !content.trim()) {
       return NextResponse.json({ error: "Reflection content is required" }, { status: 400 });
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
 
     const entry = await createJournalEntry({
       userId: session.id,
+      commitmentId: commitmentId || undefined,
       date: targetDate,
       title: title?.trim() || undefined,
       content: content.trim(),

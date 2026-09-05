@@ -44,14 +44,21 @@ export default function ProgressPage() {
   const [summaryReport, setSummaryReport] = useState<ProgressSummaryData | null>(null);
   const [includeJournalInSummary, setIncludeJournalInSummary] = useState(false);
 
+  const filteredCheckIns = commitment?.id
+    ? allCheckIns.filter((c) => c.commitmentId === commitment.id)
+    : allCheckIns;
+  const filteredJournals = commitment?.id
+    ? allJournals.filter((j) => !j.commitmentId || j.commitmentId === commitment.id)
+    : allJournals;
+
   const handleOpenSummaryReport = async () => {
     try {
       triggerHaptic(12);
       const report = generateProgressSummary(
         user,
         commitment,
-        allCheckIns,
-        allJournals,
+        filteredCheckIns,
+        filteredJournals,
         { includeJournalNotes: includeJournalInSummary }
       );
       setSummaryReport(report);
@@ -64,7 +71,8 @@ export default function ProgressPage() {
   useEffect(() => {
     async function loadRecap() {
       try {
-        const res = await fetch(`/api/recaps?range=${range}`);
+        const commParam = commitment?.id ? `&commitmentId=${commitment.id}` : "";
+        const res = await fetch(`/api/recaps?range=${range}${commParam}`);
         if (res.ok) {
           const data = await res.json();
           setRecapData(data.recap);
@@ -74,9 +82,9 @@ export default function ProgressPage() {
       }
     }
     loadRecap();
-    refreshCheckIns();
-    refreshJournals();
-  }, [range, refreshCheckIns, refreshJournals]);
+    refreshCheckIns(undefined, commitment?.id);
+    refreshJournals(commitment?.id);
+  }, [range, commitment?.id, refreshCheckIns, refreshJournals]);
 
   const handleRangeChange = async (newRange: "7" | "30" | "90" | "all") => {
     triggerHaptic(10);
@@ -173,7 +181,7 @@ export default function ProgressPage() {
           </div>
 
           {/* 7/30/90-Day Mood & Energy Timeline Chart with Follow-Through Overlays */}
-          <MoodTimelineChart checkIns={allCheckIns} journalEntries={allJournals} />
+          <MoodTimelineChart checkIns={filteredCheckIns} journalEntries={filteredJournals} />
 
           {/* 90-Day Rhythm Calendar Heatmap Matrix */}
           <div className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-organic-sm space-y-4">
@@ -288,8 +296,8 @@ export default function ProgressPage() {
             const updated = generateProgressSummary(
               user,
               commitment,
-              allCheckIns,
-              allJournals,
+              filteredCheckIns,
+              filteredJournals,
               { includeJournalNotes: include }
             );
             setSummaryReport(updated);

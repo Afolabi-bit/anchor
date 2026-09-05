@@ -73,26 +73,28 @@ export default function TodayPage() {
   }, [todayStr, refreshCheckIns, refreshPartnerMessages]);
 
   const morningCheckIn = useMemo(() => {
+    if (!activeCommitment?.id) return null;
     return (
       checkIns.find(
         (c: CheckIn) =>
           c.type === "morning" &&
           c.date === todayStr &&
-          (!c.commitmentId || c.commitmentId === activeCommitmentId)
+          c.commitmentId === activeCommitment.id
       ) || null
     );
-  }, [checkIns, todayStr, activeCommitmentId]);
+  }, [checkIns, todayStr, activeCommitment?.id]);
 
   const eveningCheckIn = useMemo(() => {
+    if (!activeCommitment?.id) return null;
     return (
       checkIns.find(
         (c: CheckIn) =>
           c.type === "evening" &&
           c.date === todayStr &&
-          (!c.commitmentId || c.commitmentId === activeCommitmentId)
+          c.commitmentId === activeCommitment.id
       ) || null
     );
-  }, [checkIns, todayStr, activeCommitmentId]);
+  }, [checkIns, todayStr, activeCommitment?.id]);
 
   const dismissPartnerMessage = async (msgId: string) => {
     triggerHaptic(10);
@@ -545,7 +547,7 @@ export default function TodayPage() {
           {/* 4. JOURNAL COMPOSER (Collapsed Accordion by Default)                      */}
           {/* ========================================================================= */}
           <div className="pt-1">
-            <JournalComposer variant="compact" />
+            <JournalComposer variant="compact" commitmentId={activeCommitment?.id} />
           </div>
         </main>
 

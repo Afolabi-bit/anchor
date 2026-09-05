@@ -91,6 +91,7 @@ export const communityReflections = pgTable("community_reflections", {
 export const journalEntries = pgTable("journal_entries", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  commitmentId: uuid("commitment_id").references(() => commitments.id, { onDelete: "cascade" }),
   date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
   title: varchar("title", { length: 255 }),
   content: text("content").notNull(),

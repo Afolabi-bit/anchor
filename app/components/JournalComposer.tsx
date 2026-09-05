@@ -23,6 +23,7 @@ interface JournalComposerProps {
   variant?: "full" | "compact";
   defaultDate?: string;
   placeholder?: string;
+  commitmentId?: string;
 }
 
 const PRESET_TAGS = [
@@ -40,6 +41,7 @@ export default function JournalComposer({
   variant = "full",
   defaultDate,
   placeholder = "Write freely. Your thoughts stay safe here...",
+  commitmentId,
 }: JournalComposerProps) {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
@@ -55,7 +57,7 @@ export default function JournalComposer({
   const [error, setError] = useState("");
   const [isExpanded, setIsExpanded] = useState(variant === "full");
 
-  const storageKey = `anchor_journal_draft_${defaultDate || "today"}`;
+  const storageKey = `anchor_journal_draft_${commitmentId || "global"}_${defaultDate || "today"}`;
 
   // Load draft on mount
   useEffect(() => {
@@ -139,6 +141,7 @@ export default function JournalComposer({
           moodValence: selectedEmotion?.valence,
           moodEnergy: selectedEmotion?.arousal,
           tags,
+          commitmentId: commitmentId || undefined,
         }),
       });
 
