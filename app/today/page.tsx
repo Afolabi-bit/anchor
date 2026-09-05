@@ -619,7 +619,7 @@ export default function TodayPage() {
           }
           setNewModalOpen(true);
         }}
-        className="fixed bottom-20 sm:bottom-8 right-5 sm:right-8 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white flex items-center justify-center shadow-organic-lg hover:shadow-organic-xl transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#C86D51]/30 group"
+        className="fixed bottom-floating-fab right-5 sm:right-8 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#C86D51] hover:bg-[#B35D43] text-white flex items-center justify-center shadow-organic-lg hover:shadow-organic-xl transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#C86D51]/30 group"
         aria-label="Add new anchor"
         title="Add new anchor"
       >

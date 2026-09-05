@@ -21,8 +21,8 @@ const NAV_ITEMS = [
 ];
 
 /**
- * Derives user initials from first and last name, full name, or email.
- * E.g., "John" + "Doe" -> "JD", "Zerox" -> "Z", "zerox@example.com" -> "Z"
+ * Derives user's first name initial from first name, full name, or email.
+ * E.g., "John" -> "J", "John Doe" -> "J", "zerox@example.com" -> "Z"
  */
 export function getInitials(
   firstName?: string | null,
@@ -31,26 +31,12 @@ export function getInitials(
   userEmail?: string | null
 ): string {
   const f = firstName?.trim();
-  const l = lastName?.trim();
-
-  if (f && l) {
-    return `${f.charAt(0)}${l.charAt(0)}`.toUpperCase();
-  }
-
   if (f) {
-    const parts = f.split(/\s+/);
-    if (parts.length >= 2) {
-      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
-    }
     return f.charAt(0).toUpperCase();
   }
 
   const u = userName?.trim();
   if (u) {
-    const parts = u.split(/\s+/);
-    if (parts.length >= 2) {
-      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
-    }
     return u.charAt(0).toUpperCase();
   }
 
