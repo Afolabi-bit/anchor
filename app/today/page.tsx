@@ -21,10 +21,12 @@ import {
   HandHeart as MessageSquareHeart,
   Quotes as Quote,
   CaretDown,
+  Lock,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
+import { recordClientActivityLog, formatTimeFromTimestamp } from "@/lib/client-time-log";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
@@ -127,6 +129,63 @@ export default function TodayPage() {
 
   const handleCheckInSuccess = (savedCheckIn: CheckIn) => {
     updateCheckInLocally(savedCheckIn);
+    const comm = commitments.find((c) => c.id === savedCheckIn.commitmentId);
+    const now = Date.now();
+    recordClientActivityLog({
+      id: `checkin_${savedCheckIn.id}`,
+      date: savedCheckIn.date,
+      timestamp: now,
+      timeStr: formatTimeFromTimestamp(now),
+      type: savedCheckIn.type === "morning" ? "morning_checkin" : "evening_checkin",
+      commitmentId: savedCheckIn.commitmentId || undefined,
+      commitmentName: comm?.name || "Daily Anchor",
+      commitmentColorIndex: comm?.colorIndex ?? 0,
+      title: savedCheckIn.type === "morning" ? "Morning Intention" : "Evening Reflection",
+      detail:
+        savedCheckIn.type === "morning"
+          ? savedCheckIn.intentionNote || undefined
+          : savedCheckIn.reflection || undefined,
+      plannedActions: savedCheckIn.plannedActions || undefined,
+      status: savedCheckIn.status || undefined,
+      emotion: savedCheckIn.emotionName || undefined,
+      lessonsLearned: savedCheckIn.lessonsLearned || undefined,
+      isSealed: true,
+    });
+  };
+
+  const handleJournalEntryCreated = (newEntry: any) => {
+    const comm = commitments.find((c) => c.id === newEntry.commitmentId);
+    const now = Date.now();
+    recordClientActivityLog({
+      id: `journal_${newEntry.id}`,
+      date: newEntry.date,
+      timestamp: now,
+      timeStr: formatTimeFromTimestamp(now),
+      type: "journal_entry",
+      commitmentId: newEntry.commitmentId || undefined,
+      commitmentName: comm?.name || "Daily Reflection",
+      commitmentColorIndex: comm?.colorIndex ?? 0,
+      title: newEntry.title || "Daily Reflection",
+      detail: newEntry.content,
+      tags: newEntry.tags || undefined,
+      isSealed: true,
+    });
+  };
+
+  const handleOpenStepper = (stage: "morning" | "evening", comm: Commitment) => {
+    const isAlreadySealed = todayCheckIns.some(
+      (c) => c.commitmentId === comm.id && c.type === stage
+    );
+    if (isAlreadySealed) {
+      triggerHaptic(10);
+      alert(
+        `Your ${stage} check-in for "${comm.name}" has already been sealed for today and cannot be modified.`
+      );
+      return;
+    }
+    setStepperCommitment(comm);
+    setActiveCommitmentId(comm.id);
+    setActiveStepper(stage);
   };
 
   const handleCommitmentCreated = (newComm: Commitment) => {
@@ -398,14 +457,14 @@ export default function TodayPage() {
                         "{morningCheckIn.intentionNote}"
                       </p>
                     )}
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setActiveStepper("morning")}
-                        className="text-xs text-[#B88452] hover:underline cursor-pointer font-medium"
-                      >
-                        Edit intention
-                      </button>
+                    <div className="pt-2 flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
+                      <span className="flex items-center gap-1 font-medium text-[#658B70]">
+                        <Lock className="w-3 h-3" />
+                        <span>Sealed &bull; Immutable</span>
+                      </span>
+                      {morningCheckIn.createdAt && (
+                        <span>Sealed at {formatTimeFromTimestamp(morningCheckIn.createdAt)}</span>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -476,14 +535,14 @@ export default function TodayPage() {
                         <span className="italic">{eveningCheckIn.lessonsLearned}</span>
                       </p>
                     )}
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setActiveStepper("evening")}
-                        className="text-xs text-[#C86D51] hover:underline cursor-pointer font-medium"
-                      >
-                        Edit reflection
-                      </button>
+                    <div className="pt-2 flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
+                      <span className="flex items-center gap-1 font-medium text-[#658B70]">
+                        <Lock className="w-3 h-3" />
+                        <span>Sealed &bull; Immutable</span>
+                      </span>
+                      {eveningCheckIn.createdAt && (
+                        <span>Sealed at {formatTimeFromTimestamp(eveningCheckIn.createdAt)}</span>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -513,7 +572,11 @@ export default function TodayPage() {
           {/* 3. WHAT'S ON YOUR MIND (Quick Reflection Composer)                       */}
           {/* ========================================================================= */}
           <div className="pt-0.5">
-            <JournalComposer variant="compact" commitmentId={activeCommitment?.id} />
+            <JournalComposer
+              variant="compact"
+              commitmentId={activeCommitment?.id}
+              onEntryCreated={handleJournalEntryCreated}
+            />
           </div>
 
           {/* ========================================================================= */}
@@ -549,11 +612,7 @@ export default function TodayPage() {
             }}
             todayCheckIns={todayCheckIns}
             todayJournals={todayJournals}
-            onOpenStepper={(stage, comm) => {
-              setStepperCommitment(comm);
-              setActiveCommitmentId(comm.id);
-              setActiveStepper(stage);
-            }}
+            onOpenStepper={handleOpenStepper}
           />
         </main>
 

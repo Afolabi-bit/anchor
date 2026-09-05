@@ -1,16 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Sun,
   Moon,
+  PencilSimple as PenLine,
   CheckCircle as CheckCircle2,
-  Circle,
+  Clock,
+  Lock,
   Compass,
-  ArrowRight,
 } from "@phosphor-icons/react";
 import { triggerHaptic } from "@/lib/sensory";
 import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
+import { syncClientTimeLogs, ClientActivityLog } from "@/lib/client-time-log";
 
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
@@ -31,7 +33,18 @@ export default function DailyActivityCard({
   todayJournals,
   onOpenStepper,
 }: DailyActivityCardProps) {
-  // Only render if user has at least 1 commitment
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  // Client-side time logs saved strictly in localStorage
+  const [clientLogs, setClientLogs] = useState<ClientActivityLog[]>([]);
+
+  useEffect(() => {
+    // Synchronize client-side time logs in localStorage
+    const synced = syncClientTimeLogs(todayStr, todayCheckIns, todayJournals, commitments);
+    setClientLogs(synced);
+  }, [todayStr, todayCheckIns, todayJournals, commitments]);
+
+  // If user has no commitments, don't show the card
   if (commitments.length === 0) return null;
 
   const totalPossible = commitments.length * 2;
@@ -41,29 +54,35 @@ export default function DailyActivityCard({
 
   return (
     <section
-      aria-label="Today across all anchors"
-      className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-4"
+      aria-label="Daily Activity & Time Log"
+      className="p-5 sm:p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-5"
     >
-      {/* Header Row: Quiet & Balanced */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#FAF7F2] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0">
-            <Compass className="w-4 h-4" />
+      {/* Header: Title, Local Storage Badge, Progress */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#FAF7F2] dark:bg-[#2E2A26] border border-[#EAE3D7] dark:border-[#38332E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0 mt-0.5">
+            <Clock className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-serif-title text-base font-normal text-[#2C2520] dark:text-[#ECE7E0]">
-              Today Across Anchors
-            </h2>
-            <span className="text-2xs text-[#786F66] dark:text-[#A8A096]">
-              {completedCheckIns} of {totalPossible} completed
-              {todayJournals.length > 0 && ` • ${todayJournals.length} note${todayJournals.length > 1 ? "s" : ""}`}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-serif-title text-base font-normal text-[#2C2520] dark:text-[#ECE7E0]">
+                Activity & Time Log
+              </h2>
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] border border-[#EAE3D7] dark:border-[#38332E]">
+                <Lock className="w-2.5 h-2.5 text-[#658B70]" />
+                Client-side • Sealed
+              </span>
+            </div>
+            <p className="text-2xs text-[#786F66] dark:text-[#A8A096] mt-0.5">
+              {completedCheckIns} of {totalPossible} check-ins sealed
+              {todayJournals.length > 0 && ` • ${todayJournals.length} written note${todayJournals.length > 1 ? "s" : ""}`}
+            </p>
           </div>
         </div>
 
-        {/* Minimal Progress Chip */}
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-1.5 rounded-full bg-[#F3EFE7] dark:bg-[#1E1B18] overflow-hidden">
+        {/* Minimal Progress Bar */}
+        <div className="flex items-center gap-2 shrink-0 pt-1">
+          <div className="w-14 h-1.5 rounded-full bg-[#F3EFE7] dark:bg-[#1E1B18] overflow-hidden">
             <div
               className="h-full rounded-full bg-[#658B70] transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -75,18 +94,21 @@ export default function DailyActivityCard({
         </div>
       </div>
 
-      {/* Clean, Scannable Anchor Cards Grid */}
+      {/* Anchor Status Overview Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {commitments.map((comm) => {
           const isActive = comm.id === activeCommitmentId;
           const colorHex = PALETTE_HEX[comm.colorIndex % PALETTE_HEX.length] || "#C86D51";
 
-          const morning = todayCheckIns.find(
-            (c) => c.commitmentId === comm.id && c.type === "morning"
+          const morningLog = clientLogs.find(
+            (l) => l.commitmentId === comm.id && l.type === "morning_checkin"
           );
-          const evening = todayCheckIns.find(
-            (c) => c.commitmentId === comm.id && c.type === "evening"
+          const eveningLog = clientLogs.find(
+            (l) => l.commitmentId === comm.id && l.type === "evening_checkin"
           );
+
+          const isMorningSealed = Boolean(morningLog);
+          const isEveningSealed = Boolean(eveningLog);
 
           return (
             <div
@@ -116,55 +138,204 @@ export default function DailyActivityCard({
 
               {/* Status Chips: Morning & Evening */}
               <div className="flex items-center gap-1.5 shrink-0">
-                {/* Morning Action */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    triggerHaptic(8);
-                    onOpenStepper("morning", comm);
-                  }}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-2xs transition-colors cursor-pointer ${
-                    morning
-                      ? "bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold"
-                      : "bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] border border-dashed border-[#EAE3D7] dark:border-[#38332E]"
-                  }`}
-                  title={morning ? "Morning intention set" : "Tap to set morning intention"}
-                >
-                  {morning ? (
-                    <CheckCircle2 className="w-3 h-3 text-[#658B70]" />
-                  ) : (
+                {/* Morning Chip: If sealed, locked with time; if unsealed, opens stepper */}
+                {isMorningSealed ? (
+                  <span
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] cursor-default"
+                    title={`Sealed at ${morningLog?.timeStr || "morning"} — Cannot be edited`}
+                  >
+                    <Lock className="w-2.5 h-2.5 text-[#658B70]" />
+                    <span>{morningLog?.timeStr || "Sealed"}</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      triggerHaptic(8);
+                      onOpenStepper("morning", comm);
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] border border-dashed border-[#EAE3D7] dark:border-[#38332E] transition-colors cursor-pointer"
+                    title="Tap to set morning intention"
+                  >
                     <Sun className="w-3 h-3 opacity-60" />
-                  )}
-                  <span>{morning ? "Morning" : "Morning"}</span>
-                </button>
+                    <span>+ Morning</span>
+                  </button>
+                )}
 
-                {/* Evening Action */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    triggerHaptic(8);
-                    onOpenStepper("evening", comm);
-                  }}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-2xs transition-colors cursor-pointer ${
-                    evening
-                      ? "bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] font-semibold"
-                      : "bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] border border-dashed border-[#EAE3D7] dark:border-[#38332E]"
-                  }`}
-                  title={evening ? "Evening reflection completed" : "Tap to review evening"}
-                >
-                  {evening ? (
-                    <CheckCircle2 className="w-3 h-3 text-[#658B70]" />
-                  ) : (
+                {/* Evening Chip: If sealed, locked with time; if unsealed, opens stepper */}
+                {isEveningSealed ? (
+                  <span
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] font-semibold border border-[#F2D7CE] dark:border-[#4D332B] cursor-default"
+                    title={`Sealed at ${eveningLog?.timeStr || "evening"} — Cannot be edited`}
+                  >
+                    <Lock className="w-2.5 h-2.5 text-[#658B70]" />
+                    <span>{eveningLog?.timeStr || "Sealed"}</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      triggerHaptic(8);
+                      onOpenStepper("evening", comm);
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] border border-dashed border-[#EAE3D7] dark:border-[#38332E] transition-colors cursor-pointer"
+                    title="Tap to review evening"
+                  >
                     <Moon className="w-3 h-3 opacity-60" />
-                  )}
-                  <span>{evening ? "Evening" : "Evening"}</span>
-                </button>
+                    <span>+ Evening</span>
+                  </button>
+                )}
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Detailed Chronological Time Log Stream */}
+      <div className="pt-2 border-t border-[#EAE3D7] dark:border-[#38332E] space-y-3">
+        <div className="flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
+          <span className="uppercase tracking-wider font-semibold">
+            Today&apos;s Time Log ({clientLogs.length})
+          </span>
+          <span className="italic">Immutable upon sealing</span>
+        </div>
+
+        {clientLogs.length === 0 ? (
+          <div className="p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-center space-y-1">
+            <p className="text-xs font-serif italic text-[#786F66] dark:text-[#A8A096]">
+              No sealed activities recorded yet today.
+            </p>
+            <p className="text-2xs text-[#786F66] dark:text-[#A8A096]">
+              Complete your morning intention above to initiate today&apos;s time log.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {clientLogs.map((log) => {
+              const colorHex =
+                PALETTE_HEX[(log.commitmentColorIndex ?? 0) % PALETTE_HEX.length] || "#C86D51";
+
+              return (
+                <div
+                  key={log.id}
+                  className="p-3.5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] text-xs space-y-2 shadow-2xs"
+                >
+                  {/* Event Header: Time Badge, Anchor, Event Type, Sealed Lock */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      {/* Time pill */}
+                      <span className="text-2xs px-2 py-0.5 rounded-md bg-[#FFFFFF] dark:bg-[#25221F] text-[#2C2520] dark:text-[#ECE7E0] border border-[#EAE3D7] dark:border-[#38332E] font-medium shrink-0">
+                        {log.timeStr}
+                      </span>
+
+                      {/* Anchor name badge */}
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: colorHex }}
+                        />
+                        <span className="font-semibold text-xs text-[#2C2520] dark:text-[#ECE7E0]">
+                          {log.commitmentName}
+                        </span>
+                      </div>
+
+                      {/* Event Type Icon & Label */}
+                      <span className="text-2xs text-[#786F66] dark:text-[#A8A096] flex items-center gap-1">
+                        {log.type === "morning_checkin" && <Sun className="w-3 h-3 text-[#B88452]" />}
+                        {log.type === "evening_checkin" && <Moon className="w-3 h-3 text-[#C86D51]" />}
+                        {log.type === "journal_entry" && <PenLine className="w-3 h-3 text-[#658B70]" />}
+                        <span>{log.title}</span>
+                      </span>
+                    </div>
+
+                    {/* Sealed Permanent Badge (Non-Editable) */}
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-medium shrink-0">
+                      <Lock className="w-2.5 h-2.5" />
+                      Sealed
+                    </span>
+                  </div>
+
+                  {/* Event Specific Details */}
+                  {log.type === "morning_checkin" && (
+                    <div className="space-y-1.5 pt-0.5">
+                      {log.plannedActions && log.plannedActions.length > 0 && (
+                        <div className="space-y-1">
+                          {log.plannedActions.map((action, i) => (
+                            <div key={i} className="flex items-center gap-1.5 text-[#2C2520] dark:text-[#ECE7E0]">
+                              <CheckCircle2 className="w-3 h-3 text-[#658B70] shrink-0" />
+                              <span>{action}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {log.detail && (
+                        <p className="font-serif italic text-[#786F66] dark:text-[#A8A096]">
+                          &ldquo;{log.detail}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {log.type === "evening_checkin" && (
+                    <div className="space-y-1.5 pt-0.5">
+                      {log.status && (
+                        <div className="flex items-center gap-2">
+                          <span className="capitalize text-2xs px-2 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#C86D51] font-semibold border border-[#F2D7CE] dark:border-[#4D332B]">
+                            {log.status === "yes"
+                              ? "Followed Through"
+                              : log.status === "partial"
+                              ? "Adjusted"
+                              : "Learned"}
+                          </span>
+                          {log.emotion && (
+                            <span className="text-2xs px-2 py-0.5 rounded-full bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] font-medium">
+                              {log.emotion}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {log.detail && (
+                        <p className="font-serif italic text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
+                          &ldquo;{log.detail}&rdquo;
+                        </p>
+                      )}
+                      {log.lessonsLearned && (
+                        <p className="text-2xs text-[#786F66] dark:text-[#A8A096]">
+                          <strong className="text-[#C86D51] font-semibold">Lesson: </strong>
+                          <span className="italic">{log.lessonsLearned}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {log.type === "journal_entry" && (
+                    <div className="space-y-1 pt-0.5">
+                      {log.detail && (
+                        <p className="font-serif text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed whitespace-pre-wrap">
+                          {log.detail}
+                        </p>
+                      )}
+                      {log.tags && log.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {log.tags.map((tg) => (
+                            <span
+                              key={tg}
+                              className="text-2xs px-1.5 py-0.5 rounded bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096]"
+                            >
+                              #{tg}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
