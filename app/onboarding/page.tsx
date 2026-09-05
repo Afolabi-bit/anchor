@@ -11,6 +11,12 @@ import {
   Check,
   CheckCircle as CheckCircle2,
   Shield,
+  ShieldCheck,
+  User as UserIcon,
+  Envelope as Mail,
+  Lock,
+  Eye,
+  EyeSlash as EyeOff,
 } from "@phosphor-icons/react";
 import Spinner from "@/app/components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,6 +61,7 @@ export default function OnboardingPage() {
   const [user, setUser] = useState<User | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
+  // Load user if already authenticated
   useEffect(() => {
     async function loadUser() {
       try {
@@ -63,11 +70,7 @@ export default function OnboardingPage() {
           const data = await res.json();
           if (data.user) {
             setUser(data.user);
-          } else {
-            window.location.href = "/signup";
           }
-        } else {
-          window.location.href = "/signup";
         }
       } catch (e) {
         console.warn("Could not load user in onboarding:", e);
@@ -82,6 +85,34 @@ export default function OnboardingPage() {
   const [frequency, setFrequency] = useState<"daily" | "custom_days">("daily");
   const [morningTime, setMorningTime] = useState("08:00");
   const [eveningTime, setEveningTime] = useState("20:00");
+
+  // Account creation fields for unauthenticated users
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Restore draft anchor from sessionStorage if available
+  useEffect(() => {
+    try {
+      const savedName = sessionStorage.getItem("anchor_draft_name");
+      const savedWhy = sessionStorage.getItem("anchor_draft_why");
+      if (savedName && !commitmentName) setCommitmentName(savedName);
+      if (savedWhy && !commitmentWhy) setCommitmentWhy(savedWhy);
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (commitmentName) sessionStorage.setItem("anchor_draft_name", commitmentName);
+      if (commitmentWhy) sessionStorage.setItem("anchor_draft_why", commitmentWhy);
+    } catch {
+      // Ignore storage errors
+    }
+  }, [commitmentName, commitmentWhy]);
 
   // Screen 2 Interactive Preview State
   const [previewStatus, setPreviewStatus] = useState<"yes" | "partial" | "no">("yes");
@@ -105,7 +136,7 @@ export default function OnboardingPage() {
     setPreviewSealed(true);
   };
 
-  // Complete onboarding for authenticated user
+  // Complete onboarding: create account if needed, then save anchor and land on /today
   const handleCompleteAccount = async () => {
     try {
       setLoading(true);
@@ -113,14 +144,48 @@ export default function OnboardingPage() {
       playSingingBowlChime(432);
       triggerHaptic([20, 50, 30]);
 
-      // If user is not yet signed up, redirect to signup
-      if (!user) {
-        window.location.href = "/signup";
-        return;
-      }
-
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
+      // 1. If not authenticated, create account first right here
+      if (!user) {
+        const trimmedFirst = firstName.trim();
+        const trimmedLast = lastName.trim();
+
+        if (!trimmedFirst || !trimmedLast) {
+          setError("Please provide your first and last name so Anchor can address you.");
+          return;
+        }
+
+        if (!email.trim() || !password) {
+          setError("Please enter your email and password to secure your account.");
+          return;
+        }
+
+        if (password.length < 6) {
+          setError("Password should be at least 6 characters.");
+          return;
+        }
+
+        const signupRes = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: trimmedFirst,
+            lastName: trimmedLast,
+            email: email.trim().toLowerCase(),
+            password,
+            timezone: userTimezone,
+          }),
+        });
+
+        const signupData = await signupRes.json();
+        if (!signupRes.ok) {
+          setError(signupData.error || "Failed to create account. Please try again.");
+          return;
+        }
+      }
+
+      // 2. Save the anchor commitment and finalize onboarding
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,6 +206,13 @@ export default function OnboardingPage() {
         return;
       }
 
+      // Clear draft storage
+      try {
+        sessionStorage.removeItem("anchor_draft_name");
+        sessionStorage.removeItem("anchor_draft_why");
+      } catch {}
+
+      // Hard redirect to ensure browser document request sends newly set session cookie
       window.location.href = "/today";
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -491,6 +563,108 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
+                {/* Account Credentials Section (Only for Unauthenticated Users) */}
+                {!user && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#EAE3D7] dark:border-[#38332E] space-y-3.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#C86D51] dark:text-[#DB8165]">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Create Your Private Space</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbFirstName">
+                          First Name <span className="text-[#C86D51]">*</span>
+                        </label>
+                        <div className="relative">
+                          <UserIcon className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                          <input
+                            id="onbFirstName"
+                            type="text"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder="Alex"
+                            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbLastName">
+                          Last Name <span className="text-[#C86D51]">*</span>
+                        </label>
+                        <div className="relative">
+                          <UserIcon className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                          <input
+                            id="onbLastName"
+                            type="text"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder="Morgan"
+                            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbEmail">
+                        Email Address <span className="text-[#C86D51]">*</span>
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                        <input
+                          id="onbEmail"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold mb-1" htmlFor="onbPassword">
+                        Password <span className="text-[#C86D51]">*</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E948A]" />
+                        <input
+                          id="onbPassword"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="At least 6 characters"
+                          className="w-full pl-8 pr-9 py-2.5 rounded-xl border border-[#EAE3D7] dark:border-[#38332E] bg-white dark:bg-[#25221F] text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] focus:outline-none focus:border-[#C86D51] transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic(8);
+                            setShowPassword(!showPassword);
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9E948A] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] p-1 cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* If already signed in, show reassurance badge */}
+                {user && (
+                  <div className="p-3.5 rounded-2xl bg-[#EEF4F0] dark:bg-[#202D24] text-[#658B70] dark:text-[#82A78C] text-xs font-medium flex items-center justify-between border border-[#658B70]/20">
+                    <div className="flex items-center gap-2 truncate">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span className="truncate">
+                        Signed in as <strong>{user.firstName} {user.lastName}</strong> ({user.email})
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Plain-Language Privacy Box */}
                 <div className="p-4 rounded-2xl bg-[#FAF2EA] dark:bg-[#2C221A] border border-[#EAE3D7] dark:border-[#38332E] text-xs space-y-2 text-[#786F66] dark:text-[#D5CFC7]">
                   <div className="flex items-center gap-2 font-semibold text-[#B88452] dark:text-[#E2A365]">
@@ -521,11 +695,11 @@ export default function OnboardingPage() {
                     {loading ? (
                       <>
                         <Spinner />
-                        <span>Saving your anchor...</span>
+                        <span>{user ? "Saving your anchor..." : "Creating account & saving anchor..."}</span>
                       </>
                     ) : (
                       <>
-                        <span>Save Anchor & Start Today</span>
+                        <span>{user ? "Save Anchor & Start Today" : "Create Account & Save Anchor"}</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
