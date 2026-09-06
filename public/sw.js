@@ -46,6 +46,16 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
+  // In local development or on localhost, bypass Service Worker caching completely
+  // to avoid Turbopack/Next.js HMR chunk corruption and stale module factory crashes
+  if (
+    url.hostname === "localhost" ||
+    url.hostname === "127.0.0.1" ||
+    url.pathname.startsWith("/_next/webpack-hmr")
+  ) {
+    return;
+  }
+
   // Dynamic API calls: never cache in Service Worker to prevent stale DB updates
   if (url.pathname.startsWith("/api/")) {
     return;

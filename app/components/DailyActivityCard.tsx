@@ -6,6 +6,7 @@ import {
   Moon,
   PencilSimple as PenLine,
   CheckCircle as CheckCircle2,
+  Clock,
 } from "@phosphor-icons/react";
 import { triggerHaptic } from "@/lib/sensory";
 import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";

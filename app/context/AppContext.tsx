@@ -67,12 +67,33 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [communityReflections, setCommunityReflections] = useState<Record<string, any[]>>({});
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Register service worker globally on mount
+  // Register service worker only in production; unregister & purge stale cache in development to prevent Turbopack chunk collisions
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch((err) => {
-        console.warn("Service worker registration:", err);
-      });
+    if (typeof window !== "undefined") {
+      if ("serviceWorker" in navigator) {
+        if (process.env.NODE_ENV === "development") {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((reg) => reg.unregister());
+          });
+          if ("caches" in window) {
+            caches.keys().then((keys) => {
+              keys.forEach((key) => caches.delete(key));
+            });
+          }
+        } else {
+          navigator.serviceWorker.register("/sw.js").catch((err) => {
+            console.warn("Service worker registration:", err);
+          });
+        }
+      }
+
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === "anchor_active_commitment_id" && e.newValue) {
+          setActiveCommitmentIdState(e.newValue);
+        }
+      };
+      window.addEventListener("storage", handleStorage);
+      return () => window.removeEventListener("storage", handleStorage);
     }
   }, []);
 

@@ -23,6 +23,8 @@ import { motion } from "framer-motion";
 import { triggerHaptic } from "@/lib/sensory";
 import type { Commitment, CheckIn, JournalEntry } from "@/db/schema";
 
+const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
+
 export default function ProgressPage() {
   const router = useRouter();
   const {
@@ -105,9 +107,25 @@ export default function ProgressPage() {
           {/* Header */}
           <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3">
             <div>
-              <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
-                Progress & Insights
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
+                  Progress & Insights
+                </span>
+                {commitment && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-2xs text-[#786F66] dark:text-[#A8A096] shadow-2xs">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor:
+                          PALETTE_HEX[commitment.colorIndex % PALETTE_HEX.length] || "#C86D51",
+                      }}
+                    />
+                    <span className="font-medium text-[#2C2520] dark:text-[#ECE7E0] truncate max-w-[140px]">
+                      {commitment.name}
+                    </span>
+                  </span>
+                )}
+              </div>
               <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5">
                 Progress & Rhythm
               </h1>

@@ -46,7 +46,6 @@ export default function JournalPage() {
     commitments,
     activeCommitment,
     activeCommitmentId,
-    setActiveCommitmentId,
     checkIns,
     journalEntries,
     setJournalEntries,
@@ -55,18 +54,6 @@ export default function JournalPage() {
     refreshJournals,
     updateCheckInLocally,
   } = useAppContext();
-
-  // Selected Anchor filter: "all" or commitment.id.
-  // Defaults to activeCommitment?.id || "all"
-  const [selectedCommitmentId, setSelectedCommitmentId] = useState<string>(() => {
-    return activeCommitment?.id || "all";
-  });
-
-  useEffect(() => {
-    if (activeCommitment?.id && selectedCommitmentId === "all") {
-      setSelectedCommitmentId(activeCommitment.id);
-    }
-  }, [activeCommitment?.id]);
 
   const [filterStatus, setFilterStatus] = useState<"all" | "yes" | "partial" | "no">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,9 +93,9 @@ export default function JournalPage() {
   };
 
   useEffect(() => {
-    refreshCheckIns(undefined, selectedCommitmentId === "all" ? undefined : selectedCommitmentId);
-    refreshJournals(selectedCommitmentId === "all" ? undefined : selectedCommitmentId);
-  }, [selectedCommitmentId, refreshCheckIns, refreshJournals]);
+    refreshCheckIns(undefined, activeCommitmentId || undefined);
+    refreshJournals(activeCommitmentId || undefined);
+  }, [activeCommitmentId, refreshCheckIns, refreshJournals]);
 
   const handleNewJournalEntry = (newEntry: JournalEntry) => {
     setJournalEntries((prev) => [newEntry, ...prev.filter((j) => j.id !== newEntry.id)]);
@@ -135,8 +122,8 @@ export default function JournalPage() {
     const map: Record<string, DayGroup> = {};
 
     checkIns.forEach((item) => {
-      // If user selected a specific anchor, skip check-ins from other anchors
-      if (selectedCommitmentId !== "all" && item.commitmentId !== selectedCommitmentId) {
+      // Strictly scope check-ins to the active anchor selected on the dashboard
+      if (activeCommitmentId && item.commitmentId && item.commitmentId !== activeCommitmentId) {
         return;
       }
 
@@ -160,11 +147,11 @@ export default function JournalPage() {
     });
 
     journalEntries.forEach((entry) => {
-      // If user selected a specific anchor and entry has commitmentId, filter if mismatch
+      // Strictly scope reflections to the active anchor selected on the dashboard
       if (
-        selectedCommitmentId !== "all" &&
+        activeCommitmentId &&
         entry.commitmentId &&
-        entry.commitmentId !== selectedCommitmentId
+        entry.commitmentId !== activeCommitmentId
       ) {
         return;
       }
@@ -176,7 +163,7 @@ export default function JournalPage() {
     });
 
     return map;
-  }, [checkIns, journalEntries, selectedCommitmentId, commitments]);
+  }, [checkIns, journalEntries, activeCommitmentId, commitments]);
 
   const sortedDates = useMemo(() => {
     return Object.keys(groupedByDate).sort((a, b) => (b > a ? 1 : -1));
@@ -203,16 +190,12 @@ export default function JournalPage() {
       if (dStr < accountStartDate) return false;
       const day = groupedByDate[dStr];
       if (!day) return true;
-      if (selectedCommitmentId !== "all") {
-        return !day.anchors[selectedCommitmentId]?.evening;
-      }
-      const activeId = activeCommitment?.id;
-      if (activeId) {
-        return !day.anchors[activeId]?.evening;
+      if (activeCommitmentId) {
+        return !day.anchors[activeCommitmentId]?.evening;
       }
       return Object.values(day.anchors).every((ag) => !ag.evening);
     });
-  }, [past7Days, accountStartDate, groupedByDate, selectedCommitmentId, activeCommitment?.id]);
+  }, [past7Days, accountStartDate, groupedByDate, activeCommitmentId]);
 
   // Filtered & Searched dates
   const filteredDates = useMemo(() => {
@@ -316,92 +299,52 @@ export default function JournalPage() {
     return <JournalSkeleton />;
   }
 
-  const activeAnchorForComposer =
-    selectedCommitmentId !== "all"
-      ? selectedCommitmentId
-      : activeCommitment?.id;
-
   return (
     <div className="w-full flex-1 flex flex-col">
       <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-10 pb-36">
         {/* Header */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
-            <span className="text-xs sm:text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
+            <span className="text-xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
               Reflective Archive
             </span>
             <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] mt-0.5 truncate">
               Personal Journal
             </h1>
           </div>
-          <span className="text-xs px-3 py-1 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs shrink-0">
-            {filteredDates.length} {filteredDates.length === 1 ? "entry" : "entries"}
-          </span>
-        </div>
-
-        {/* Anchor Switcher / Filter Bar */}
-        {commitments.length > 0 && (
-          <div className="space-y-1.5">
-            <span className="text-2xs uppercase tracking-wider font-semibold text-[#786F66] dark:text-[#A8A096] block px-1">
-              Filter by Anchor
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            {activeCommitment && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{
+                    backgroundColor:
+                      PALETTE_HEX[activeCommitment.colorIndex % PALETTE_HEX.length] || "#C86D51",
+                  }}
+                />
+                <span className="text-xs font-medium text-[#2C2520] dark:text-[#ECE7E0] truncate max-w-[160px]">
+                  {activeCommitment.name}
+                </span>
+              </div>
+            )}
+            <span className="text-xs px-3 py-1.5 rounded-full bg-[#FFFFFF] dark:bg-[#25221F] text-[#786F66] dark:text-[#A8A096] font-medium border border-[#EAE3D7] dark:border-[#38332E] shadow-2xs shrink-0">
+              {filteredDates.length} {filteredDates.length === 1 ? "entry" : "entries"}
             </span>
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic(8);
-                  setSelectedCommitmentId("all");
-                }}
-                className={`px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
-                  selectedCommitmentId === "all"
-                    ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] font-semibold border-transparent shadow-2xs"
-                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
-                }`}
-              >
-                All Anchors
-              </button>
-              {commitments.map((comm) => {
-                const isSelected = selectedCommitmentId === comm.id;
-                const colorHex = PALETTE_HEX[comm.colorIndex % PALETTE_HEX.length] || "#C86D51";
-                return (
-                  <button
-                    key={comm.id}
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(8);
-                      setSelectedCommitmentId(comm.id);
-                      setActiveCommitmentId(comm.id);
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer transition-colors shrink-0 ${
-                      isSelected
-                        ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] font-semibold border-transparent shadow-2xs"
-                        : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096]"
-                    }`}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: colorHex }}
-                    />
-                    <span className="truncate max-w-35">{comm.name}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
-        )}
+        </div>
 
         {/* Prominent Freeform Journal Composer */}
         <JournalComposer
           onEntryCreated={handleNewJournalEntry}
           variant="full"
-          commitmentId={activeAnchorForComposer}
+          commitmentId={activeCommitmentId}
         />
 
         {/* Compact 7-Day Timeline Pebble Strip */}
         <div className="p-3.5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-2">
           <div className="flex items-center justify-between px-1 text-xs text-[#786F66] dark:text-[#A8A096]">
             <span className="uppercase tracking-wider font-semibold">
-              This Week {selectedCommitmentId !== "all" && `• ${commitments.find((c) => c.id === selectedCommitmentId)?.name || ""}`}
+              This Week {activeCommitment ? `• ${activeCommitment.name}` : ""}
             </span>
             <span className="text-xs">Tap pebble to focus</span>
           </div>
@@ -415,23 +358,14 @@ export default function JournalPage() {
               let eveningStatus: string | undefined;
               let hasMorning = false;
 
-              if (day) {
-                if (selectedCommitmentId !== "all") {
-                  const ag = day.anchors[selectedCommitmentId];
-                  eveningStatus = ag?.evening?.status ?? undefined;
-                  hasMorning = Boolean(ag?.morning);
-                } else {
-                  const activeId = activeCommitment?.id;
-                  const ag = activeId ? day.anchors[activeId] : undefined;
-                  if (ag?.evening?.status) {
-                    eveningStatus = ag.evening.status;
-                    hasMorning = Boolean(ag.morning);
-                  } else {
-                    const anyAgWithEvening = Object.values(day.anchors).find((a) => a.evening?.status);
-                    eveningStatus = anyAgWithEvening?.evening?.status ?? undefined;
-                    hasMorning = Object.values(day.anchors).some((a) => Boolean(a.morning));
-                  }
-                }
+              if (day && activeCommitmentId) {
+                const ag = day.anchors[activeCommitmentId];
+                eveningStatus = ag?.evening?.status ?? undefined;
+                hasMorning = Boolean(ag?.morning);
+              } else if (day) {
+                const anyAgWithEvening = Object.values(day.anchors).find((a) => a.evening?.status);
+                eveningStatus = anyAgWithEvening?.evening?.status ?? undefined;
+                hasMorning = Object.values(day.anchors).some((a) => Boolean(a.morning));
               }
 
               return (
@@ -678,30 +612,6 @@ export default function JournalPage() {
                         </p>
                       )}
 
-                      {/* If viewing all anchors and multiple anchors exist on this date, show anchor badges */}
-                      {selectedCommitmentId === "all" && anchorGroups.length > 0 && (
-                        <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
-                          {anchorGroups.map((ag) => {
-                            const colorHex =
-                              PALETTE_HEX[(ag.commitment?.colorIndex ?? 0) % PALETTE_HEX.length] ||
-                              "#C86D51";
-                            return (
-                              <span
-                                key={ag.commitmentId}
-                                className="inline-flex items-center gap-1 text-2xs px-2 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-[#1E1B18] text-[#786F66] dark:text-[#A8A096] border border-[#EAE3D7] dark:border-[#38332E]"
-                              >
-                                <span
-                                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                                  style={{ backgroundColor: colorHex }}
-                                />
-                                <span className="truncate max-w-25">
-                                  {ag.commitment?.name || "Anchor"}
-                                </span>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -898,19 +808,9 @@ export default function JournalPage() {
           initialStage="evening"
           targetDate={backfillDate || undefined}
           isLate={true}
-          commitmentName={
-            (selectedCommitmentId !== "all"
-              ? commitments.find((c) => c.id === selectedCommitmentId)?.name
-              : activeCommitment?.name) || "Daily Anchor"
-          }
-          commitmentWhy={
-            selectedCommitmentId !== "all"
-              ? commitments.find((c) => c.id === selectedCommitmentId)?.why || undefined
-              : activeCommitment?.why || undefined
-          }
-          commitmentId={
-            selectedCommitmentId !== "all" ? selectedCommitmentId : activeCommitment?.id
-          }
+          commitmentName={activeCommitment?.name || "Daily Anchor"}
+          commitmentWhy={activeCommitment?.why || undefined}
+          commitmentId={activeCommitmentId || undefined}
           onClose={() => setStepperOpen(false)}
           onSuccess={(saved) => {
             updateCheckInLocally(saved);
