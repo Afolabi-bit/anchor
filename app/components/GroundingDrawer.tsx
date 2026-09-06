@@ -13,7 +13,13 @@ const GROUNDING_ITEMS = [
   { id: 1, label: "1 slow, honest breath down to the belly", placeholder: "Take a full 4-second inhale and exhale" },
 ];
 
-export default function GroundingDrawer({ triggerClassName }: { triggerClassName?: string }) {
+export default function GroundingDrawer({
+  triggerClassName,
+  iconOnly = false,
+}: {
+  triggerClassName?: string;
+  iconOnly?: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [breathingStep, setBreathingStep] = useState<"Inhale" | "Hold" | "Exhale" | "Pause">("Inhale");
   const [seconds, setSeconds] = useState(4);
@@ -60,20 +66,24 @@ export default function GroundingDrawer({ triggerClassName }: { triggerClassName
     <>
       {/* Trigger Button */}
       <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
         onClick={() => {
           setIsOpen(true);
           setIsBreathingActive(true);
           triggerHaptic(10);
         }}
+        aria-label="Pause and Breathe"
+        title="Pause and Breathe"
         className={
           triggerClassName ||
-          "text-xs text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-transparent hover:bg-[#FAF7F2] dark:hover:bg-[#1E1B18] transition-colors cursor-pointer"
+          (iconOnly
+            ? "w-8 h-8 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-white/80 dark:bg-[#25221F]/80 hover:bg-[#FAF7F2] dark:hover:bg-[#1E1B18] text-[#658B70] flex items-center justify-center transition-colors cursor-pointer shadow-2xs shrink-0"
+            : "text-xs text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0] flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#EAE3D7] dark:border-[#38332E] bg-transparent hover:bg-[#FAF7F2] dark:hover:bg-[#1E1B18] transition-colors cursor-pointer")
         }
       >
-        <Wind className="w-3.5 h-3.5 text-[#658B70]" />
-        <span className="font-medium">Pause & Breathe</span>
+        <Wind className={iconOnly ? "w-4 h-4 text-[#658B70]" : "w-3.5 h-3.5 text-[#658B70]"} />
+        {!iconOnly && <span className="font-medium">Pause & Breathe</span>}
       </motion.button>
 
       {/* Modal / Drawer */}

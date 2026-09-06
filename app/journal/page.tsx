@@ -382,7 +382,7 @@ export default function JournalPage() {
                       className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: colorHex }}
                     />
-                    <span className="truncate max-w-[140px]">{comm.name}</span>
+                    <span className="truncate max-w-35">{comm.name}</span>
                   </button>
                 );
               })}
@@ -694,7 +694,7 @@ export default function JournalPage() {
                                   className="w-1.5 h-1.5 rounded-full shrink-0"
                                   style={{ backgroundColor: colorHex }}
                                 />
-                                <span className="truncate max-w-[100px]">
+                                <span className="truncate max-w-25">
                                   {ag.commitment?.name || "Anchor"}
                                 </span>
                               </span>

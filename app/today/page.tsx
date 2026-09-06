@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import GroundingDrawer from "@/app/components/GroundingDrawer";
 import CheckInStepper from "@/app/components/CheckInStepper";
 import NewCommitmentModal from "@/app/components/NewCommitmentModal";
@@ -13,10 +12,11 @@ import { useAppContext } from "@/app/context/AppContext";
 import {
   Sun,
   Moon,
-  CheckCircle as CheckCircle2,
   Check,
+  CheckCircle as CheckCircle2,
   ArrowRight,
   Plus,
+  CaretDown,
   HandHeart as MessageSquareHeart,
   Sparkle,
 } from "@phosphor-icons/react";
@@ -28,7 +28,6 @@ import { recordClientActivityLog, formatTimeFromTimestamp } from "@/lib/client-t
 const PALETTE_HEX = ["#C86D51", "#B88452", "#658B70", "#786F66", "#D4A373"];
 
 export default function TodayPage() {
-  const router = useRouter();
   const {
     user,
     commitments,
@@ -48,10 +47,13 @@ export default function TodayPage() {
   } = useAppContext();
 
   const [newModalOpen, setNewModalOpen] = useState(false);
+  const [showCommitmentDropdown, setShowCommitmentDropdown] = useState(false);
 
-  // Time-aware horizon: before 2:00 PM is Morning Intention, after 2:00 PM is Evening Reflection
+  // Time-aware greeting & windows
   const currentHour = new Date().getHours();
-  const isEveningHorizon = currentHour >= 14;
+  const isMorning = currentHour < 12;
+  const isAfternoon = currentHour >= 12 && currentHour < 17;
+  const isEvening = currentHour >= 17;
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -67,13 +69,17 @@ export default function TodayPage() {
     }
   }, []);
 
-  const greeting = isEveningHorizon ? "Good evening" : "Good morning";
+  const greeting = isMorning
+    ? "Good morning"
+    : isAfternoon
+    ? "Good afternoon"
+    : "Good evening";
 
   // Stepper Modal State
   const [activeStepper, setActiveStepper] = useState<"morning" | "evening" | null>(null);
   const [stepperCommitment, setStepperCommitment] = useState<Commitment | null>(null);
 
-  // Daily Affirmation quote
+  // Daily Affirmation quote (confirmed not duplicated elsewhere)
   const affirmation = getTodayAffirmation();
 
   // Background refresh of check-ins, journals, and sponsor messages
@@ -83,13 +89,19 @@ export default function TodayPage() {
     refreshPartnerMessages();
   }, [todayStr, refreshCheckIns, refreshJournals, refreshPartnerMessages]);
 
+  // Strictly scoped check-ins for the active commitment
   const todayCheckIns = useMemo(() => {
-    return checkIns.filter((c: CheckIn) => c.date === todayStr);
-  }, [checkIns, todayStr]);
+    return checkIns.filter(
+      (c: CheckIn) => c.date === todayStr && c.commitmentId === activeCommitment?.id
+    );
+  }, [checkIns, todayStr, activeCommitment?.id]);
 
+  // Strictly scoped journals for the active commitment
   const todayJournals = useMemo(() => {
-    return journalEntries.filter((j: JournalEntry) => j.date === todayStr);
-  }, [journalEntries, todayStr]);
+    return journalEntries.filter(
+      (j: JournalEntry) => j.date === todayStr && j.commitmentId === activeCommitment?.id
+    );
+  }, [journalEntries, todayStr, activeCommitment?.id]);
 
   const morningCheckIn = useMemo(() => {
     if (!activeCommitment?.id) return null;
@@ -114,6 +126,12 @@ export default function TodayPage() {
       ) || null
     );
   }, [checkIns, todayStr, activeCommitment?.id]);
+
+  const isMorningDone = Boolean(morningCheckIn);
+  const isEveningDone = Boolean(eveningCheckIn);
+  const isAllCheckInsDone = isMorningDone && isEveningDone;
+
+  const activeColorHex = PALETTE_HEX[activeCommitment?.colorIndex ?? 0] || "#C86D51";
 
   const dismissPartnerMessage = async (msgId: string) => {
     triggerHaptic(10);
@@ -175,8 +193,8 @@ export default function TodayPage() {
   };
 
   const handleOpenStepper = (stage: "morning" | "evening", comm: Commitment) => {
-    const isAlreadySealed = todayCheckIns.some(
-      (c) => c.commitmentId === comm.id && c.type === stage
+    const isAlreadySealed = checkIns.some(
+      (c) => c.commitmentId === comm.id && c.date === todayStr && c.type === stage
     );
     if (isAlreadySealed) {
       triggerHaptic(10);
@@ -203,82 +221,143 @@ export default function TodayPage() {
     <div className="w-full flex-1 flex flex-col">
       <main className="flex-1 max-w-xl mx-auto w-full px-5 sm:px-6 py-6 sm:py-8 space-y-6 pb-28">
         {/* ========================================================================= */}
-        {/* 1. SANCTUARY HEADER & HORIZONTAL ANCHOR BAR                               */}
+        {/* 1. SIMPLIFIED HEADER: Greeting, Breathe, Dropdown, Why Quote              */}
         {/* ========================================================================= */}
-        <header className="space-y-3.5">
-          {/* Top Line: Date, Greeting, Grounding Drawer */}
+        <header className="space-y-3">
+          {/* Top Line: Date, Greeting, Icon-only Grounding */}
           <div className="flex items-start justify-between gap-3">
-            <div className="space-y-0.5">
-              <span className="text-2xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block">
+            <div className="space-y-0.5 min-w-0">
+              <span className="text-2xs uppercase tracking-widest text-[#786F66] dark:text-[#A8A096] font-semibold block truncate">
                 {formattedDate}
               </span>
-              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight">
+              <h1 className="font-serif-title text-2xl sm:text-3xl font-normal text-[#2C2520] dark:text-[#ECE7E0] tracking-tight truncate">
                 {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
               </h1>
             </div>
-            <div className="shrink-0 pt-0.5">
-              <GroundingDrawer />
+
+            {/* Top-Right Tools: Icon-only Pause & Breathe */}
+            <div className="flex items-center gap-2 shrink-0 pt-0.5">
+              <GroundingDrawer iconOnly />
             </div>
           </div>
 
-          {/* Horizontal Anchor Pill Switcher */}
+          {/* Commitment Dropdown Switcher */}
           {commitments.length > 0 ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-                {commitments.map((c) => {
-                  const isSelected = c.id === activeCommitmentId;
-                  const colorHex = PALETTE_HEX[c.colorIndex % PALETTE_HEX.length] || "#C86D51";
+            <div className="space-y-1.5 pt-1">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic(8);
+                    setShowCommitmentDropdown(!showCommitmentDropdown);
+                  }}
+                  aria-haspopup="listbox"
+                  aria-expanded={showCommitmentDropdown}
+                  className="w-full sm:w-auto min-w-[200px] px-4 py-2 rounded-2xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs hover:border-[#C86D51]/40 flex items-center justify-between gap-3 text-left transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: activeColorHex }}
+                    />
+                    <span className="font-semibold text-sm text-[#2C2520] dark:text-[#ECE7E0] truncate">
+                      {activeCommitment?.name || "Select Anchor"}
+                    </span>
+                  </div>
+                  <CaretDown
+                    className={`w-3.5 h-3.5 text-[#786F66] dark:text-[#A8A096] transition-transform duration-200 shrink-0 ${
+                      showCommitmentDropdown ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
 
-                  const isMorningDone = todayCheckIns.some(
-                    (ck) => ck.commitmentId === c.id && ck.type === "morning"
-                  );
-                  const isEveningDone = todayCheckIns.some(
-                    (ck) => ck.commitmentId === c.id && ck.type === "evening"
-                  );
-                  const isAllDone = isMorningDone && isEveningDone;
-
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic(8);
-                        setActiveCommitmentId(c.id);
-                      }}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                        isSelected
-                          ? "bg-[#2C2520] dark:bg-[#ECE7E0] text-white dark:text-[#1C1917] shadow-organic-sm font-semibold"
-                          : "bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:text-[#2C2520] dark:hover:text-[#ECE7E0]"
-                      }`}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: colorHex }}
+                {/* Dropdown Menu Popover */}
+                <AnimatePresence>
+                  {showCommitmentDropdown && (
+                    <>
+                      {/* Click outside overlay */}
+                      <div
+                        className="fixed inset-0 z-30 cursor-default"
+                        onClick={() => setShowCommitmentDropdown(false)}
                       />
-                      <span>{c.name}</span>
-                      {isAllDone && <Check className="w-3 h-3 text-[#658B70]" />}
-                    </button>
-                  );
-                })}
 
-                {/* Inline Add Anchor Button */}
-                {commitments.length < 5 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(8);
-                      setNewModalOpen(true);
-                    }}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-[#EAE3D7] dark:border-[#38332E] text-[#786F66] dark:text-[#A8A096] hover:border-[#C86D51] hover:text-[#C86D51] transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
-                    title="Add new anchor"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>New Anchor</span>
-                  </button>
-                )}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.98, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.98, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-0 top-full mt-1.5 w-full sm:w-80 p-2 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] shadow-organic-lg z-40 space-y-1"
+                      >
+                        <div className="px-3 py-1.5 text-[11px] uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold border-b border-[#EAE3D7] dark:border-[#38332E]">
+                          Switch Active Anchor
+                        </div>
+
+                        <div className="max-h-60 overflow-y-auto space-y-1 py-1">
+                          {commitments.map((c) => {
+                            const isSelected = c.id === activeCommitmentId;
+                            const colorHex = PALETTE_HEX[c.colorIndex % PALETTE_HEX.length] || "#C86D51";
+
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => {
+                                  triggerHaptic(10);
+                                  setActiveCommitmentId(c.id);
+                                  setShowCommitmentDropdown(false);
+                                }}
+                                className={`w-full text-left p-2.5 rounded-2xl flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+                                  isSelected
+                                    ? "bg-[#FAF7F2] dark:bg-[#2E2A26] text-[#2C2520] dark:text-[#ECE7E0] font-medium"
+                                    : "hover:bg-[#FAF7F2]/60 dark:hover:bg-[#2E2A26]/60 text-[#786F66] dark:text-[#A8A096]"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: colorHex }}
+                                  />
+                                  <div className="truncate">
+                                    <span className="text-xs sm:text-sm block truncate text-[#2C2520] dark:text-[#ECE7E0]">
+                                      {c.name}
+                                    </span>
+                                    {c.why && (
+                                      <span className="text-[11px] text-[#786F66] dark:text-[#A8A096] italic block truncate">
+                                        &ldquo;{c.why}&rdquo;
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <Check className="w-4 h-4 text-[#658B70] shrink-0" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {commitments.length < 5 && (
+                          <div className="pt-1 border-t border-[#EAE3D7] dark:border-[#38332E]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowCommitmentDropdown(false);
+                                setNewModalOpen(true);
+                              }}
+                              className="w-full text-left p-2 rounded-xl hover:bg-[#FAF7F2] dark:hover:bg-[#2E2A26] text-xs font-semibold text-[#C86D51] dark:text-[#DB8165] flex items-center gap-2 cursor-pointer transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Add New Anchor</span>
+                            </button>
+                          </div>
+                        )}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* Active Anchor Purpose / Why */}
+              {/* Selected Commitment's Why Quote */}
               {activeCommitment?.why && (
                 <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed pt-0.5">
                   &ldquo;{activeCommitment.why}&rdquo;
@@ -344,86 +423,46 @@ export default function TodayPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* 2. THE DAY'S RHYTHM (Unified Morning & Evening Ritual)                     */}
+        {/* 2. THE DAY'S RHYTHM (NEXT PENDING ACTION ONLY - DEDUPLICATED)              */}
         {/* ========================================================================= */}
         {activeCommitment && (
-          <section aria-label="Today's Rhythm" className="space-y-3">
+          <section aria-label="Daily Rhythm" className="space-y-2.5">
             <div className="flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096]">
               <span className="uppercase tracking-wider font-semibold">
                 Daily Rhythm
               </span>
-              <span>{activeCommitment.name}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-              {/* -------------------- MORNING INTENTION CARD -------------------- */}
-              <div
-                className={`p-5 rounded-3xl border clay-card shadow-2xs flex flex-col justify-between space-y-4 transition-all ${
-                  morningCheckIn
-                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
-                    : !isEveningHorizon
-                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#B88452]/40 ring-1 ring-[#B88452]/20"
-                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
-                }`}
-              >
-                <div className="space-y-3">
-                  {/* Card Header: Icon, Title, Status Badge */}
+            {/* Condition 1: Both check-ins done or evening check-in is complete -> Collapsed Reassurance */}
+            {isAllCheckInsDone || isEveningDone ? (
+              <div className="p-4 rounded-3xl bg-[#EEF4F0] dark:bg-[#202D24] border border-[#D9E6DD] dark:border-[#2C4032] clay-card shadow-2xs flex items-center justify-between gap-3 text-xs text-[#658B70] dark:text-[#82A78C] font-medium">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#658B70]" />
+                  <span>All check-ins complete for {activeCommitment.name} today.</span>
+                </div>
+              </div>
+            ) : !isEvening ? (
+              /* ========================================================================= */
+              /* DAYTIME (Not evening yet)                                                 */
+              /* ========================================================================= */
+              !isMorningDone ? (
+                /* Daytime & Morning NOT set: Morning Intention Card */
+                <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] hover:border-[#B88452]/40 clay-card shadow-2xs space-y-3.5 transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0">
                         <Sun className="w-4 h-4" />
                       </div>
-                      <h2 className="font-serif-title text-base font-medium text-[#2C2520] dark:text-[#ECE7E0]">
+                      <h2 className="font-serif-title text-base font-normal text-[#2C2520] dark:text-[#ECE7E0]">
                         Morning Intention
                       </h2>
                     </div>
-
-                    {morningCheckIn ? (
-                      <span className="text-2xs text-[#658B70] dark:text-[#82A78C] font-medium flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Done</span>
-                      </span>
-                    ) : !isEveningHorizon ? (
-                      <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452]">
-                        Active
-                      </span>
-                    ) : null}
                   </div>
 
-                  {/* Card Content */}
-                  {morningCheckIn ? (
-                    <div className="space-y-2 text-xs pt-1">
-                      {morningCheckIn.plannedActions && morningCheckIn.plannedActions.length > 0 && (
-                        <div className="space-y-1.5">
-                          {morningCheckIn.plannedActions.map((act: string, i: number) => (
-                            <div key={i} className="flex items-center gap-2 text-[#2C2520] dark:text-[#ECE7E0]">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70] shrink-0" />
-                              <span className="leading-snug">{act}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {morningCheckIn.intentionNote && (
-                        <p className="font-serif italic text-xs text-[#786F66] dark:text-[#A8A096] pt-1 leading-relaxed">
-                          &ldquo;{morningCheckIn.intentionNote}&rdquo;
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed pt-1">
-                      Set your focus and intentional actions for today.
-                    </p>
-                  )}
-                </div>
+                  <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    Set your focus and intentional planned actions for today.
+                  </p>
 
-                {/* Card Footer / Action */}
-                {morningCheckIn ? (
-                  morningCheckIn.createdAt && (
-                    <div className="pt-1 text-right text-2xs text-[#786F66]/60 dark:text-[#A8A096]/60">
-                      {formatTimeFromTimestamp(morningCheckIn.createdAt)}
-                    </div>
-                  )
-                ) : (
                   <button
                     type="button"
                     onClick={() => {
@@ -432,97 +471,135 @@ export default function TodayPage() {
                     }}
                     className="btn-primary w-full py-2.5 text-xs font-semibold shadow-organic-sm flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                   >
-                    <span>Set Intention</span>
+                    <span>Set Morning Intention</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
-                )}
-              </div>
-
-              {/* -------------------- EVENING REFLECTION CARD -------------------- */}
-              <div
-                className={`p-5 rounded-3xl border clay-card shadow-2xs flex flex-col justify-between space-y-4 transition-all ${
-                  eveningCheckIn
-                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
-                    : isEveningHorizon
-                    ? "bg-[#FFFFFF] dark:bg-[#25221F] border-[#C86D51]/40 ring-1 ring-[#C86D51]/20"
-                    : "bg-[#FFFFFF] dark:bg-[#25221F] border-[#EAE3D7] dark:border-[#38332E]"
-                }`}
-              >
-                <div className="space-y-3">
-                  {/* Card Header: Icon, Title, Status Badge */}
+                </div>
+              ) : (
+                /* Daytime & Morning IS set: Display Active Daytime Intention Guide */
+                <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] clay-card shadow-2xs space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] flex items-center justify-center shadow-2xs shrink-0">
-                        <Moon className="w-4 h-4" />
+                      <div className="w-8 h-8 rounded-xl bg-[#FAF2EA] dark:bg-[#352A1E] text-[#B88452] flex items-center justify-center shadow-2xs shrink-0">
+                        <Sun className="w-4 h-4" />
                       </div>
-                      <h2 className="font-serif-title text-base font-medium text-[#2C2520] dark:text-[#ECE7E0]">
-                        Evening Review
+                      <h2 className="font-serif-title text-base font-normal text-[#2C2520] dark:text-[#ECE7E0]">
+                        Today&apos;s Intention
                       </h2>
                     </div>
 
-                    {eveningCheckIn ? (
-                      <span className="text-2xs text-[#658B70] dark:text-[#82A78C] font-medium flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Done</span>
-                      </span>
-                    ) : isEveningHorizon ? (
-                      <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51]">
-                        Active
-                      </span>
-                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic(8);
+                        handleOpenStepper("evening", activeCommitment);
+                      }}
+                      className="text-2xs text-[#786F66] hover:text-[#C86D51] dark:text-[#A8A096] dark:hover:text-[#DB8165] transition-colors cursor-pointer font-medium"
+                      title="Review day early"
+                    >
+                      Review early &rarr;
+                    </button>
                   </div>
 
-                  {/* Card Content */}
-                  {eveningCheckIn ? (
-                    <div className="space-y-2 text-xs pt-1">
-                      {eveningCheckIn.reflection && (
-                        <p className="font-serif italic text-xs text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed">
-                          &ldquo;{eveningCheckIn.reflection}&rdquo;
-                        </p>
-                      )}
-                      {eveningCheckIn.lessonsLearned && (
-                        <p className="text-2xs text-[#786F66] dark:text-[#A8A096]">
-                          <strong className="text-[#C86D51] font-medium">Lesson: </strong>
-                          <span className="italic">{eveningCheckIn.lessonsLearned}</span>
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed pt-1">
-                      Pause and reflect honestly on how today unfolded.
+                  {morningCheckIn?.intentionNote && (
+                    <p className="font-serif italic text-xs sm:text-sm text-[#2C2520] dark:text-[#ECE7E0] leading-relaxed bg-[#FAF7F2] dark:bg-[#1E1B18] p-3 rounded-2xl border border-[#EAE3D7]/70 dark:border-[#38332E]/70">
+                      &ldquo;{morningCheckIn.intentionNote}&rdquo;
                     </p>
                   )}
+
+                  {morningCheckIn?.plannedActions && morningCheckIn.plannedActions.length > 0 && (
+                    <div className="space-y-1.5 pt-0.5">
+                      <span className="text-2xs uppercase tracking-wider text-[#786F66] dark:text-[#A8A096] font-semibold">
+                        Planned Actions
+                      </span>
+                      <div className="space-y-1">
+                        {morningCheckIn.plannedActions.map((action, i) => (
+                          <div key={i} className="flex items-center gap-2 text-xs text-[#2C2520] dark:text-[#ECE7E0]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#658B70] shrink-0" />
+                            <span className="leading-snug">{action}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-1 flex items-center justify-between text-2xs text-[#786F66] dark:text-[#A8A096] border-t border-[#EAE3D7]/60 dark:border-[#38332E]/60">
+                    <span>Carrying your intention through today</span>
+                    <span className="font-mono">Evening review opens at 5 PM</span>
+                  </div>
+                </div>
+              )
+            ) : (
+              /* ========================================================================= */
+              /* EVENING (>= 17:00 / 5:00 PM)                                              */
+              /* ========================================================================= */
+              <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#25221F] border border-[#EAE3D7] dark:border-[#38332E] hover:border-[#C86D51]/40 clay-card shadow-2xs space-y-3.5 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#F9EBE7] dark:bg-[#38251F] text-[#C86D51] flex items-center justify-center shadow-2xs shrink-0">
+                      <Moon className="w-4 h-4" />
+                    </div>
+                    <h2 className="font-serif-title text-base font-normal text-[#2C2520] dark:text-[#ECE7E0]">
+                      Evening Review
+                    </h2>
+                  </div>
                 </div>
 
-                {/* Card Footer / Action */}
-                {eveningCheckIn ? (
-                  eveningCheckIn.createdAt && (
-                    <div className="pt-1 text-right text-2xs text-[#786F66]/60 dark:text-[#A8A096]/60">
-                      {formatTimeFromTimestamp(eveningCheckIn.createdAt)}
-                    </div>
-                  )
+                {/* Contextual guidance based on whether morning intention was set */}
+                {isMorningDone && morningCheckIn?.intentionNote ? (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                      Pause and reflect on your day against your morning intention:
+                    </p>
+                    <p className="font-serif italic text-xs text-[#2C2520] dark:text-[#ECE7E0] bg-[#FAF7F2] dark:bg-[#1E1B18] px-3 py-2 rounded-xl border border-[#EAE3D7]/60 dark:border-[#38332E]/60">
+                      &ldquo;{morningCheckIn.intentionNote}&rdquo;
+                    </p>
+                  </div>
+                ) : isMorningDone ? (
+                  <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    Pause and reflect honestly on how today unfolded.
+                  </p>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(10);
-                      handleOpenStepper("evening", activeCommitment);
-                    }}
-                    className="btn-primary w-full py-2.5 text-xs font-semibold shadow-organic-sm flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                  >
-                    <span>Review Day</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  <p className="text-xs text-[#786F66] dark:text-[#A8A096] leading-relaxed">
+                    No morning intention set today — your evening reflection still counts.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic(10);
+                    handleOpenStepper("evening", activeCommitment);
+                  }}
+                  className="btn-primary w-full py-2.5 text-xs font-semibold shadow-organic-sm flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <span>Review Day</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+
+                {!isMorningDone && (
+                  <div className="pt-0.5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic(8);
+                        handleOpenStepper("morning", activeCommitment);
+                      }}
+                      className="text-2xs text-[#786F66] hover:text-[#B88452] dark:text-[#A8A096] dark:hover:text-[#D4A373] transition-colors cursor-pointer"
+                    >
+                      Set morning intention retroactively &rarr;
+                    </button>
+                  </div>
                 )}
               </div>
-            </div>
+            )}
           </section>
         )}
 
         {/* ========================================================================= */}
-        {/* 3. AMBIENT QUICK REFLECTION CAPTURE                                       */}
+        {/* 3. AMBIENT CAPTURE COMPOSER (FIXED CONSISTENT POSITION)                   */}
         {/* ========================================================================= */}
-        <div className="pt-1">
+        <div className="pt-0.5">
           <JournalComposer
             variant="compact"
             commitmentId={activeCommitment?.id}
@@ -531,16 +608,17 @@ export default function TodayPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. TODAY'S JOURNEY (Connected Activity Timeline)                          */}
+        {/* 4. ACTIVITIES (STRICTLY SCOPED TO SELECTED COMMITMENT)                    */}
         {/* ========================================================================= */}
         <DailyActivityCard
           commitments={commitments}
+          activeCommitmentId={activeCommitment?.id}
           todayCheckIns={todayCheckIns}
           todayJournals={todayJournals}
         />
 
         {/* ========================================================================= */}
-        {/* 5. AMBIENT DAILY WISDOM                                                   */}
+        {/* 5. BOTTOM-OF-SCROLL DAILY WISDOM (NOT DUPLICATED ELSEWHERE)               */}
         {/* ========================================================================= */}
         <footer className="pt-2 pb-4 text-center space-y-1">
           <p className="font-serif italic text-xs sm:text-sm text-[#786F66] dark:text-[#A8A096] leading-relaxed max-w-md mx-auto">
